@@ -6,7 +6,7 @@
 # Cached install from the lockfile. --ignore-scripts skips workspace postinstalls
 # (e.g. web's `nuxt prepare`, which needs the shared-types build that runs later).
 # bcrypt ships prebuilt binaries, so it needs no install script.
-FROM oven/bun:1.4.0 AS deps
+FROM oven/bun:1.4.2 AS deps
 WORKDIR /app
 COPY package.json bun.lock turbo.json tsconfig.base.json ./
 COPY packages/shared-types/package.json ./packages/shared-types/
@@ -27,7 +27,7 @@ RUN bun run --filter @nuxion/shared-types build \
  && bun run --filter @nuxion/api build
 
 # ─────────────────────────────── runtime ─────────────────────────────────────
-FROM oven/bun:1.4.0-slim AS runtime
+FROM oven/bun:1.4.2-slim AS runtime
 ENV NODE_ENV=production
 WORKDIR /app/apps/api
 # CA roots for TLS connections to managed Postgres/Redis.

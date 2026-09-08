@@ -5,7 +5,7 @@
 # ─────────────────────────────── deps ────────────────────────────────────────
 # --ignore-scripts skips `nuxt prepare` here; it would fail because shared-types
 # isn't built yet. `nuxt build` re-runs prepare later, after shared-types exists.
-FROM oven/bun:1.4.0 AS deps
+FROM oven/bun:1.4.2 AS deps
 WORKDIR /app
 COPY package.json bun.lock turbo.json tsconfig.base.json ./
 COPY packages/shared-types/package.json ./packages/shared-types/
@@ -28,7 +28,7 @@ RUN bun run --filter @nuxion/shared-types build \
 
 # ─────────────────────────────── runtime ─────────────────────────────────────
 # Nitro's node-server output is self-contained — only .output is needed.
-FROM oven/bun:1.4.0-slim AS runtime
+FROM oven/bun:1.4.2-slim AS runtime
 ENV NODE_ENV=production
 ENV PORT=4300
 ENV HOST=0.0.0.0

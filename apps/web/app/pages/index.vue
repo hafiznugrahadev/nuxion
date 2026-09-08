@@ -155,7 +155,7 @@ async function copy(textToCopy: string) {
             <div
               class="inline-flex cursor-default items-center gap-1.5 rounded-full bg-secondary-container px-4 py-0.5 text-xs font-medium text-on-secondary-container shadow-sm"
             >
-              <MaterialSymbol name="deployed_code" :size="16" class="text-primary" />
+              <BrandLogo class="h-4" />
               <span>{{ APP_NAME }}</span>
               <span class="mx-1 h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true" />
               <span class="font-mono text-[11px] text-on-surface-variant">{{ KIT_VERSION }}</span>
@@ -771,11 +771,7 @@ NUXT_PUBLIC_API_BASE=http://localhost:8000/api</code></pre>
       <div class="mx-auto flex max-w-7xl flex-col gap-6 px-4 sm:px-6 lg:px-8">
         <div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div class="flex items-center gap-3">
-            <div
-              class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-on-primary"
-            >
-              <MaterialSymbol name="deployed_code" :size="20" />
-            </div>
+            <BrandLogo class="h-8" />
             <div>
               <p class="text-base font-semibold text-on-surface">{{ APP_NAME }}</p>
               <p class="text-xs text-on-surface-variant">{{ $t('home.footer.tagline') }}</p>

@@ -15,11 +15,7 @@ const auth = useAuthStore();
         class="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-6 px-4 sm:px-6"
       >
         <NuxtLink to="/" class="flex shrink-0 items-center gap-3">
-          <div
-            class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-on-primary"
-          >
-            <MaterialSymbol name="deployed_code" :size="20" />
-          </div>
+          <BrandLogo class="h-8" />
           <div class="flex flex-col leading-none">
             <span class="text-base font-semibold tracking-tight text-on-surface">
               {{ APP_NAME }}

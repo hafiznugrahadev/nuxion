@@ -65,11 +65,7 @@ const showFull = computed(() => isMobileOpen.value || isExpanded.value);
         class="flex items-center gap-2.5 font-semibold"
         @click="closeMobile"
       >
-        <span
-          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-on-primary"
-        >
-          <MaterialSymbol name="deployed_code" :size="22" />
-        </span>
+        <BrandLogo class="h-10" />
         <span v-if="showFull" class="text-base tracking-tight text-foreground">{{ APP_NAME }}</span>
       </NuxtLink>
     </div>

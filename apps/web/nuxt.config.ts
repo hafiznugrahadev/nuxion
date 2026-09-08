@@ -69,7 +69,11 @@ export default defineNuxtConfig({
       // rule in main.css) + Material Symbols Outlined for icons. The icon
       // font uses display=block so ligature names never flash as raw text
       // while the font loads.
+      // Favicon: PNG because Safari ignores WebP icons; both are square
+      // center-crops generated from public/images/nuxion.webp.
       link: [
+        { rel: 'icon', type: 'image/png', href: '/favicon.png' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         {

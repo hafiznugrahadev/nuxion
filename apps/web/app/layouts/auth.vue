@@ -17,17 +17,13 @@ import { APP_NAME } from '~/lib/constants';
       </div>
     </div>
 
-    <!-- Brand side: MD3 tonal panel (primary-container), tertiary-container
-         logo tile as the single accent. No orbs, grid, or glass. -->
+    <!-- Brand side: MD3 tonal panel (primary-container), brand logo as the
+         single accent. No orbs, grid, or glass. -->
     <div
       class="relative hidden items-center justify-center overflow-hidden bg-primary-container lg:flex"
     >
       <div class="relative z-10 max-w-md px-8 text-center text-on-primary-container">
-        <div
-          class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-tertiary-container text-on-tertiary-container"
-        >
-          <MaterialSymbol name="deployed_code" :size="32" />
-        </div>
+        <BrandLogo class="mx-auto mb-6 h-16" />
         <h2 class="text-2xl font-semibold tracking-tight">{{ APP_NAME }}</h2>
         <p class="mt-3 text-sm text-on-primary-container">{{ $t('appTagline') }}</p>
       </div>

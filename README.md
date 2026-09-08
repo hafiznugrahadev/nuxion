@@ -143,9 +143,10 @@ It clones this repo, resets git history **without remotes** (no accidental
 pushes back to the kit), runs the `bun run init` rename, strips kit-internal
 meta docs (`.zcode/`, `docs/`, `LESSON.md`, `MEMORY.md`, `ERRORS.md` and the
 init script itself — SPEC.md stays), then runs `bun install` and makes the
-first commit. The scaffolder lives in its own repository and is published
-as the [`create-nuxion`](https://www.npmjs.com/package/create-nuxion) npm
-package (template fetched live from this repo at runtime).
+first commit. The scaffolder lives in its own repository,
+[hafiznugrahadev/nuxion-installer](https://github.com/hafiznugrahadev/nuxion-installer),
+published as the [`create-nuxion`](https://www.npmjs.com/package/create-nuxion)
+npm package (template fetched live from this repo at runtime).
 
 ### Manual path (`bun run init`)
 

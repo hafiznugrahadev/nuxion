@@ -14,6 +14,8 @@
   "auth": {
     "email": "Email",
     "password": "Kata sandi",
+    "showPassword": "Lihat kata sandi",
+    "hidePassword": "Sembunyikan kata sandi",
     "fullName": "Nama lengkap",
     "signIn": "Masuk",
     "signingIn": "Memproses…",
@@ -78,6 +80,7 @@
     "nav": {
       "features": "Fitur",
       "quickstart": "Mulai Cepat",
+      "why": "Alasan",
       "stack": "Stack"
     },
     "pills": {
@@ -140,6 +143,35 @@
       "sharedText": "Satu paket TypeScript memuat UserRole, amplop API, dan tipe entitas, dikompilasi ke CJS/ESM dan dipakai kedua aplikasi.",
       "dockerTitle": "Dev stack disertakan",
       "dockerText": "Docker Compose menyalakan Postgres, Redis, object storage, dan Mailpit. Satu file env di root mengendalikan kedua aplikasi."
+    },
+    "why": {
+      "eyebrow": "Arsitektur",
+      "title": "Kenapa API NestJS — bukan fullstack Nuxt",
+      "lead": "Nitro adalah app server yang hebat. Tapi begitu API menjadi produk — banyak klien, pekerjaan background, kontrak yang ketat — backend terpisah cepat mengembalikan modalnya.",
+      "c1t": "API-nya adalah produk",
+      "c1x": "Satu API melayani aplikasi web hari ini — aplikasi mobile, partner, dan skrip besok. Klien mengonsumsi kontrak ter-tipe, bukan server route yang dilekatkan ke sebuah website.",
+      "c2t": "Framework backend sesungguhnya",
+      "c2x": "Dependency injection, guards, pipes, interceptors, plus OpenAPI/Swagger langsung dari kotaknya — pola yang dijalankan backend production, bukan konvensi yang dirakit sendiri.",
+      "c3t": "Background & realtime",
+      "c3x": "Queue, cron scheduler, dan WebSocket adalah kelas satu di ekosistem Nest — tidak ada kerja panjang yang diparkir di dalam proses SSR.",
+      "c4t": "Lifecycle independen",
+      "c4x": "Deploy dan scale API serta aplikasi web secara terpisah — image berbeda, ritme berbeda. Web bahkan bisa menjadi full static saat API terus berevolusi.",
+      "vsTitle": "Berbanding langsung",
+      "vsNuxt": "Fullstack Nuxt",
+      "vsNest": "NestJS + Nuxt",
+      "r1l": "Konsumen API",
+      "r1n": "Terikat aplikasi web",
+      "r1s": "Web, mobile, partner",
+      "r2l": "Validasi & docs",
+      "r2n": "Dirakit manual per route",
+      "r2s": "DTO pipes + OpenAPI",
+      "r3l": "Pekerjaan background",
+      "r3n": "Terbatas",
+      "r3s": "Ekosistem queue & cron",
+      "r4l": "Scaling",
+      "r4n": "Satu proses, satu nasib",
+      "r4s": "Servis independen",
+      "note": "Tetap puritan Nuxt? Aplikasi web ini bicara dengan API apa pun — arahkan apiBase ke tempat lain dan pertahankan frontend-nya."
     },
     "stackEyebrow": "Inti modern",
     "stackTitle": "Stack-nya",

@@ -14,6 +14,8 @@
   "auth": {
     "email": "Email",
     "password": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "fullName": "Full name",
     "signIn": "Sign In",
     "signingIn": "Signing in…",
@@ -78,6 +80,7 @@
     "nav": {
       "features": "Features",
       "quickstart": "Quickstart",
+      "why": "Why",
       "stack": "Tech Stack"
     },
     "pills": {
@@ -140,6 +143,35 @@
       "sharedText": "One TypeScript package holds UserRole, API envelopes, and entity types, compiled to CJS/ESM and consumed by both apps.",
       "dockerTitle": "Dev stack included",
       "dockerText": "Docker Compose brings up Postgres, Redis, object storage, and Mailpit. One env file at the root drives both apps."
+    },
+    "why": {
+      "eyebrow": "Architecture",
+      "title": "Why a NestJS API — not fullstack Nuxt",
+      "lead": "Nitro is a great app server. But when the API is a product — many clients, background work, strict contracts — a dedicated backend pays for itself.",
+      "c1t": "The API is a product",
+      "c1x": "One API serves the web app today — mobile apps, partners, and scripts tomorrow. Clients consume typed contracts, not server routes welded to a website.",
+      "c2t": "A real backend framework",
+      "c2x": "Dependency injection, guards, pipes, interceptors, and OpenAPI/Swagger out of the box — the patterns production backends run on, not conventions you assemble yourself.",
+      "c3t": "Background work & realtime",
+      "c3x": "Queues, cron schedulers, and WebSockets are first-class in the Nest ecosystem — no long-running work parked inside the SSR process.",
+      "c4t": "Independent lifecycles",
+      "c4x": "Deploy and scale the API and the web app separately — different images, different pace. The web can even go fully static while the API keeps evolving.",
+      "vsTitle": "Side by side",
+      "vsNuxt": "Fullstack Nuxt",
+      "vsNest": "NestJS + Nuxt",
+      "r1l": "API consumers",
+      "r1n": "Tied to the web app",
+      "r1s": "Web, mobile, partners",
+      "r2l": "Validation & docs",
+      "r2n": "Hand-rolled per route",
+      "r2s": "DTO pipes + OpenAPI",
+      "r3l": "Background jobs",
+      "r3n": "Limited",
+      "r3s": "Queues & cron ecosystem",
+      "r4l": "Scaling",
+      "r4n": "One process, one fate",
+      "r4s": "Independent services",
+      "note": "Still a Nuxt purist? The web app talks to any API — point apiBase elsewhere and keep the frontend."
     },
     "stackEyebrow": "Modern core",
     "stackTitle": "The stack",

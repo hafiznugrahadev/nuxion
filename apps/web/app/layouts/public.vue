@@ -40,6 +40,12 @@ const auth = useAuthStore();
             {{ $t('home.nav.quickstart') }}
           </a>
           <a
+            href="#why"
+            class="rounded-full px-3.5 py-1.5 text-sm font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
+          >
+            {{ $t('home.nav.why') }}
+          </a>
+          <a
             href="#stack"
             class="rounded-full px-3.5 py-1.5 text-sm font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
           >
@@ -56,7 +62,7 @@ const auth = useAuthStore();
               v-if="auth.isAuthenticated"
               size="sm"
               class="active:scale-[0.98]"
-              @click="navigateTo('/dashboard')"
+              @click="navigateTo('/admin/dashboard')"
             >
               {{ $t('nav.dashboard') }}
             </Button>

@@ -77,6 +77,17 @@
   --color-outline-variant: var(--outline-variant);
   --color-scrim: var(--scrim);
 
+  /*
+   * Nuxion brand accents, sampled from the logo mark (navy lion + teal→mint N).
+   * Theme-invariant: `-deep`/`-navy` carry text on light surfaces, `-mint`
+   * carries text on dark surfaces (all ≥4.5:1 in their intended pairing).
+   */
+  --color-brand-navy: #16265c;
+  --color-brand-blue: #2e4396;
+  --color-brand-teal: #0aa590;
+  --color-brand-teal-deep: #0a6e60;
+  --color-brand-mint: #26e89d;
+
   /* shadcn-vue contract bridged onto MD3 roles. */
   --color-border: var(--border);
   --color-input: var(--input);
@@ -408,6 +419,72 @@ body {
   float: left;
   height: 0;
   pointer-events: none;
+}
+
+/*
+ * Landing hero ambience. Pure-CSS, GPU-friendly (transform-only) animation:
+ * a blueprint grid panning under a radial mask, tonal blobs drifting behind
+ * the content, and a soft light sweep. Call sites pair these with
+ * motion-reduce:animate-none; the grid additionally guards prefers-reduced-motion.
+ */
+@keyframes hero-grid-pan {
+  to {
+    /* one full background tile → the loop is seamless */
+    transform: translate3d(44px, 44px, 0);
+  }
+}
+@keyframes hero-drift-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(9%, -7%, 0) scale(1.14);
+  }
+}
+@keyframes hero-drift-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.06);
+  }
+  50% {
+    transform: translate3d(-11%, 9%, 0) scale(0.94);
+  }
+}
+@keyframes hero-sweep {
+  0% {
+    transform: translateX(-170%) skewX(-14deg);
+  }
+  55%,
+  100% {
+    transform: translateX(360%) skewX(-14deg);
+  }
+}
+
+.hero-grid {
+  /* oversized so the pan never exposes an edge */
+  position: absolute;
+  inset: -3rem;
+  background-image:
+    linear-gradient(to right, rgb(0 0 0 / 0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(0 0 0 / 0.055) 1px, transparent 1px);
+  background-size: 44px 44px;
+  animation: hero-grid-pan 70s linear infinite;
+}
+[data-theme='dark'] .hero-grid {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.06) 1px, transparent 1px);
+}
+.hero-grid-mask {
+  /* strongest at the top center of the hero, fading before the content ends */
+  -webkit-mask-image: radial-gradient(90% 72% at 50% 0%, black 32%, transparent 78%);
+  mask-image: radial-gradient(90% 72% at 50% 0%, black 32%, transparent 78%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-grid {
+    animation: none;
+  }
 }
 
 /*

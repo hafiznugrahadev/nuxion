@@ -1,14 +1,15 @@
 /*
  * Material Design 3 token layer.
  *
- * Single source of visual truth: the MD3 color scheme generated from seed
- * #CDDC39 (Material Lime 500) with @material/material-color-utilities —
- * regenerate with `bun apps/web/scripts/generate-md3-tokens.ts` — plus the
+ * Single source of visual truth: the MD3 color scheme — hand-tuned neutral
+ * monochrome (black & white) exported from Material Theme Builder — plus the
  * MD3 shape scale, elevation levels, type-scale alignment, and motion
- * easings. Runtime values live in the :root / [data-theme='dark'] blocks
- * below; this @theme block publishes them as Tailwind v4 utilities
- * (bg-primary, bg-surface-container-high, border-outline-variant,
- * text-on-surface-variant, ...).
+ * easings. (The lime TonalSpot generator remains at
+ * apps/web/scripts/generate-md3-tokens.ts for reference.) Runtime values live
+ * in the :root / [data-theme='dark'] blocks below; this @theme block
+ * publishes them as Tailwind v4 utilities (bg-primary,
+ * bg-surface-container-high, border-outline-variant, text-on-surface-variant,
+ * ...).
  *
  * The shadcn-style semantic contract (background, card, muted, border, ...)
  * is kept as a bridge: every legacy utility (bg-card, text-muted-foreground)
@@ -148,42 +149,44 @@
 }
 
 /*
- * MD3 scheme, light. Generated from seed #CDDC39 (Material Lime 500), variant
- * TonalSpot (Material Theme Builder default), standard contrast:
- *   bun apps/web/scripts/generate-md3-tokens.ts
- * Every tonal pair (primary/on-primary, surface/on-surface, ...) meets WCAG AA
- * by construction.
+ * MD3 scheme, light — neutral monochrome, values provided from Material
+ * Theme Builder (2026-09-08). Roles absent from the export (surface-container
+ * tiers, inverse pair, outline-variant) are derived on the same neutral tone
+ * ramp (#ffffff → #000000) so every tonal pair keeps WCAG AA.
  */
 :root {
-  --primary: #5c631d;
+  --primary: #000000;
   --on-primary: #ffffff;
-  --primary-container: #e1e994;
-  --on-primary-container: #444b04;
-  --secondary: #5e6044;
+  --primary-container: #e6e6e6;
+  --on-primary-container: #333333;
+  /* Raw secondary/on-secondary are #ffffff/#ffffff in the export (1:1) —
+     unusable as a pair, but dead here: the bridge below re-points --secondary
+     at the container pair before anything can read it. */
+  --secondary: #ffffff;
   --on-secondary: #ffffff;
-  --secondary-container: #e4e5c1;
-  --on-secondary-container: #46492e;
-  --tertiary: #3c665a;
+  --secondary-container: #e6e6e6;
+  --on-secondary-container: #333333;
+  --tertiary: #f5a407;
   --on-tertiary: #ffffff;
-  --tertiary-container: #beecdc;
-  --on-tertiary-container: #234e43;
-  --error: #ba1a1a;
+  --tertiary-container: #e6ce9f;
+  --on-tertiary-container: #332202;
+  --error: #d42847;
   --on-error: #ffffff;
-  --error-container: #ffdad6;
-  --on-error-container: #93000a;
-  --surface: #fcfaec;
-  --on-surface: #1c1c14;
-  --on-surface-variant: #47483b;
+  --error-container: #e6abb5;
+  --on-error-container: #330a11;
+  --surface: #fcfcfc;
+  --on-surface: #333333;
+  --on-surface-variant: #666666;
   --surface-container-lowest: #ffffff;
-  --surface-container-low: #f6f4e7;
-  --surface-container: #f0eee1;
-  --surface-container-high: #ebe8dc;
-  --surface-container-highest: #e5e3d6;
-  --inverse-surface: #313128;
-  --inverse-on-surface: #f3f1e4;
-  --inverse-primary: #c5cd7a;
-  --outline: #787869;
-  --outline-variant: #c8c7b7;
+  --surface-container-low: #f5f5f5;
+  --surface-container: #f0f0f0;
+  --surface-container-high: #ebebeb;
+  --surface-container-highest: #e6e6e6;
+  --inverse-surface: #333333;
+  --inverse-on-surface: #f5f5f5;
+  --inverse-primary: #e6e6e6;
+  --outline: #999999;
+  --outline-variant: #cccccc;
   --scrim: rgb(0 0 0 / 0.32);
 
   /* shadcn bridge: legacy semantic names resolve to MD3 roles. */
@@ -195,9 +198,9 @@
   --popover-foreground: var(--on-surface);
   --primary-foreground: var(--on-primary);
   /* bg-secondary must be the TONAL container (never the raw secondary role):
-     components pair it with on-secondary-container text, and raw secondary
-     against that ink measured 1.4:1 (WCAG sweep 2026-09-08). Re-bridged here
-     AFTER the scheme block so it wins the cascade. */
+     components pair it with on-secondary-container text, and in this neutral
+     scheme the raw pair is white-on-white (1:1). Re-bridged here AFTER the
+     scheme block so it wins the cascade. */
   --secondary: var(--secondary-container);
   --secondary-foreground: var(--on-secondary-container);
   --muted: var(--surface-container-highest);
@@ -212,7 +215,7 @@
   --radius: 0.75rem;
 
   /* Status trio: MD3 defines no success/warning roles; these tones keep AA
-     contrast on both surfaces and harmonize with the lime-tinted neutrals. */
+     contrast on the neutral surfaces above. */
   --success: #386a20;
   --success-foreground: #ffffff;
   /* #8a5a00 measured 4.37:1 on the /15 tint (WCAG sweep 2026-09-08); one
@@ -242,37 +245,37 @@
   --sidebar-ring: var(--primary);
 }
 
-/* MD3 scheme, dark (same seed, generated — see the light block header). */
+/* MD3 scheme, dark — same neutral monochrome source (see the light block). */
 [data-theme='dark'] {
-  --primary: #c5cd7a;
-  --on-primary: #2f3300;
-  --primary-container: #444b04;
-  --on-primary-container: #e1e994;
-  --secondary: #c7c9a6;
-  --on-secondary: #30321a;
-  --secondary-container: #46492e;
-  --on-secondary-container: #e4e5c1;
-  --tertiary: #a2d0c1;
-  --on-tertiary: #07372d;
-  --tertiary-container: #234e43;
-  --on-tertiary-container: #beecdc;
-  --error: #ffb4ab;
-  --on-error: #690005;
-  --error-container: #93000a;
-  --on-error-container: #ffdad6;
-  --surface: #13140c;
-  --on-surface: #e5e3d6;
-  --on-surface-variant: #c8c7b7;
-  --surface-container-lowest: #0e0f08;
-  --surface-container-low: #1c1c14;
-  --surface-container: #202018;
-  --surface-container-high: #2a2a22;
-  --surface-container-highest: #35352d;
-  --inverse-surface: #e5e3d6;
-  --inverse-on-surface: #313128;
-  --inverse-primary: #5c631d;
-  --outline: #929282;
-  --outline-variant: #47483b;
+  --primary: #e6e6e6;
+  --on-primary: #4c4c4c;
+  --primary-container: #666666;
+  --on-primary-container: #e6e6e6;
+  --secondary: #e6e6e6;
+  --on-secondary: #4c4c4c;
+  --secondary-container: #666666;
+  --on-secondary-container: #e6e6e6;
+  --tertiary: #e6c482;
+  --on-tertiary: #4c3302;
+  --tertiary-container: #664403;
+  --on-tertiary-container: #e6ce9f;
+  --error: #e692a1;
+  --on-error: #4c0f19;
+  --error-container: #661322;
+  --on-error-container: #e6abb5;
+  --surface: #333333;
+  --on-surface: #e6e6e6;
+  --on-surface-variant: #e6e6e6;
+  --surface-container-lowest: #1a1a1a;
+  --surface-container-low: #262626;
+  --surface-container: #383838;
+  --surface-container-high: #424242;
+  --surface-container-highest: #4c4c4c;
+  --inverse-surface: #fcfcfc;
+  --inverse-on-surface: #333333;
+  --inverse-primary: #000000;
+  --outline: #b3b3b3;
+  --outline-variant: #4c4c4c;
   /* Tonal bridge (see the :root note) — must repeat here because this block's
      specificity beats :root. */
   --secondary: var(--secondary-container);

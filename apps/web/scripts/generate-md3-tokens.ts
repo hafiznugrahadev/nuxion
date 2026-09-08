@@ -1,6 +1,11 @@
 /**
  * Generate the MD3 color-role values used by apps/web/app/assets/css/main.css.
  *
+ * NOTE: main.css no longer carries the output of this script — the scheme is
+ * now a hand-tuned neutral monochrome exported from Material Theme Builder
+ * (2026-09-08). This generator is kept for reference only; running it would
+ * produce the legacy lime TonalSpot scheme.
+ *
  * Usage:
  *   bun apps/web/scripts/generate-md3-tokens.ts [#seedHex]
  *

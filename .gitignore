@@ -1,0 +1,72 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+.output/
+.nuxt/
+.turbo/
+build/
+*.tsbuildinfo
+
+# Env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Prisma
+prisma/migrations/dev.db*
+
+# Testing
+coverage/
+.nyc_output/
+
+# OS / Editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# Bun
+bun.lockb
+
+# Misc
+.cache/
+tmp/
+
+# Prisma 7 generated client (run `prisma generate`)
+apps/api/src/generated
+
+# Local file uploads (storage driver = local)
+apps/api/storage/
+
+# Playwright MCP artifacts — snapshots, console logs, and bare-name
+# screenshots the tool can drop at the repo root.
+.playwright-mcp/
+/*.png
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
+# ZCode CLI session artifacts (plans, memory, scratch)
+.zcode/
+
+# Other AI coding-tool artifacts (local-only, never commit)
+.claude/
+.cursor/
+.aider*
+.windsurf/
+.codeium/

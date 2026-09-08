@@ -1,0 +1,82 @@
+// Prisma schema for nuxion.
+// Prisma 7: Rust-free `prisma-client` generator + a driver adapter at runtime
+// (see prisma.service.ts). The client is generated into src/ so nest build emits it.
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Prisma 7: connection URL lives in prisma.config.ts (Migrate) and the
+  // driver adapter (runtime). It is no longer set here.
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  name          String
+  password      String
+  avatarUrl     String?        // public URL of the user's avatar (storage module)
+  // Many-to-many: a user can hold multiple roles (scalable RBAC).
+  roles               Role[]               @relation("UserRoles")
+  refreshTokens       RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
+  notifications       Notification[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  @@map("users")
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  type      String    @default("info") // info | success | warning | error
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+model Role {
+  id        String   @id @default(uuid())
+  name      String   @unique // e.g. ADMIN, USER — add rows without code changes
+  users     User[]   @relation("UserRoles")
+  createdAt DateTime @default(now())
+
+  @@map("roles")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  familyId  String // tokens rotated from one login share a family (reuse detection)
+  tokenHash String    @unique // SHA-256 of the opaque token (raw value never stored)
+  revokedAt DateTime? // set on rotation/logout; a non-null value means unusable
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([familyId])
+  @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  tokenHash String    @unique // SHA-256 of the opaque token (raw value never stored)
+  usedAt    DateTime? // set once the token is consumed; a non-null value means spent
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}

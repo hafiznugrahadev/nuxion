@@ -1,0 +1,79 @@
+# ╭──────────────────────────────────────────────────────────────────────────╮
+# │ PROD stack — APPLICATIONS ONLY (Dokploy-compatible)                         │
+# │   api + web, built from the multi-stage Dockerfiles.                        │
+# │   NO postgres / redis here — provision those in Dokploy and inject their │
+# │   their connection strings as environment variables.                        │
+# │                                                                            │
+# │   Routing/TLS is handled by Dokploy's Traefik on `dokploy-network`. Set the │
+# │   real domains in the Dokploy UI (or uncomment the Traefik labels below).   │
+# ╰──────────────────────────────────────────────────────────────────────────╯
+name: nuxion
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: nuxion-api:latest
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: ${API_PORT:-4400}
+      API_PREFIX: ${API_PREFIX:-api}
+      # ── Provisioned in Dokploy ──
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      JWT_REFRESH_EXPIRES_DAYS: ${JWT_REFRESH_EXPIRES_DAYS:-7}
+      # Base URL of the frontend — drives CORS origin and password-reset link.
+      APP_URL: ${APP_URL}
+      # CORS_ORIGIN defaults to APP_URL in code; set only to explicitly override.
+      CORS_ORIGIN: ${CORS_ORIGIN:-}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      SWAGGER_ENABLED: ${SWAGGER_ENABLED:-true}
+      SWAGGER_USER: ${SWAGGER_USER}
+      SWAGGER_PASSWORD: ${SWAGGER_PASSWORD}
+    expose:
+      - '${API_PORT:-4400}'
+    networks: [dokploy-network]
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=dokploy-network
+      # - traefik.http.routers.nuxion-api.rule=Host(`api.example.com`)
+      # - traefik.http.routers.nuxion-api.entrypoints=websecure
+      # - traefik.http.routers.nuxion-api.tls.certresolver=letsencrypt
+      # - traefik.http.services.nuxion-api.loadbalancer.server.port=4400
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # Baked into the client bundle at build time.
+        NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE}
+    image: nuxion-web:latest
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: ${WEB_PORT:-4300}
+      HOST: 0.0.0.0
+      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE}
+    expose:
+      - '${WEB_PORT:-4300}'
+    depends_on:
+      - api
+    networks: [dokploy-network]
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=dokploy-network
+      # - traefik.http.routers.nuxion-web.rule=Host(`app.example.com`)
+      # - traefik.http.routers.nuxion-web.entrypoints=websecure
+      # - traefik.http.routers.nuxion-web.tls.certresolver=letsencrypt
+      # - traefik.http.services.nuxion-web.loadbalancer.server.port=4300
+
+networks:
+  dokploy-network:
+    external: true

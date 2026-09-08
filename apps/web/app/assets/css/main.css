@@ -1,0 +1,518 @@
+/*
+ * Material Design 3 token layer.
+ *
+ * Single source of visual truth: the MD3 color scheme generated from seed
+ * #CDDC39 (Material Lime 500) with @material/material-color-utilities —
+ * regenerate with `bun apps/web/scripts/generate-md3-tokens.ts` — plus the
+ * MD3 shape scale, elevation levels, type-scale alignment, and motion
+ * easings. Runtime values live in the :root / [data-theme='dark'] blocks
+ * below; this @theme block publishes them as Tailwind v4 utilities
+ * (bg-primary, bg-surface-container-high, border-outline-variant,
+ * text-on-surface-variant, ...).
+ *
+ * The shadcn-style semantic contract (background, card, muted, border, ...)
+ * is kept as a bridge: every legacy utility (bg-card, text-muted-foreground)
+ * resolves to an MD3 role, so call sites that predate the MD3 restyle keep
+ * working without edits.
+ */
+@import 'tailwindcss';
+
+/* Dark theme flips the MD3 scheme via [data-theme] on <html> (see useTheme). */
+@custom-variant dark (&:is([data-theme='dark'] *, .dark *));
+
+@theme {
+  /*
+   * Type system: Google Sans for UI text, Poppins for headings (see the
+   * heading rule after the @theme block). Fallbacks keep the app readable
+   * while the Google Fonts stylesheet loads (or if it is unreachable).
+   */
+  --font-sans:
+    'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+    'Fira Sans', 'Droid Sans', sans-serif;
+  --font-heading:
+    'Poppins', 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono:
+    'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+
+  /*
+   * Type scale aligned to MD3 steps. Tailwind defaults already match the MD3
+   * body/label steps (12/16, 14/20, 16/24); the two headings steps are pulled
+   * to their MD3 equivalents (title-large 22/28, headline-medium 28/36).
+   */
+  --text-xl: 1.375rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.75rem;
+  --text-2xl--line-height: 2.25rem;
+
+  /* MD3 color roles as utilities (values in :root / [data-theme='dark']). */
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-primary-container: var(--primary-container);
+  --color-on-primary-container: var(--on-primary-container);
+  --color-secondary: var(--secondary);
+  --color-on-secondary: var(--on-secondary);
+  --color-secondary-container: var(--secondary-container);
+  --color-on-secondary-container: var(--on-secondary-container);
+  --color-tertiary: var(--tertiary);
+  --color-on-tertiary: var(--on-tertiary);
+  --color-tertiary-container: var(--tertiary-container);
+  --color-on-tertiary-container: var(--on-tertiary-container);
+  --color-error: var(--error);
+  --color-on-error: var(--on-error);
+  --color-error-container: var(--error-container);
+  --color-on-error-container: var(--on-error-container);
+  --color-surface: var(--surface);
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-highest: var(--surface-container-highest);
+  --color-inverse-surface: var(--inverse-surface);
+  --color-inverse-on-surface: var(--inverse-on-surface);
+  --color-inverse-primary: var(--inverse-primary);
+  --color-outline: var(--outline);
+  --color-outline-variant: var(--outline-variant);
+  --color-scrim: var(--scrim);
+
+  /* shadcn-vue contract bridged onto MD3 roles. */
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  /* Status trio + sidebar contract + chart palette (runtime values below). */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /*
+   * MD3 shape scale. Component mapping: buttons/chips full (rounded-full),
+   * text fields + snackbars 4dp (rounded-sm), menus 8dp (rounded-md),
+   * cards 12dp (rounded-lg), navigation drawers/FABs 16dp (rounded-xl),
+   * dialogs + search views 28dp (rounded-2xl).
+   */
+  --radius-sm: 0.25rem;
+  --radius-base: 0.5rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.75rem;
+
+  /*
+   * MD3 elevation shadows. Resting elevation is expressed through tonal
+   * surface roles (surface-container-*), not shadows: cards sit flat
+   * (--shadow-card is transparent); only floating layers (menus, dialogs,
+   * palettes) carry a shadow.
+   */
+  --shadow-theme-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3), 0 1px 3px 1px rgb(0 0 0 / 0.15);
+  --shadow-theme-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3), 0 1px 3px 1px rgb(0 0 0 / 0.15);
+  --shadow-theme-md: 0 1px 2px 0 rgb(0 0 0 / 0.3), 0 2px 6px 2px rgb(0 0 0 / 0.15);
+  --shadow-theme-lg: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 4px 8px 3px rgb(0 0 0 / 0.15);
+  --shadow-card: 0 0 #0000;
+
+  /* MD3 emphasized motion curves. */
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-emphasized-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
+}
+
+/*
+ * MD3 scheme, light. Generated from seed #CDDC39 (Material Lime 500), variant
+ * TonalSpot (Material Theme Builder default), standard contrast:
+ *   bun apps/web/scripts/generate-md3-tokens.ts
+ * Every tonal pair (primary/on-primary, surface/on-surface, ...) meets WCAG AA
+ * by construction.
+ */
+:root {
+  --primary: #5c631d;
+  --on-primary: #ffffff;
+  --primary-container: #e1e994;
+  --on-primary-container: #444b04;
+  --secondary: #5e6044;
+  --on-secondary: #ffffff;
+  --secondary-container: #e4e5c1;
+  --on-secondary-container: #46492e;
+  --tertiary: #3c665a;
+  --on-tertiary: #ffffff;
+  --tertiary-container: #beecdc;
+  --on-tertiary-container: #234e43;
+  --error: #ba1a1a;
+  --on-error: #ffffff;
+  --error-container: #ffdad6;
+  --on-error-container: #93000a;
+  --surface: #fcfaec;
+  --on-surface: #1c1c14;
+  --on-surface-variant: #47483b;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f6f4e7;
+  --surface-container: #f0eee1;
+  --surface-container-high: #ebe8dc;
+  --surface-container-highest: #e5e3d6;
+  --inverse-surface: #313128;
+  --inverse-on-surface: #f3f1e4;
+  --inverse-primary: #c5cd7a;
+  --outline: #787869;
+  --outline-variant: #c8c7b7;
+  --scrim: rgb(0 0 0 / 0.32);
+
+  /* shadcn bridge: legacy semantic names resolve to MD3 roles. */
+  --background: var(--surface);
+  --foreground: var(--on-surface);
+  --card: var(--surface-container-low);
+  --card-foreground: var(--on-surface);
+  --popover: var(--surface-container-high);
+  --popover-foreground: var(--on-surface);
+  --primary-foreground: var(--on-primary);
+  /* bg-secondary must be the TONAL container (never the raw secondary role):
+     components pair it with on-secondary-container text, and raw secondary
+     against that ink measured 1.4:1 (WCAG sweep 2026-09-08). Re-bridged here
+     AFTER the scheme block so it wins the cascade. */
+  --secondary: var(--secondary-container);
+  --secondary-foreground: var(--on-secondary-container);
+  --muted: var(--surface-container-highest);
+  --muted-foreground: var(--on-surface-variant);
+  --accent: var(--surface-container-highest);
+  --accent-foreground: var(--on-surface);
+  --destructive: var(--error);
+  --destructive-foreground: var(--on-error);
+  --border: var(--outline-variant);
+  --input: var(--outline);
+  --ring: var(--primary);
+  --radius: 0.75rem;
+
+  /* Status trio: MD3 defines no success/warning roles; these tones keep AA
+     contrast on both surfaces and harmonize with the lime-tinted neutrals. */
+  --success: #386a20;
+  --success-foreground: #ffffff;
+  /* #8a5a00 measured 4.37:1 on the /15 tint (WCAG sweep 2026-09-08); one
+     step darker clears 4.5. */
+  --warning: #7a5000;
+  --warning-foreground: #ffffff;
+  --info: #07639c;
+  --info-foreground: #ffffff;
+
+  /* Chart palette: primary + tertiary plus functional hues for series. */
+  --chart-1: var(--primary);
+  --chart-2: var(--tertiary);
+  --chart-3: #00696e;
+  --chart-4: #07639c;
+  --chart-5: #b3261e;
+
+  /* Sidebar contract: MD3 navigation area on surface-container (the common
+     surface background + surface-container navigation combination), active
+     pill tonal. */
+  --sidebar: var(--surface-container);
+  --sidebar-foreground: var(--on-surface-variant);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--on-primary);
+  --sidebar-accent: var(--secondary-container);
+  --sidebar-accent-foreground: var(--on-secondary-container);
+  --sidebar-border: var(--outline-variant);
+  --sidebar-ring: var(--primary);
+}
+
+/* MD3 scheme, dark (same seed, generated — see the light block header). */
+[data-theme='dark'] {
+  --primary: #c5cd7a;
+  --on-primary: #2f3300;
+  --primary-container: #444b04;
+  --on-primary-container: #e1e994;
+  --secondary: #c7c9a6;
+  --on-secondary: #30321a;
+  --secondary-container: #46492e;
+  --on-secondary-container: #e4e5c1;
+  --tertiary: #a2d0c1;
+  --on-tertiary: #07372d;
+  --tertiary-container: #234e43;
+  --on-tertiary-container: #beecdc;
+  --error: #ffb4ab;
+  --on-error: #690005;
+  --error-container: #93000a;
+  --on-error-container: #ffdad6;
+  --surface: #13140c;
+  --on-surface: #e5e3d6;
+  --on-surface-variant: #c8c7b7;
+  --surface-container-lowest: #0e0f08;
+  --surface-container-low: #1c1c14;
+  --surface-container: #202018;
+  --surface-container-high: #2a2a22;
+  --surface-container-highest: #35352d;
+  --inverse-surface: #e5e3d6;
+  --inverse-on-surface: #313128;
+  --inverse-primary: #5c631d;
+  --outline: #929282;
+  --outline-variant: #47483b;
+  /* Tonal bridge (see the :root note) — must repeat here because this block's
+     specificity beats :root. */
+  --secondary: var(--secondary-container);
+
+  /* Status trio retuned for the dark surface. */
+  --success: #a5d6a7;
+  --success-foreground: #0e3b12;
+  --warning: #f7c154;
+  --warning-foreground: #3e2e00;
+  --info: #82c7f5;
+  --info-foreground: #0b2e45;
+  --chart-3: #4db6ac;
+  --chart-4: #82c7f5;
+  --chart-5: #f2b8b5;
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  /* Density: 15px root (instead of the browser's 16px) scales every rem-based
+     token — type scale, control heights, spacing — down ~6%, per the user's
+     "sedikit lebih kecil" direction for fonts, forms, and buttons. */
+  font-size: 15px;
+  font-family: var(--font-sans);
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+/* Poppins carries every heading (and card titles via the data-slot hook). */
+[data-slot='card-title'],
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* MD3 snackbar treatment for vue-sonner (see Toaster in app.vue). Attributes
+   and !important out-specify sonner's own [data-sonner-toast] rules. The
+   action button gets inverse-primary per the color-roles spec. */
+[data-sonner-toast].md3-snackbar {
+  background-color: var(--inverse-surface) !important;
+  color: var(--inverse-on-surface) !important;
+  border: none !important;
+  border-radius: var(--radius-sm) !important;
+}
+[data-sonner-toast].md3-snackbar [data-button] {
+  color: var(--inverse-primary) !important;
+}
+
+/*
+ * WYSIWYG editor (tiptap) content styles. The editor writes inside
+ * .ProseMirror; these rules give the content the kit's MD3 voice: Poppins
+ * headings, list padding, tonal blockquote/code, rounded media.
+ */
+.prose-mirror {
+  outline: none;
+  font-size: 0.875rem;
+  line-height: 1.6rem;
+  color: var(--on-surface);
+}
+.prose-mirror > * + * {
+  margin-top: 0.5rem;
+}
+.prose-mirror h2,
+.prose-mirror h3 {
+  font-family: var(--font-heading);
+  color: var(--on-surface);
+}
+.prose-mirror h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 1rem;
+}
+.prose-mirror h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 0.75rem;
+}
+.prose-mirror ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+}
+.prose-mirror ol {
+  list-style: decimal;
+  padding-left: 1.25rem;
+}
+.prose-mirror blockquote {
+  border-left: 2px solid var(--outline-variant);
+  padding-left: 0.75rem;
+  color: var(--on-surface-variant);
+}
+.prose-mirror code {
+  background-color: var(--surface-container-high);
+  border-radius: var(--radius-sm);
+  padding: 0.1rem 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+.prose-mirror pre {
+  background-color: var(--surface-container-high);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  overflow-x: auto;
+}
+.prose-mirror img {
+  border-radius: var(--radius-lg);
+  max-width: 100%;
+  height: auto;
+}
+.prose-mirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--on-surface-variant);
+  opacity: 0.85;
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/*
+ * MD3 emphasized-decelerate enter keyframes for the expand/slide components
+ * (Accordion, Collapsible, Sheet). Heights come from reka-ui CSS vars.
+ */
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--reka-accordion-content-height);
+  }
+}
+@keyframes accordion-up {
+  from {
+    height: var(--reka-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+@keyframes collapsible-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--reka-collapsible-content-height);
+  }
+}
+@keyframes collapsible-up {
+  from {
+    height: var(--reka-collapsible-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/*
+ * MD3 state layer: hover/press overlay in the on-color, layered ON TOP of the
+ * fill. Utility opacity modifiers (hover:bg-on-primary/10) can't do this —
+ * they REPLACE the background color instead of overlaying it, which made
+ * filled buttons lose their fill (and their label contrast) on hover.
+ * currentColor resolves to the correct on-color for every pairing because
+ * the label color IS the on-color.
+ *
+ * NOTE: these utilities deliberately do NOT set `position` — unlayered CSS
+ * would override Tailwind's `absolute` and tear absolutely-positioned
+ * controls (password eye, avatar FAB) out of place. Call sites must already
+ * be positioned (`relative` or `absolute`) so the pseudo-elements anchor to
+ * the element itself.
+ */
+.state-layer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-color: currentColor;
+  opacity: 0;
+  transition: opacity 150ms cubic-bezier(0.2, 0, 0, 1);
+  pointer-events: none;
+}
+.state-layer:hover::after {
+  opacity: 8%;
+}
+.state-layer:active::after {
+  opacity: 12%;
+}
+
+/*
+ * MD3 target-size guidance: expand the pointer/touch hit area to >=44dp
+ * without changing the visual size. The pseudo-element is part of the
+ * element, so clicks anywhere on it activate the control. Same positioning
+ * note as .state-layer above.
+ */
+.touch-target::before {
+  content: '';
+  position: absolute;
+  inset: var(--touch-slop, -4px);
+}
+
+/* Slim, theme-aware scrollbar to match the app shell. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 9999px;
+}

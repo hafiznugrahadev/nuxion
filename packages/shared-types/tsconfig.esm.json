@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // ESM build — consumed by Vite/Rollup (Nuxt) which parses native `export`
+    // statements directly, giving reliable named-export detection.
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "outDir": "./dist/esm",
+    "rootDir": "./src",
+    "noEmit": false,
+    "declaration": false
+  },
+  "include": ["src/**/*"]
+}

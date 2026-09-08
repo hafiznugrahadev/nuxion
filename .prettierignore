@@ -1,0 +1,9 @@
+node_modules
+dist
+.output
+.nuxt
+.turbo
+coverage
+bun.lock
+**/generated/**
+apps/api/prisma/migrations/**

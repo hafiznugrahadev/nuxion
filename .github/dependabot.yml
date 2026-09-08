@@ -1,0 +1,109 @@
+version: 2
+# Major-version holds: these majors are held on purpose because each needs a
+# real migration, not a lockfile bump. Minors/patches keep flowing. Remove an
+# entry here when you start its migration PR.
+#   typescript 7      — 7.0 ships no compiler API (nest build, vue-tsc,
+#                       typescript-eslint all need it); revisit around TS 7.1
+#   @tanstack/vue-table 9 — getCoreRowModel/useVueTable API rework
+#   pinia 4, vue-router 5, @pinia/nuxt 1 — must pair with a Nuxt 4.5 bump
+#   vue-sonner 2      — becomes a Nuxt module; needs Toaster usage migration
+#   zod 4             — @vee-validate/zod still peers zod ^3.24
+#   apexcharts 7      — chart API unverified against the wrapper
+# (migrated and un-held: @nestjs/* 12 + jest→vitest swap, 2026-09-02)
+updates:
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    groups:
+      npm-dependencies:
+        patterns:
+          - '*'
+    ignore:
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
+    open-pull-requests-limit: 5
+  - package-ecosystem: 'npm'
+    directory: '/apps/api'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    groups:
+      npm-apps-api-dependencies:
+        patterns:
+          - '*'
+    ignore:
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
+    open-pull-requests-limit: 5
+  - package-ecosystem: 'npm'
+    directory: '/apps/web'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    groups:
+      npm-apps-web-dependencies:
+        patterns:
+          - '*'
+    ignore:
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@tanstack/vue-table'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'pinia'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@pinia/nuxt'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'vue-router'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'vue-sonner'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'zod'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'apexcharts'
+        update-types: ['version-update:semver-major']
+    open-pull-requests-limit: 5
+  - package-ecosystem: 'npm'
+    directory: '/packages/shared-types'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    groups:
+      npm-packages-shared-types-dependencies:
+        patterns:
+          - '*'
+    ignore:
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
+    open-pull-requests-limit: 5
+  - package-ecosystem: 'docker'
+    directory: '/apps/api'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    groups:
+      docker-apps-api-dependencies:
+        patterns:
+          - '*'
+    open-pull-requests-limit: 5
+  - package-ecosystem: 'docker'
+    directory: '/apps/web'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    groups:
+      docker-apps-web-dependencies:
+        patterns:
+          - '*'
+    open-pull-requests-limit: 5
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    groups:
+      githubactions-dependencies:
+        patterns:
+          - '*'
+    open-pull-requests-limit: 5

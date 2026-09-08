@@ -1,0 +1,262 @@
+{
+  "appTagline": "A NestJS + Nuxt monorepo starter kit, authentication, RBAC, and a typed data layer ready to build on.",
+  "language": "Language",
+  "nav": {
+    "menu": "Menu",
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "fieldsDemo": "Fields Demo",
+    "componentsDemo": "Components Demo",
+    "profile": "Profile",
+    "signOut": "Sign out",
+    "login": "Login"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "fullName": "Full name",
+    "signIn": "Sign In",
+    "signingIn": "Signing in…",
+    "signInSubtitle": "Enter your email and password to sign in!",
+    "or": "Or",
+    "keepLoggedIn": "Keep me logged in",
+    "forgotPassword": "Forgot password?",
+    "invalidCredentials": "Invalid email or password",
+    "welcomeBack": "Welcome back!",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign up",
+    "haveAccount": "Already have an account?",
+    "rememberedIt": "Remembered it?",
+    "createAccount": "Create account",
+    "creatingAccount": "Creating…",
+    "registerTitle": "Create your account",
+    "registerSubtitle": "Get started in less than a minute.",
+    "registrationDisabled": "Self-service registration is currently disabled. Ask an administrator to create your account.",
+    "backToSignIn": "Back to sign in",
+    "welcomeAboard": "Welcome aboard!",
+    "createAccountError": "Could not create your account",
+    "googleSignIn": "Sign in with Google",
+    "xSignIn": "Sign in with X",
+    "forgotTitle": "Forgot password?",
+    "forgotSubtitle": "Enter your email and we'll send you a link to reset it.",
+    "sendResetLink": "Send reset link",
+    "sending": "Sending…",
+    "resetLinkSent": "If an account exists for that email, a reset link is on its way. Check your inbox.",
+    "somethingWrong": "Something went wrong. Please try again.",
+    "resetTitle": "Reset password",
+    "resetSubtitle": "Choose a new password for your account.",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "resetPassword": "Reset password",
+    "resetting": "Resetting…",
+    "resetInvalidLink": "This reset link is invalid or incomplete.",
+    "requestNewLink": "Request a new link",
+    "resetSuccess": "Password reset. Please sign in.",
+    "resetInvalidExpired": "This reset link is invalid or has expired.",
+    "invalidToken": "Invalid or missing reset token."
+  },
+  "error": {
+    "notFound": "Page not found",
+    "generic": "Something went wrong",
+    "notFoundDesc": "The page you're looking for doesn't exist or may have moved.",
+    "genericDesc": "An unexpected error occurred. Please try again.",
+    "backHome": "Back to home"
+  },
+  "state": {
+    "loading": "Loading…",
+    "empty": "No data yet",
+    "error": "Something went wrong",
+    "retry": "Retry"
+  },
+  "home": {
+    "metaTitle": "{app} · NestJS + Nuxt starter kit",
+    "eyebrow": "NestJS + Nuxt Nuxion",
+    "description": "A NestJS + Nuxt monorepo starter kit, authentication, role-based access, a users datatable, and reusable components to build on.",
+    "goToDashboard": "Go to dashboard",
+    "signIn": "Sign in",
+    "installCta": "Install with Bun",
+    "nav": {
+      "features": "Features",
+      "quickstart": "Quickstart",
+      "stack": "Tech Stack"
+    },
+    "pills": {
+      "access": "15m JWT access + 7d refresh rotation",
+      "roles": "Role guards on admin routes",
+      "docker": "Docker dev stack included"
+    },
+    "term": {
+      "copyScaffold": "Copy scaffold"
+    },
+    "install": {
+      "eyebrow": "Fast-track CLI",
+      "title": "Start your project in one command",
+      "lead": "The scaffolder clones the kit, renames it to your project, writes .env with a generated JWT secret, installs dependencies, and commits fresh git history. Bun all the way down.",
+      "cloneTitle": "Working inside a clone instead?",
+      "cloneLead": "The same stack, driven by hand:",
+      "scaffolderLabel": "Recommended scaffolder",
+      "manualChip": "Manual bootstrap",
+      "copyAll": "Copy all steps",
+      "zeroDriftTitle": "Zero drift guarantee",
+      "zeroDriftText": "Shared types keep DTOs in sync across both apps",
+      "steps": {
+        "install": "Install dependencies (Bun workspaces)",
+        "init": "Make it YOUR project (rename scope, containers, volumes, DB)",
+        "services": "Backing services (Postgres + Redis)",
+        "prisma": "Prisma client, migrations, seed data",
+        "serve": "Run everything (API + web, one command)"
+      },
+      "checks": {
+        "workspaces": "Bun workspaces + Turborepo tasks",
+        "env": "Single root .env for both apps",
+        "seed": "Idempotent seed with demo roles"
+      }
+    },
+    "inside": {
+      "eyebrow": "Batteries fully loaded",
+      "typed": "All modules end-to-end typed",
+      "title": "What's inside",
+      "lead": "Everything below is in this repository right now, wired and working.",
+      "authTag": "Security spec",
+      "authF1": "15m access token",
+      "authF2": "7d refresh rotation",
+      "authF3": "RBAC guards",
+      "datatableTag": "TanStack Query 5",
+      "datatableF": "Server pagination + search",
+      "datatableF2": "Typed API client",
+      "uiTag": "30+ M3 components",
+      "uiPills": "Dialogs · Drawers · Editor",
+      "sharedTag": "Single source",
+      "dockerTag": "Ready to run",
+      "dockerF": "Mailpit local SMTP inbox",
+      "dockerF2": "Plug and play",
+      "authTitle": "Auth & RBAC",
+      "authText": "Email/password login, short-lived JWT access, rotating refresh cookie with reuse detection, role guards on every admin route.",
+      "datatableTitle": "Users datatable",
+      "datatableText": "Paginated, searchable, server-filtered user management over a typed API client. The password never leaves the API.",
+      "uiTitle": "Reusable UI",
+      "uiText": "30+ Material Design 3 components: buttons, fields, overlays, a WYSIWYG editor, and honest empty, loading, error states.",
+      "sharedTitle": "Shared contracts",
+      "sharedText": "One TypeScript package holds UserRole, API envelopes, and entity types, compiled to CJS/ESM and consumed by both apps.",
+      "dockerTitle": "Dev stack included",
+      "dockerText": "Docker Compose brings up Postgres, Redis, object storage, and Mailpit. One env file at the root drives both apps."
+    },
+    "stackEyebrow": "Modern core",
+    "stackTitle": "The stack",
+    "stackLead": "Strictly typed, lean dependencies chosen for speed and zero framework friction.",
+    "tabs": {
+      "sharedLead": "packages/shared-types: shared types and enums compiled once, consumed by both apps.",
+      "envLead": ".env.example: one configuration file mapped into Docker, NestJS ConfigService, and Nuxt runtime config.",
+      "turboLead": "turbo.json: a cached build pipeline across the workspace."
+    },
+    "cta": {
+      "eyebrow": "Zero config required",
+      "title": "Stop wiring auth and tables. Start building your product.",
+      "lead": "A full-stack TypeScript monorepo that scales from prototype to production.",
+      "copy": "Copy scaffolder command",
+      "docs": "Read the docs"
+    },
+    "footer": {
+      "tagline": "Full-stack NestJS + Nuxt monorepo",
+      "repo": "GitHub Repo",
+      "releases": "Releases",
+      "license": "Open-source under the MIT License."
+    },
+    "copy": "Copy",
+    "copied": "Copied"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Welcome back, here's what's happening today.",
+    "metrics": {
+      "customers": "Customers",
+      "orders": "Orders",
+      "revenue": "Revenue",
+      "growth": "Growth"
+    }
+  },
+  "users": {
+    "title": "Users",
+    "allAccounts": "All accounts",
+    "subtitle": "Registered users across the workspace (admin only).",
+    "search": "Search users…",
+    "addUser": "Add user",
+    "noResults": "No users found",
+    "noResultsHint": "Try a different search, or add a new user.",
+    "columns": {
+      "user": "User",
+      "roles": "Roles",
+      "joined": "Joined",
+      "action": "Action"
+    },
+    "roles": {
+      "all": "All",
+      "superAdmin": "Super Admin",
+      "admin": "Admin",
+      "user": "User"
+    },
+    "pagination": {
+      "prev": "Prev",
+      "next": "Next",
+      "page": "Page",
+      "of": "/",
+      "total": "{n} users"
+    },
+    "deleteModal": {
+      "title": "Delete user",
+      "body": "Delete {name}? This cannot be undone.",
+      "confirm": "Delete",
+      "deleting": "Deleting…",
+      "cancel": "Cancel"
+    },
+    "form": {
+      "newTitle": "New user",
+      "editTitle": "Edit user",
+      "newDesc": "Create an account and assign roles.",
+      "editDesc": "Update account details and roles.",
+      "email": "Email",
+      "name": "Name",
+      "password": "Password",
+      "passwordHint": "(leave blank to keep)",
+      "roles": "Roles",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "saveChanges": "Save changes",
+      "createUser": "Create user"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "personalInfo": {
+      "title": "Personal Information",
+      "edit": "Edit",
+      "fullName": "Full name",
+      "emailAddress": "Email address",
+      "roles": "Roles",
+      "emailHint": "Email can't be changed.",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "saveChanges": "Save changes"
+    },
+    "changePassword": {
+      "title": "Change Password",
+      "subtitle": "Use a strong password you don't use anywhere else.",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "update": "Update password",
+      "updating": "Updating…"
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all as read",
+    "empty": "No notifications yet",
+    "emptyHint": "You're all caught up!"
+  },
+  "commandPalette": {
+    "placeholder": "Search or type command…",
+    "noResults": "No results found.",
+    "navigation": "Navigation"
+  }
+}

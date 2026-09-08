@@ -1,0 +1,287 @@
+# ╭──────────────────────────────────────────────────────────────────────────╮
+# │ DEV stack — full local environment with HOT RELOAD                          │
+# │   infra:  postgres + redis                                                   │
+# │   apps:   api (nest --watch) + web (nuxt HMR), source bind-mounted          │
+# │                                                                            │
+# │ NO service publishes a host port. Everything is reached through OrbStack    │
+# │ container domains (HTTPS on 443 proxies to the service's port):            │
+# │   https://web.nuxion-dev.orb.local            (web, container port 3000)│
+# │   https://api.nuxion-dev.orb.local/api       (api, container port 8000)│
+# │   http://mailpit.nuxion-dev.orb.local:8025    (mailpit UI; port eksplisit│
+# │     karena mailpit punya dua port)                                           │
+# │   TCP (psql/redis-cli dari host): nuxion-postgres.orb.local:5432,       │
+# │     nuxion-redis.orb.local:6379                                          │
+# │                                                                            │
+# │ Network: dedicated `nuxion-network` (compose-managed — created on     │
+# │ `up`, removed on `down`; carries the nuxion slug so `bun run init`    │
+# │ renames it together with everything else).                                │
+# │ Run:  docker compose up            (full hot-reload stack)                   │
+# │ Infra only:  docker compose up postgres redis                               │
+# ╰──────────────────────────────────────────────────────────────────────────╯
+name: nuxion-dev
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: nuxion-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nuxion}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nuxion}
+      POSTGRES_DB: ${POSTGRES_DB:-nuxion}
+    expose:
+      - '5432' # TCP dari host: nuxion-postgres.orb.local:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-nuxion}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [nuxion-network]
+
+  redis:
+    image: redis:7-alpine
+    container_name: nuxion-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    expose:
+      - '6379' # TCP dari host: nuxion-redis.orb.local:6379
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [nuxion-network]
+
+  rustfs:
+    image: rustfs/rustfs:latest
+    container_name: nuxion-rustfs
+    restart: unless-stopped
+    user: '10001:10001'
+    environment:
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY_ID:-rustfsadmin}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_ACCESS_KEY:-rustfsadmin}
+      RUSTFS_ADDRESS: ':9000'
+      RUSTFS_CONSOLE_ENABLE: 'true'
+    expose:
+      - '9000' # S3 API — browser: https://rustfs.nuxion-dev.orb.local (proxy 443)
+      - '9001' # Konsol — http://rustfs.nuxion-dev.orb.local:9001
+    volumes:
+      - rustfs_data:/data
+    healthcheck:
+      # Image rustfs tidak punya wget (punya curl); endpoint MinIO-compatible.
+      test: ['CMD-SHELL', 'curl -sf http://localhost:9000/minio/health/live > /dev/null || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [nuxion-network]
+
+  api:
+    image: oven/bun:1.3.3
+    container_name: nuxion-api-dev
+    restart: unless-stopped
+    working_dir: /app
+    # Bootstrap via the dev entrypoint script (run with `sh` so the bind-mounted
+    # file needs no exec bit). See docker/dev-api.sh.
+    entrypoint: ['sh', '/app/docker/dev-api.sh']
+    environment:
+      NODE_ENV: development
+      PORT: ${API_PORT:-8000}
+      API_PREFIX: api
+      # Host internal memakai container_name (nuxion-*): container_name
+      # adalah dasar domain OrbStack (nuxion-postgres.orb.local) yang
+      # dipakai tooling di host, dan membuat host eksplisit/unggul.
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nuxion}:${POSTGRES_PASSWORD:-nuxion}@nuxion-postgres:5432/${POSTGRES_DB:-nuxion}?schema=public
+      REDIS_HOST: nuxion-redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-min-16-chars}
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_DAYS: 7
+      # Base URL of the frontend — single source of truth (like Laravel APP_URL).
+      # Set APP_URL in .env to override (e.g. https://web.nuxion-dev.orb.local).
+      APP_URL: ${APP_URL:-http://localhost:${WEB_PORT:-3000}}
+      # CORS_ORIGIN defaults to APP_URL in code; set only to explicitly override.
+      CORS_ORIGIN: ${CORS_ORIGIN:-}
+      LOG_LEVEL: debug
+      # Dev/E2E: skip rate limiting so rapid test runs aren't throttled.
+      THROTTLE_DISABLED: ${THROTTLE_DISABLED:-true}
+      SWAGGER_ENABLED: ${SWAGGER_ENABLED:-true}
+      SWAGGER_USER: ${SWAGGER_USER:-admin}
+      SWAGGER_PASSWORD: ${SWAGGER_PASSWORD:-admin}
+      # Dev email → Mailpit (catch-all SMTP; web UI at http://localhost:8025).
+      MAIL_TRANSPORT: smtp
+      MAIL_FROM: ${MAIL_FROM:-Nuxion <no-reply@nuxion.test>}
+      MAIL_SMTP_HOST: nuxion-mailpit
+      MAIL_SMTP_PORT: 1025
+      MAIL_SMTP_SECURE: 'false'
+      # Self-service registration (dev: on). Keep the API + web flags in sync.
+      AUTH_REGISTRATION_ENABLED: ${REGISTRATION_ENABLED:-true}
+      # File storage — defaults to local; set STORAGE_DRIVER=s3 in .env to use RustFS.
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      S3_ENDPOINT: ${S3_ENDPOINT:-http://nuxion-rustfs:9000}
+      S3_BUCKET: ${S3_BUCKET:-nuxion}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-rustfsadmin}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-rustfsadmin}
+      S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-true}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_PUBLIC_BASE_URL: ${S3_PUBLIC_BASE_URL:-https://rustfs.nuxion-dev.orb.local/nuxion}
+    expose:
+      - '${API_PORT:-8000}' # https://api.nuxion-dev.orb.local/api (proxy 443)
+    volumes:
+      - ./:/app
+      - api_node_modules:/app/node_modules # keep container's linux deps + prisma engine
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+      rustfs:
+        condition: service_started
+    networks: [nuxion-network]
+
+  web:
+    image: oven/bun:1.3.3
+    container_name: nuxion-web-dev
+    restart: unless-stopped
+    working_dir: /app
+    # Bootstrap via the dev entrypoint script. See docker/dev-web.sh.
+    entrypoint: ['sh', '/app/docker/dev-web.sh']
+    environment:
+      NODE_ENV: development
+      PORT: ${WEB_PORT:-3000}
+      HOST: 0.0.0.0
+      # Public URL the browser uses. Drives the HMR WebSocket transport: behind the
+      # OrbStack HTTPS proxy (https://web.…orb.local) Vite must point the client at
+      # wss://<host>:443 or hot-reload can't connect. See nuxt.config.ts.
+      APP_URL: ${APP_URL:-http://localhost:${WEB_PORT:-3000}}
+      # Client-side calls hit the API's OrbStack domain.
+      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-http://localhost:${API_PORT:-8000}/api}
+      NUXT_PUBLIC_REGISTRATION_ENABLED: ${REGISTRATION_ENABLED:-true}
+      # Bind-mount file events don't cross into the container on macOS/Windows,
+      # so Vite must poll for HMR to work. See nuxt.config.ts.
+      NUXT_DEV_POLLING: 'true'
+    expose:
+      - '${WEB_PORT:-3000}' # https://web.nuxion-dev.orb.local (proxy 443)
+    volumes:
+      - ./:/app
+      - web_node_modules:/app/node_modules
+    depends_on:
+      - api
+    networks: [nuxion-network]
+
+  # One-off DB toolbox (bun + psql) for `db:restore`. Behind a profile, so
+  # `docker compose up` never starts it. Run on demand — `run` (not `exec`) gives
+  # it a TTY, which the interactive bucket browser needs:
+  #   docker compose run --rm db-tools                      # browse and pick a dump
+  #   docker compose run --rm db-tools --latest --yes       # newest dump, no prompt
+  #   docker compose run --rm db-tools --path postgres/2026-07
+  db-tools:
+    build:
+      context: .
+      dockerfile: docker/db-tools.Dockerfile
+    profiles: [tools]
+    working_dir: /app
+    entrypoint: ['sh', '/app/docker/db-tools.sh']
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      # In-compose Postgres is `postgres:5432` — NOT the host-mapped port that
+      # DATABASE_URL in .env points at. Set here so it wins over the .env value
+      # (dotenv never overrides a real env var).
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nuxion}:${POSTGRES_PASSWORD:-nuxion}@nuxion-postgres:5432/${POSTGRES_DB:-nuxion}?schema=public
+      # Backup bucket — same vars as the host CLI. If BACKUP_S3_ENDPOINT points at
+      # localhost, override it here with a host reachable from the container
+      # (an external domain, or `host.docker.internal`).
+      BACKUP_DRIVER: ${BACKUP_DRIVER:-s3}
+      BACKUP_S3_ENDPOINT: ${BACKUP_S3_ENDPOINT:-}
+      BACKUP_S3_REGION: ${BACKUP_S3_REGION:-us-east-1}
+      BACKUP_S3_BUCKET: ${BACKUP_S3_BUCKET:-}
+      BACKUP_S3_ACCESS_KEY_ID: ${BACKUP_S3_ACCESS_KEY_ID:-}
+      BACKUP_S3_SECRET_ACCESS_KEY: ${BACKUP_S3_SECRET_ACCESS_KEY:-}
+      BACKUP_S3_FORCE_PATH_STYLE: ${BACKUP_S3_FORCE_PATH_STYLE:-true}
+      BACKUP_S3_PREFIX: ${BACKUP_S3_PREFIX:-}
+      BACKUP_LOCAL_DIR: ${BACKUP_LOCAL_DIR:-./storage/backups}
+    volumes:
+      - ./:/app
+      - api_node_modules:/app/node_modules # shared with the api container
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [nuxion-network]
+
+  # Prisma Studio — web UI untuk jelajah database. Service `tools`: start
+  # manual (node_modules dipinjam dari hasil `bun install` container api):
+  #   docker compose up -d prisma-studio
+  # Tanpa forward port host — akses lewat domain OrbStack (WAJIB https/443,
+  # bukan http:5555: UI Studio memakai crypto.randomUUID yang hanya tersedia
+  # di secure context; lewat plain-HTTP halamannya blank):
+  #   https://prisma-studio.nuxion-dev.orb.local
+  prisma-studio:
+    image: oven/bun:1.3.3
+    container_name: nuxion-prisma-studio
+    restart: unless-stopped
+    profiles: [tools]
+    working_dir: /app
+    # Tunggu sampai container api selesai `bun install` (bin prisma tersedia di
+    # volume bersama), lalu jalankan Studio dari workspace api — lokasi schema.
+    # `--port 5555`: tanpa ini Prisma 7 memilih port acak (mis. 51212), yang
+    # tidak cocok dengan `expose` di bawah. Shim `xdg-open`: Prisma selalu
+    # mencoba membuka browser; di dalam container xdg-open tidak ada dan
+    # ENOENT-nya mematikan proses Studio.
+    entrypoint:
+      - sh
+      - -c
+      - |
+        until [ -e /app/apps/api/node_modules/.bin/prisma ]; do
+          echo "menunggu bun install (container api)…"
+          sleep 2
+        done
+        printf '#!/bin/sh\nexit 0\n' > /usr/local/bin/xdg-open
+        chmod +x /usr/local/bin/xdg-open
+        cd /app/apps/api && bunx prisma studio --port 5555
+    environment:
+      # Postgres di dalam compose adalah `postgres:5432` — BUKAN port host-mapped
+      # yang ditunjuk DATABASE_URL di .env. Set di sini agar menang atas nilai
+      # .env (dotenv tidak pernah override env var sungguhan).
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nuxion}:${POSTGRES_PASSWORD:-nuxion}@nuxion-postgres:5432/${POSTGRES_DB:-nuxion}?schema=public
+    expose:
+      - '5555' # UI Studio — diakses via *.orb.local, bukan port host
+    volumes:
+      - ./:/app
+      - api_node_modules:/app/node_modules # shared with the api container
+    depends_on:
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_started
+    networks: [nuxion-network]
+
+  # Dev mail catcher — SMTP sink + web UI. The API (MAIL_TRANSPORT=smtp) sends here;
+  # open the UI to read password-reset and other emails. Not for production.
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: nuxion-mailpit
+    restart: unless-stopped
+    expose:
+      - '1025' # SMTP (API → nuxion-mailpit:1025, internal saja)
+      - '8025' # Web UI — http://mailpit.nuxion-dev.orb.local:8025
+    networks: [nuxion-network]
+
+# Dedicated dev network: compose-managed (created on `up`, removed on `down`).
+# The `nuxion` slug means `bun run init` renames it with everything else.
+# Prod (docker-compose.prod.yml) stays on the shared `dokploy-network`.
+networks:
+  nuxion-network:
+    name: nuxion-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  rustfs_data:
+  api_node_modules:
+  web_node_modules:

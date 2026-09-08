@@ -1,0 +1,21 @@
+# Keep the build context small & deterministic (build context = repo root).
+**/node_modules
+**/dist
+**/.output
+**/.nuxt
+**/.turbo
+**/coverage
+**/generated
+.playwright-mcp
+.git
+.github
+**/.env
+**/.env.*
+!**/.env.example
+**/*.log
+.DS_Store
+**/.vscode
+**/.idea
+README.md
+SPEC.md
+LESSON.md

@@ -1,0 +1,262 @@
+{
+  "appTagline": "Starter kit monorepo NestJS + Nuxt, autentikasi, RBAC, dan lapisan data bertipe yang siap dikembangkan.",
+  "language": "Bahasa",
+  "nav": {
+    "menu": "Menu",
+    "dashboard": "Dasbor",
+    "users": "Pengguna",
+    "fieldsDemo": "Demo Field",
+    "componentsDemo": "Demo Komponen",
+    "profile": "Profil",
+    "signOut": "Keluar",
+    "login": "Masuk"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Kata sandi",
+    "fullName": "Nama lengkap",
+    "signIn": "Masuk",
+    "signingIn": "Memproses…",
+    "signInSubtitle": "Masukkan email dan kata sandi Anda untuk masuk!",
+    "or": "Atau",
+    "keepLoggedIn": "Tetap masuk",
+    "forgotPassword": "Lupa kata sandi?",
+    "invalidCredentials": "Email atau kata sandi salah",
+    "welcomeBack": "Selamat datang kembali!",
+    "noAccount": "Belum punya akun?",
+    "signUp": "Daftar",
+    "haveAccount": "Sudah punya akun?",
+    "rememberedIt": "Sudah ingat?",
+    "createAccount": "Buat akun",
+    "creatingAccount": "Membuat…",
+    "registerTitle": "Buat akun Anda",
+    "registerSubtitle": "Mulai dalam waktu kurang dari satu menit.",
+    "registrationDisabled": "Pendaftaran mandiri sedang dinonaktifkan. Minta administrator membuatkan akun Anda.",
+    "backToSignIn": "Kembali ke halaman masuk",
+    "welcomeAboard": "Selamat bergabung!",
+    "createAccountError": "Tidak dapat membuat akun Anda",
+    "googleSignIn": "Masuk dengan Google",
+    "xSignIn": "Masuk dengan X",
+    "forgotTitle": "Lupa kata sandi?",
+    "forgotSubtitle": "Masukkan email Anda dan kami akan mengirimkan tautan untuk meresetnya.",
+    "sendResetLink": "Kirim tautan reset",
+    "sending": "Mengirim…",
+    "resetLinkSent": "Jika akun dengan email tersebut ada, tautan reset sedang dikirim. Periksa kotak masuk Anda.",
+    "somethingWrong": "Terjadi kesalahan. Silakan coba lagi.",
+    "resetTitle": "Reset kata sandi",
+    "resetSubtitle": "Pilih kata sandi baru untuk akun Anda.",
+    "newPassword": "Kata sandi baru",
+    "confirmPassword": "Konfirmasi kata sandi",
+    "resetPassword": "Reset kata sandi",
+    "resetting": "Mereset…",
+    "resetInvalidLink": "Tautan reset ini tidak valid atau tidak lengkap.",
+    "requestNewLink": "Minta tautan baru",
+    "resetSuccess": "Kata sandi berhasil direset. Silakan masuk.",
+    "resetInvalidExpired": "Tautan reset ini tidak valid atau telah kedaluwarsa.",
+    "invalidToken": "Token reset tidak valid atau tidak ada."
+  },
+  "error": {
+    "notFound": "Halaman tidak ditemukan",
+    "generic": "Terjadi kesalahan",
+    "notFoundDesc": "Halaman yang Anda cari tidak ada atau mungkin telah dipindahkan.",
+    "genericDesc": "Terjadi kesalahan tak terduga. Silakan coba lagi.",
+    "backHome": "Kembali ke beranda"
+  },
+  "state": {
+    "loading": "Memuat…",
+    "empty": "Belum ada data",
+    "error": "Terjadi kesalahan",
+    "retry": "Coba lagi"
+  },
+  "home": {
+    "metaTitle": "{app} · Nuxion NestJS + Nuxt",
+    "eyebrow": "Nuxion NestJS + Nuxt",
+    "description": "Starter kit monorepo NestJS + Nuxt, autentikasi, akses berbasis peran, tabel data pengguna, dan komponen yang siap dikembangkan.",
+    "goToDashboard": "Ke dasbor",
+    "signIn": "Masuk",
+    "installCta": "Instalasi dengan Bun",
+    "nav": {
+      "features": "Fitur",
+      "quickstart": "Mulai Cepat",
+      "stack": "Stack"
+    },
+    "pills": {
+      "access": "JWT access 15 mnt + rotasi refresh 7 hari",
+      "roles": "Penjaga peran di route admin",
+      "docker": "Docker dev stack disertakan"
+    },
+    "term": {
+      "copyScaffold": "Salin scaffold"
+    },
+    "install": {
+      "eyebrow": "CLI jalur cepat",
+      "title": "Mulai proyek Anda dalam satu perintah",
+      "lead": "Scaffolder meng-clone kit ini, mengganti identitasnya menjadi proyek Anda, menulis .env dengan JWT secret yang digenerate, memasang dependensi, dan membuat commit dengan riwayat git yang bersih. Semua dengan Bun.",
+      "cloneTitle": "Lebih suka bekerja di dalam clone?",
+      "cloneLead": "Stack yang sama, dijalankan manual:",
+      "scaffolderLabel": "Scaffolder rekomendasi",
+      "manualChip": "Bootstrap manual",
+      "copyAll": "Salin semua langkah",
+      "zeroDriftTitle": "Jaminan tanpa drift",
+      "zeroDriftText": "Tipe bersama menjaga DTO tetap sinkron di kedua aplikasi",
+      "steps": {
+        "install": "Instal dependensi (workspace Bun)",
+        "init": "Jadikan proyek MILIK ANDA (rename scope, container, volume, DB)",
+        "services": "Service pendukung (Postgres + Redis)",
+        "prisma": "Prisma client, migrasi, dan data seed",
+        "serve": "Jalankan semuanya (API + web, satu perintah)"
+      },
+      "checks": {
+        "workspaces": "Workspace Bun + task Turborepo",
+        "env": "Satu .env root untuk kedua aplikasi",
+        "seed": "Seed idempoten dengan role demo"
+      }
+    },
+    "inside": {
+      "eyebrow": "Lengkap dan siap pakai",
+      "typed": "Semua modul bertipe ujung ke ujung",
+      "title": "Apa saja di dalamnya",
+      "lead": "Semua di bawah ini ada di repositori ini sekarang, terpasang dan berfungsi.",
+      "authTag": "Spesifikasi keamanan",
+      "authF1": "Access token 15 mnt",
+      "authF2": "Rotasi refresh 7 hari",
+      "authF3": "Penjaga RBAC",
+      "datatableTag": "TanStack Query 5",
+      "datatableF": "Paginasi + pencarian di server",
+      "datatableF2": "Klien API bertipe",
+      "uiTag": "30+ komponen M3",
+      "uiPills": "Dialog · Drawer · Editor",
+      "sharedTag": "Satu sumber",
+      "dockerTag": "Siap dijalankan",
+      "dockerF": "Inbox SMTP lokal Mailpit",
+      "dockerF2": "Pasang dan jalankan",
+      "authTitle": "Auth & RBAC",
+      "authText": "Login email/password, JWT access berumur pendek, cookie refresh berputar dengan deteksi reuse, penjaga peran di setiap route admin.",
+      "datatableTitle": "Tabel pengguna",
+      "datatableText": "Manajemen pengguna dengan paginasi, pencarian, dan filter di sisi server melalui klien API bertipe. Password tidak pernah dikirim ke klien.",
+      "uiTitle": "UI Reusable",
+      "uiText": "30+ komponen Material Design 3: tombol, field formulir, overlay, editor WYSIWYG, dan status kosong, loading, error yang jujur.",
+      "sharedTitle": "Kontrak bersama",
+      "sharedText": "Satu paket TypeScript memuat UserRole, amplop API, dan tipe entitas, dikompilasi ke CJS/ESM dan dipakai kedua aplikasi.",
+      "dockerTitle": "Dev stack disertakan",
+      "dockerText": "Docker Compose menyalakan Postgres, Redis, object storage, dan Mailpit. Satu file env di root mengendalikan kedua aplikasi."
+    },
+    "stackEyebrow": "Inti modern",
+    "stackTitle": "Stack-nya",
+    "stackLead": "Ketat bertipe, dependensi ramping untuk kecepatan dan tanpa friksi framework.",
+    "tabs": {
+      "sharedLead": "packages/shared-types: tipe dan enum bersama dikompilasi sekali, dipakai kedua aplikasi.",
+      "envLead": ".env.example: satu file konfigurasi yang dipetakan ke Docker, ConfigService NestJS, dan runtime config Nuxt.",
+      "turboLead": "turbo.json: pipeline build ter-cache lintas workspace."
+    },
+    "cta": {
+      "eyebrow": "Tanpa konfigurasi awal",
+      "title": "Berhenti merakit auth dan tabel. Mulai bangun produk Anda.",
+      "lead": "Monorepo TypeScript full-stack yang tumbuh dari prototipe sampai produksi.",
+      "copy": "Salin perintah scaffolder",
+      "docs": "Baca dokumentasi"
+    },
+    "footer": {
+      "tagline": "Monorepo full-stack NestJS + Nuxt",
+      "repo": "Repo GitHub",
+      "releases": "Rilis",
+      "license": "Open-source di bawah lisensi MIT."
+    },
+    "copy": "Salin",
+    "copied": "Tersalin"
+  },
+  "dashboard": {
+    "title": "Dasbor",
+    "subtitle": "Selamat datang kembali, ini yang terjadi hari ini.",
+    "metrics": {
+      "customers": "Pelanggan",
+      "orders": "Pesanan",
+      "revenue": "Pendapatan",
+      "growth": "Pertumbuhan"
+    }
+  },
+  "users": {
+    "title": "Pengguna",
+    "allAccounts": "Semua akun",
+    "subtitle": "Pengguna terdaftar di seluruh ruang kerja (khusus admin).",
+    "search": "Cari pengguna…",
+    "addUser": "Tambah pengguna",
+    "noResults": "Tidak ada pengguna ditemukan",
+    "noResultsHint": "Coba pencarian lain, atau tambah pengguna baru.",
+    "columns": {
+      "user": "Pengguna",
+      "roles": "Peran",
+      "joined": "Bergabung",
+      "action": "Aksi"
+    },
+    "roles": {
+      "all": "Semua",
+      "superAdmin": "Super Admin",
+      "admin": "Admin",
+      "user": "Pengguna"
+    },
+    "pagination": {
+      "prev": "Sebelumnya",
+      "next": "Berikutnya",
+      "page": "Halaman",
+      "of": "/",
+      "total": "{n} pengguna"
+    },
+    "deleteModal": {
+      "title": "Hapus pengguna",
+      "body": "Hapus {name}? Ini tidak dapat dibatalkan.",
+      "confirm": "Hapus",
+      "deleting": "Menghapus…",
+      "cancel": "Batal"
+    },
+    "form": {
+      "newTitle": "Pengguna baru",
+      "editTitle": "Edit pengguna",
+      "newDesc": "Buat akun dan tetapkan peran.",
+      "editDesc": "Perbarui detail akun dan peran.",
+      "email": "Email",
+      "name": "Nama",
+      "password": "Kata sandi",
+      "passwordHint": "(kosongkan untuk tetap sama)",
+      "roles": "Peran",
+      "cancel": "Batal",
+      "saving": "Menyimpan…",
+      "saveChanges": "Simpan perubahan",
+      "createUser": "Buat pengguna"
+    }
+  },
+  "profile": {
+    "title": "Profil",
+    "personalInfo": {
+      "title": "Informasi Pribadi",
+      "edit": "Edit",
+      "fullName": "Nama lengkap",
+      "emailAddress": "Alamat email",
+      "roles": "Peran",
+      "emailHint": "Email tidak dapat diubah.",
+      "cancel": "Batal",
+      "saving": "Menyimpan…",
+      "saveChanges": "Simpan perubahan"
+    },
+    "changePassword": {
+      "title": "Ubah Kata Sandi",
+      "subtitle": "Gunakan kata sandi kuat yang tidak digunakan di tempat lain.",
+      "currentPassword": "Kata sandi saat ini",
+      "newPassword": "Kata sandi baru",
+      "confirmPassword": "Konfirmasi kata sandi baru",
+      "update": "Perbarui kata sandi",
+      "updating": "Memperbarui…"
+    }
+  },
+  "notifications": {
+    "title": "Notifikasi",
+    "markAllRead": "Tandai semua telah dibaca",
+    "empty": "Belum ada notifikasi",
+    "emptyHint": "Anda sudah membaca semua!"
+  },
+  "commandPalette": {
+    "placeholder": "Cari atau ketik perintah…",
+    "noResults": "Tidak ada hasil ditemukan.",
+    "navigation": "Navigasi"
+  }
+}

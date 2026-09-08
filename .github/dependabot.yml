@@ -1,4 +1,12 @@
 version: 2
+# Single npm entry, on purpose: the npm ecosystem at '/' scans the whole Bun
+# workspace (root manifest + apps/* + packages/*), so per-directory entries
+# would produce overlapping PRs for the same packages — the root PR even swept
+# in apps/web majors that were held (nuxion#3/#4/#5 vs #5, 2026-09-08).
+# Root devDependencies are only visible to this entry, so '/' is the one that
+# stays. Everything arrives as one grouped weekly PR; the lockfile workflow
+# syncs bun.lock either way.
+#
 # Major-version holds: these majors are held on purpose because each needs a
 # real migration, not a lockfile bump. Minors/patches keep flowing. Remove an
 # entry here when you start its migration PR.
@@ -9,6 +17,8 @@ version: 2
 #   vue-sonner 2      — becomes a Nuxt module; needs Toaster usage migration
 #   zod 4             — @vee-validate/zod still peers zod ^3.24
 #   apexcharts 7      — chart API unverified against the wrapper
+#   @tiptap/* 3       — CI-proven 2026-09-08: Editor.vue SetContentOptions API
+#                       break + vue-router volar plugin path no longer exported
 # (migrated and un-held: @nestjs/* 12 + jest→vitest swap, 2026-09-02)
 updates:
   - package-ecosystem: 'npm'
@@ -18,32 +28,6 @@ updates:
       day: 'monday'
     groups:
       npm-dependencies:
-        patterns:
-          - '*'
-    ignore:
-      - dependency-name: 'typescript'
-        update-types: ['version-update:semver-major']
-    open-pull-requests-limit: 5
-  - package-ecosystem: 'npm'
-    directory: '/apps/api'
-    schedule:
-      interval: 'weekly'
-      day: 'monday'
-    groups:
-      npm-apps-api-dependencies:
-        patterns:
-          - '*'
-    ignore:
-      - dependency-name: 'typescript'
-        update-types: ['version-update:semver-major']
-    open-pull-requests-limit: 5
-  - package-ecosystem: 'npm'
-    directory: '/apps/web'
-    schedule:
-      interval: 'weekly'
-      day: 'monday'
-    groups:
-      npm-apps-web-dependencies:
         patterns:
           - '*'
     ignore:
@@ -63,18 +47,7 @@ updates:
         update-types: ['version-update:semver-major']
       - dependency-name: 'apexcharts'
         update-types: ['version-update:semver-major']
-    open-pull-requests-limit: 5
-  - package-ecosystem: 'npm'
-    directory: '/packages/shared-types'
-    schedule:
-      interval: 'weekly'
-      day: 'monday'
-    groups:
-      npm-packages-shared-types-dependencies:
-        patterns:
-          - '*'
-    ignore:
-      - dependency-name: 'typescript'
+      - dependency-name: '@tiptap/*'
         update-types: ['version-update:semver-major']
     open-pull-requests-limit: 5
   - package-ecosystem: 'docker'

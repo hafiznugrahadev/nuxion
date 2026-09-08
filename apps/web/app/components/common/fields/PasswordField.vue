@@ -12,8 +12,11 @@ const props = defineProps<{
   prefixIcon?: string;
   /** MD3 supporting text below the field; the error replaces it when present. */
   hint?: string;
+  /** Passed through for password managers ('current-password' | 'new-password'). */
+  autocomplete?: string;
 }>();
 
+const { t } = useI18n();
 const { value, errorMessage } = useField<string>(toRef(props, 'name'));
 const show = ref(false);
 </script>
@@ -30,6 +33,7 @@ const show = ref(false);
         :type="show ? 'text' : 'password'"
         :placeholder="placeholder"
         :prefix-icon="prefixIcon"
+        :autocomplete="autocomplete"
         :class="
           cn(
             'pr-12',
@@ -40,7 +44,8 @@ const show = ref(false);
       <button
         type="button"
         class="touch-target absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-on-surface-variant/10 hover:text-foreground [--touch-slop:-6px]"
-        :aria-label="show ? 'Hide password' : 'Show password'"
+        :aria-label="show ? t('auth.hidePassword') : t('auth.showPassword')"
+        :aria-pressed="show"
         @click="show = !show"
       >
         <MaterialSymbol :name="show ? 'visibility' : 'visibility_off'" :size="18" />

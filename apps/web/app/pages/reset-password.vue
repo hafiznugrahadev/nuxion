@@ -73,12 +73,14 @@ const onSubmit = handleSubmit(async (values) => {
         name="newPassword"
         :label="$t('auth.newPassword')"
         placeholder="••••••••"
+        autocomplete="new-password"
         required
       />
       <PasswordField
         name="confirmPassword"
         :label="$t('auth.confirmPassword')"
         placeholder="••••••••"
+        autocomplete="new-password"
         required
       />
       <Button type="submit" size="lg" class="w-full" :disabled="submitting">

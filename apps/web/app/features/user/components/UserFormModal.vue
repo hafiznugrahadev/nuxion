@@ -30,7 +30,6 @@ const { handleSubmit, resetForm, errors } = useForm({
 });
 const { value: email } = useField<string>('email');
 const { value: name } = useField<string>('name');
-const { value: password } = useField<string>('password');
 const { value: roles } = useField<string[]>('roles');
 
 // (Re)seed the form whenever the modal opens for a new target.
@@ -102,17 +101,14 @@ const onSubmit = handleSubmit(async (values) => {
         <p v-if="errors.name" class="text-xs text-destructive">{{ errors.name }}</p>
       </div>
 
-      <!-- Password -->
-      <div class="space-y-1.5">
-        <label class="text-sm font-medium text-foreground">
-          {{ $t('users.form.password') }}
-          <span v-if="isEdit" class="font-normal text-muted-foreground">{{
-            $t('users.form.passwordHint')
-          }}</span>
-        </label>
-        <input v-model="password" type="password" placeholder="••••••••" :class="inputClass" />
-        <p v-if="errors.password" class="text-xs text-destructive">{{ errors.password }}</p>
-      </div>
+      <!-- Password (PasswordField wires itself into the same vee-validate form) -->
+      <PasswordField
+        name="password"
+        :label="$t('users.form.password')"
+        placeholder="••••••••"
+        autocomplete="new-password"
+        :hint="isEdit ? $t('users.form.passwordHint') : undefined"
+      />
 
       <!-- Roles -->
       <div class="space-y-1.5">

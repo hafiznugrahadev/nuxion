@@ -45,6 +45,7 @@ const onSubmit = handleSubmit(async (values) => {
           name="currentPassword"
           :label="$t('profile.changePassword.currentPassword')"
           placeholder="••••••••"
+          autocomplete="current-password"
         />
       </div>
       <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -52,11 +53,13 @@ const onSubmit = handleSubmit(async (values) => {
           name="newPassword"
           :label="$t('profile.changePassword.newPassword')"
           placeholder="••••••••"
+          autocomplete="new-password"
         />
         <PasswordField
           name="confirmPassword"
           :label="$t('profile.changePassword.confirmPassword')"
           placeholder="••••••••"
+          autocomplete="new-password"
         />
       </div>
 

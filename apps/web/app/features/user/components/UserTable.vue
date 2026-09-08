@@ -6,6 +6,7 @@ import { roleLabel } from '~/lib/roles';
 import { useUsers, useDeleteUser } from '../composables/useUsers';
 import UserFormModal from './UserFormModal.vue';
 import type { UserListParams } from '../types';
+import type { SortState } from '~/components/ui/Table.vue';
 
 const { t } = useI18n();
 
@@ -15,9 +16,13 @@ const canManage = computed(() => auth.isSuperAdmin);
 const search = ref('');
 const selectedRoles = ref<string[]>([]);
 const page = ref(1);
+// Mirrors the API defaults (newest first) so the first load's arrow is honest.
+const sort = ref<SortState>({ key: 'createdAt', order: 'desc' });
 const params = computed<UserListParams>(() => ({
   page: page.value,
   limit: 10,
+  sortBy: sort.value.key as UserListParams['sortBy'],
+  order: sort.value.order,
   search: search.value || undefined,
   // Server-side filter: the API is the source of truth (no client-side filtering).
   roles: selectedRoles.value.length ? [...selectedRoles.value] : undefined,
@@ -99,16 +104,24 @@ const joined = (iso: string) => new Date(iso).toLocaleDateString('id-ID');
 const asUser = (row: unknown) => row as User;
 
 // Kolom mengikuti kebutuhan halaman (kolom aksi hanya untuk super admin).
+// Sortable hanya pada kolom yang di-whitelist API (name/createdAt); roles
+// adalah relasi — tidak bisa di-orderBy, actions bukan data.
 const columns = computed(() => {
   const cols = [
-    { key: 'name', label: t('users.columns.user') },
+    { key: 'name', label: t('users.columns.user'), sortable: true },
     { key: 'roles', label: t('users.columns.roles') },
-    { key: 'createdAt', label: t('users.columns.joined') },
+    { key: 'createdAt', label: t('users.columns.joined'), sortable: true },
   ];
   return canManage.value
     ? [...cols, { key: 'actions', label: t('users.columns.action'), align: 'right' as const }]
     : cols;
 });
+
+// Header click → server refetch (Table only emits; the API is source of truth).
+function onSort(next: SortState) {
+  sort.value = next;
+  page.value = 1;
+}
 </script>
 
 <template>
@@ -175,7 +188,15 @@ const columns = computed(() => {
     />
 
     <!-- Reusable MD3 data table (bare, no card chrome) -->
-    <Table v-else :columns="columns" :rows="rows" row-key="id" class="min-w-full">
+    <Table
+      v-else
+      :sort="sort"
+      :columns="columns"
+      :rows="rows"
+      row-key="id"
+      class="min-w-full"
+      @update:sort="onSort"
+    >
       <template #cell-name="{ row }">
         <div class="flex items-center gap-3">
           <div

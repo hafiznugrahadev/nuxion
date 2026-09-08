@@ -15,10 +15,10 @@ interface NavItem {
 
 // Only existing routes — kept minimal per the starter kit's surface.
 const items: NavItem[] = [
-  { label: 'nav.dashboard', to: '/dashboard', icon: 'grid_view' },
-  { label: 'nav.users', to: '/users', icon: 'group', adminOnly: true },
-  { label: 'nav.fieldsDemo', to: '/demo/fields', icon: 'science' },
-  { label: 'nav.componentsDemo', to: '/demo/components', icon: 'widgets' },
+  { label: 'nav.dashboard', to: '/admin/dashboard', icon: 'grid_view' },
+  { label: 'nav.users', to: '/admin/users', icon: 'group', adminOnly: true },
+  { label: 'nav.fieldsDemo', to: '/admin/demo/fields', icon: 'science' },
+  { label: 'nav.componentsDemo', to: '/admin/demo/components', icon: 'widgets' },
 ];
 
 // Auth roles are only known on the client (the access token lives in memory), so
@@ -61,7 +61,7 @@ const showFull = computed(() => isMobileOpen.value || isExpanded.value);
     <!-- Brand -->
     <div :class="['flex h-16 items-center', showFull ? 'px-4' : 'justify-center px-0']">
       <NuxtLink
-        to="/dashboard"
+        to="/admin/dashboard"
         class="flex items-center gap-2.5 font-semibold"
         @click="closeMobile"
       >

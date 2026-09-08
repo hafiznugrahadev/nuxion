@@ -32,7 +32,7 @@ const onSubmit = handleSubmit(async (values) => {
   try {
     await auth.login(values.email, values.password);
     toast.success(t('auth.welcomeBack'));
-    const redirect = (route.query.redirect as string) || '/dashboard';
+    const redirect = (route.query.redirect as string) || '/admin/dashboard';
     await navigateTo(redirect);
   } catch {
     toast.error(t('auth.invalidCredentials'));
@@ -119,6 +119,7 @@ const notImplemented = (provider: string) =>
         name="password"
         :label="$t('auth.password')"
         placeholder="Enter your password"
+        autocomplete="current-password"
         required
       />
 

@@ -3,7 +3,7 @@ import { toast } from 'vue-sonner';
 import type { DropdownMenuItemDef } from '~/components/ui/DropdownMenu.vue';
 import { APP_NAME } from '~/lib/constants';
 
-definePageMeta({ layout: 'dashboard', middleware: ['auth'] });
+definePageMeta({ layout: 'admin', middleware: ['auth'] });
 useHead({ title: `Components · ${APP_NAME}` });
 
 // ── local demo state ────────────────────────────────────────────────────────
@@ -78,7 +78,7 @@ function showToast() {
     <PageHeading
       title="Components"
       subtitle="Every shadcn-vue component in the kit, restyled to Material Design 3."
-      :breadcrumbs="[{ label: 'Demo', to: '/demo/fields' }, { label: 'Components' }]"
+      :breadcrumbs="[{ label: 'Demo', to: '/admin/demo/fields' }, { label: 'Components' }]"
     />
 
     <!-- Buttons -->

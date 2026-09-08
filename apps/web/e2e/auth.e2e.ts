@@ -3,13 +3,13 @@ import { ADMIN, login } from './helpers';
 
 test.describe('authentication', () => {
   test('redirects unauthenticated users to the login page', async ({ page }) => {
-    await page.goto('/dashboard');
+    await page.goto('/admin/dashboard');
     await expect(page).toHaveURL(/\/login/);
   });
 
   test('logs in with valid credentials and reaches the dashboard', async ({ page }) => {
     await login(page);
-    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page).toHaveURL(/\/admin\/dashboard/);
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
   });
 
@@ -21,7 +21,7 @@ test.describe('authentication', () => {
 
   test('signs out from the user menu', async ({ page }) => {
     await login(page);
-    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page).toHaveURL(/\/admin\/dashboard/);
     await page.getByTestId('user-menu-trigger').first().click();
     await page.getByTestId('logout-button').first().click();
     await expect(page).toHaveURL(/\/login/);

@@ -16,9 +16,13 @@ interface Command {
 }
 
 const allCommands = computed<Command[]>(() => [
-  { label: t('nav.dashboard'), icon: 'space_dashboard', action: () => router.push('/dashboard') },
-  { label: t('nav.users'), icon: 'group', action: () => router.push('/users') },
-  { label: t('nav.profile'), icon: 'person', action: () => router.push('/profile') },
+  {
+    label: t('nav.dashboard'),
+    icon: 'space_dashboard',
+    action: () => router.push('/admin/dashboard'),
+  },
+  { label: t('nav.users'), icon: 'group', action: () => router.push('/admin/users') },
+  { label: t('nav.profile'), icon: 'person', action: () => router.push('/admin/profile') },
 ]);
 
 const filtered = computed(() => {

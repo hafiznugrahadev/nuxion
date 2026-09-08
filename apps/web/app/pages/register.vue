@@ -30,7 +30,7 @@ const onSubmit = handleSubmit(async (values) => {
   try {
     await auth.register(values.name, values.email, values.password);
     toast.success(t('auth.welcomeAboard'));
-    await navigateTo('/dashboard');
+    await navigateTo('/admin/dashboard');
   } catch (err) {
     const message = (err as { data?: { message?: string } })?.data?.message;
     toast.error(message || t('auth.createAccountError'));
@@ -67,7 +67,13 @@ const onSubmit = handleSubmit(async (values) => {
         placeholder="name@example.com"
         required
       />
-      <PasswordField name="password" :label="$t('auth.password')" placeholder="••••••••" required />
+      <PasswordField
+        name="password"
+        :label="$t('auth.password')"
+        placeholder="••••••••"
+        autocomplete="new-password"
+        required
+      />
       <Button type="submit" size="lg" class="w-full" :disabled="submitting">
         {{ submitting ? $t('auth.creatingAccount') : $t('auth.createAccount') }}
       </Button>

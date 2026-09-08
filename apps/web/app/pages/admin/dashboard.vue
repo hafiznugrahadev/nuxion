@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { APP_NAME } from '~/lib/constants';
 
-definePageMeta({ layout: 'dashboard', middleware: ['auth'] });
+definePageMeta({ layout: 'admin', middleware: ['auth'] });
 useHead({ title: `Dashboard · ${APP_NAME}` });
 
 const { t } = useI18n();

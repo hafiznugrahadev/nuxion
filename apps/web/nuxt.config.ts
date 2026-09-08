@@ -103,6 +103,18 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
+  /*
+   * The /admin area renders client-side (SPA island): its session lives in
+   * browser memory (restored from the refresh cookie by plugins/auth.client.ts)
+   * and every admin data call runs in the browser, so server-rendering those
+   * shells adds nothing — unauthenticated visitors get bounced to /login right
+   * after hydration anyway. Public + auth pages stay SSR.
+   */
+  routeRules: {
+    '/admin': { ssr: false },
+    '/admin/**': { ssr: false },
+  },
+
   vite: {
     plugins: [
       tailwindcss(),

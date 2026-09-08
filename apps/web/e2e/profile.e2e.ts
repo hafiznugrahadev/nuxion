@@ -19,8 +19,8 @@ test.describe('profile', () => {
   test('edits the display name', async ({ page, request }) => {
     try {
       await login(page);
-      await expect(page).toHaveURL(/\/dashboard/);
-      await page.goto('/profile');
+      await expect(page).toHaveURL(/\/admin\/dashboard/);
+      await page.goto('/admin/profile');
       await expect(page.getByRole('heading', { name: 'Admin', exact: true })).toBeVisible();
 
       await page.getByRole('button', { name: /^edit$/i }).click();
@@ -38,8 +38,8 @@ test.describe('profile', () => {
     await patchMe(request, { avatarUrl: '' });
     try {
       await login(page);
-      await expect(page).toHaveURL(/\/dashboard/);
-      await page.goto('/profile');
+      await expect(page).toHaveURL(/\/admin\/dashboard/);
+      await page.goto('/admin/profile');
       await expect(page.getByRole('heading', { name: 'Admin', exact: true })).toBeVisible();
 
       await page.locator('input[type="file"]').setInputFiles({

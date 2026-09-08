@@ -11,8 +11,8 @@ import {
 test.describe('users (super admin)', () => {
   test('lists seed users in the table', async ({ page }) => {
     await login(page, SUPER_ADMIN.email, SUPER_ADMIN.password);
-    await expect(page).toHaveURL(/\/dashboard/);
-    await page.goto('/users');
+    await expect(page).toHaveURL(/\/admin\/dashboard/);
+    await page.goto('/admin/users');
     await waitForHydration(page);
     // exact — otherwise it also substring-matches "superadmin@nuxion.test".
     await expect(page.getByText('admin@nuxion.test', { exact: true })).toBeVisible();
@@ -22,8 +22,8 @@ test.describe('users (super admin)', () => {
     const email = `e2e-user-${Date.now()}@nuxion.test`;
     try {
       await login(page, SUPER_ADMIN.email, SUPER_ADMIN.password);
-      await expect(page).toHaveURL(/\/dashboard/);
-      await page.goto('/users');
+      await expect(page).toHaveURL(/\/admin\/dashboard/);
+      await page.goto('/admin/users');
       await waitForHydration(page);
 
       // create
@@ -59,8 +59,8 @@ test.describe('users (super admin)', () => {
     });
     try {
       await login(page, SUPER_ADMIN.email, SUPER_ADMIN.password);
-      await expect(page).toHaveURL(/\/dashboard/);
-      await page.goto('/users');
+      await expect(page).toHaveURL(/\/admin\/dashboard/);
+      await page.goto('/admin/users');
       await waitForHydration(page);
 
       await page.getByPlaceholder('Search users…').fill(email);
@@ -81,8 +81,8 @@ test.describe('users (super admin)', () => {
 
   test('filters the table by role tags (multi-select, server-side)', async ({ page }) => {
     await login(page, SUPER_ADMIN.email, SUPER_ADMIN.password);
-    await expect(page).toHaveURL(/\/dashboard/);
-    await page.goto('/users');
+    await expect(page).toHaveURL(/\/admin\/dashboard/);
+    await page.goto('/admin/users');
     await waitForHydration(page);
 
     const table = page.getByRole('table');

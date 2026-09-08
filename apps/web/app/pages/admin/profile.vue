@@ -3,7 +3,7 @@
 import { ChangePasswordCard, PersonalInfoCard, ProfileHeaderCard, useMe } from '~/features/profile';
 import { APP_NAME } from '~/lib/constants';
 
-definePageMeta({ layout: 'dashboard', middleware: ['auth'] });
+definePageMeta({ layout: 'admin', middleware: ['auth'] });
 useHead({ title: `Profile · ${APP_NAME}` });
 
 const { data: user, isLoading, isError, error, refetch } = useMe();
@@ -14,7 +14,7 @@ const { data: user, isLoading, isError, error, refetch } = useMe();
     <PageHeading
       :title="$t('profile.title')"
       :breadcrumbs="[
-        { label: $t('nav.dashboard'), to: '/dashboard' },
+        { label: $t('nav.dashboard'), to: '/admin/dashboard' },
         { label: $t('profile.title') },
       ]"
     />

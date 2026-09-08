@@ -7,7 +7,7 @@ import { toast } from 'vue-sonner';
 import { useUpload } from '~/composables/useUpload';
 import { APP_NAME } from '~/lib/constants';
 
-definePageMeta({ layout: 'dashboard', middleware: ['auth'] });
+definePageMeta({ layout: 'admin', middleware: ['auth'] });
 useHead({ title: `Fields Showcase · ${APP_NAME}` });
 
 const schema = toTypedSchema(

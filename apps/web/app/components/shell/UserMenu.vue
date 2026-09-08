@@ -116,7 +116,7 @@ const panelClass = computed(() =>
           <div class="pt-1.5">
             <button
               class="flex w-full items-center gap-2.5 rounded-sm px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-on-surface-variant/10 hover:text-foreground"
-              @click="go('/profile')"
+              @click="go('/admin/profile')"
             >
               <MaterialSymbol name="person" :size="18" />
               {{ $t('nav.profile') }}

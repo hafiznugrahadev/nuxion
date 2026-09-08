@@ -41,8 +41,8 @@
     "cookie-parser": "^1.4.7",
     "express-basic-auth": "^1.2.1",
     "ioredis": "^6.0.0",
-    "nestjs-pino": "^4.3.0",
-    "nodemailer": "^9.0.6",
+    "nestjs-pino": "^5.1.0",
+    "nodemailer": "^10.0.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pg": "^8.21.0",
@@ -69,6 +69,6 @@
     "supertest": "^7.0.0",
     "tsc-alias": "^1.8.17",
     "typescript": "^5.7.2",
-    "vitest": "^4.1.8"
+    "vitest": "^5.0.0"
   }
 }

@@ -72,6 +72,7 @@
   },
   "home": {
     "metaTitle": "{app} · NestJS + Nuxt starter kit",
+    "metaDescription": "Production-ready NestJS + Nuxt monorepo starter kit: JWT authentication, role-based access, a users datatable, and reusable components. Clone, configure, ship.",
     "eyebrow": "NestJS + Nuxt Nuxion",
     "description": "A NestJS + Nuxt monorepo starter kit, authentication, role-based access, a users datatable, and reusable components to build on.",
     "goToDashboard": "Go to dashboard",

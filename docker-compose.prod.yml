@@ -61,6 +61,10 @@ services:
       PORT: ${WEB_PORT:-4300}
       HOST: 0.0.0.0
       NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE}
+      # Canonical site URL for @nuxtjs/seo (sitemap/robots/canonical/OG). Read
+      # at RUNTIME by nuxt-site-config, so the Dokploy domain can change
+      # without a rebuild.
+      NUXT_PUBLIC_SITE_URL: ${NUXT_PUBLIC_SITE_URL:-http://localhost:4300}
     expose:
       - '${WEB_PORT:-4300}'
     depends_on:

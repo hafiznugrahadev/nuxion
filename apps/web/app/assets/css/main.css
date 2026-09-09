@@ -274,19 +274,25 @@
   --on-error: #4c0f19;
   --error-container: #661322;
   --on-error-container: #e6abb5;
-  --surface: #333333;
+  /*
+   * Surfaces deliberately darker than the MTB export (#333333 read as "dim
+   * gray", not dark): anchor at MD3's ~tone-10 (#1a1a1a) and rebuild the
+   * container ramp around it. On-colors are unchanged — darker bases only
+   * raise their contrast.
+   */
+  --surface: #1a1a1a;
   --on-surface: #e6e6e6;
   --on-surface-variant: #e6e6e6;
-  --surface-container-lowest: #1a1a1a;
-  --surface-container-low: #262626;
-  --surface-container: #383838;
-  --surface-container-high: #424242;
-  --surface-container-highest: #4c4c4c;
+  --surface-container-lowest: #0e0e0e;
+  --surface-container-low: #151515;
+  --surface-container: #232323;
+  --surface-container-high: #2b2b2b;
+  --surface-container-highest: #343434;
   --inverse-surface: #fcfcfc;
   --inverse-on-surface: #333333;
   --inverse-primary: #000000;
   --outline: #b3b3b3;
-  --outline-variant: #4c4c4c;
+  --outline-variant: #3a3a3a;
   /* Tonal bridge (see the :root note) — must repeat here because this block's
      specificity beats :root. */
   --secondary: var(--secondary-container);

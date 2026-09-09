@@ -6,7 +6,9 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  IsUrl,
   MinLength,
+  ValidateIf,
   validateSync,
 } from 'class-validator';
 
@@ -75,6 +77,36 @@ export class EnvironmentVariables {
   @IsString()
   @IsOptional()
   LOG_LEVEL = 'info';
+
+  // ── Logging → Mattermost (self-hosted Slack; webhook push, level-gated) ────
+  @Transform(toBool)
+  @IsBoolean()
+  @IsOptional()
+  MATTERMOST_LOG_ENABLED = false;
+
+  // Required (must be a URL; localhost allowed) only when the driver is enabled.
+  // No @IsOptional here — it would skip validation even for the conditional
+  // branch; @ValidateIf already makes it a no-op when the driver is disabled.
+  @ValidateIf((o) => o.MATTERMOST_LOG_ENABLED === true)
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true, require_tld: false })
+  MATTERMOST_LOG_WEBHOOK_URL?: string;
+
+  @IsIn(['trace', 'debug', 'info', 'warn', 'error', 'fatal'])
+  @IsOptional()
+  MATTERMOST_LOG_LEVEL: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal' = 'error';
+
+  @IsString()
+  @IsOptional()
+  MATTERMOST_LOG_CHANNEL?: string;
+
+  @IsString()
+  @IsOptional()
+  MATTERMOST_LOG_USERNAME = 'Nuxion API';
+
+  @Transform(toBool)
+  @IsBoolean()
+  @IsOptional()
+  MATTERMOST_LOG_SKIP_HTTP = true;
 
   // ── Swagger docs (protected with Basic Auth) ──────────────────────────────
   @Transform(toBool)

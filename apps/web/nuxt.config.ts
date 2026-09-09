@@ -51,7 +51,7 @@ export default defineNuxtConfig({
   },
 
   // Nuxt 4: srcDir defaults to app/ (alias ~ → app/), matching the spec structure.
-  modules: ['@pinia/nuxt', '@nuxt/eslint', '@nuxtjs/i18n'],
+  modules: ['@pinia/nuxt', '@nuxt/eslint', '@nuxtjs/i18n', '@nuxtjs/seo', '@vueuse/nuxt'],
 
   // vue-sonner's Nuxt module doesn't yet declare Nuxt 4 compat, so we register
   // <Toaster> manually in app.vue and just transpile the package for SSR.
@@ -59,6 +59,12 @@ export default defineNuxtConfig({
 
   app: {
     head: {
+      // Every page title already ends with "· APP_NAME" (see the per-page
+      // useHead calls), so opt out of the "%s %separator %siteName" template
+      // nuxt-seo-utils would otherwise append (its useHead runs at a lower
+      // tag priority than app.head, so this wins). Canonical/OG injection
+      // from mergeWithSiteConfig is unaffected.
+      titleTemplate: '%s',
       // MD3 tokens resolve under [data-theme]; setting it on the SSR'd <html>
       // means the scheme is defined on the very first paint, and the script
       // below only ever flips theme to dark.
@@ -200,6 +206,26 @@ export default defineNuxtConfig({
       redirectOn: 'root',
     },
   },
+
+  // ── SEO (@nuxtjs/seo: site config + robots + sitemap + canonical/OG meta) ────
+  // The canonical site URL is runtime-first: NUXT_PUBLIC_SITE_URL (read by
+  // nuxt-site-config at runtime, so Dokploy can set the real domain without a
+  // rebuild), falling back to APP_URL (the same source of truth the dev HMR
+  // setup uses), then plain localhost. i18n's no_prefix strategy keeps one URL
+  // per route, so the sitemap stays single-locale.
+  site: {
+    url: process.env.NUXT_PUBLIC_SITE_URL ?? process.env.APP_URL ?? 'http://localhost:4300',
+    name: 'Nuxion',
+  },
+  // /admin is a client-side island behind auth — keep crawlers out (also
+  // filters those URLs from the sitemap).
+  robots: {
+    disallow: ['/admin'],
+  },
+  // Lean setup: og-image (satori render runtime) and link-checker (dev-only
+  // noise) stay off until the kit ships behind a real public domain.
+  ogImage: { enabled: false },
+  linkChecker: { enabled: false },
 
   typescript: {
     strict: true,

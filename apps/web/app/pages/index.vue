@@ -14,6 +14,47 @@ const { t } = useI18n();
 // Judul tab mengikuti locale aktif (getter = reaktif saat bahasa diganti).
 useHead({ title: () => t('home.metaTitle', { app: APP_NAME }) });
 
+// Meta description (juga dipakai untuk og:description oleh @nuxtjs/seo).
+useSeoMeta({ description: () => t('home.metaDescription') });
+
+// Hero entrance via VueUse useAnimate: the pitch column reveals top-to-bottom
+// — chip → headline → lead → CTAs → pills — once, right after hydration. The
+// elements carry NO hidden-by-default CSS, so pre-hydration visitors, no-JS
+// browsers and crawlers always see the full text; the animation only touches
+// opacity/transform (GPU-friendly, safe on the gradient-clipped word, no
+// layout shift). Reduced motion is expressed IN the keyframes: null keyframes
+// make Element.animate() a no-effect animation, so the text simply stays
+// visible (and reacts if the OS preference flips mid-session). This avoids
+// useAnimate's deferred init re-pausing an imperative play() — its internal
+// tryOnMounted(..., sync:false) runs via nextTick, i.e. AFTER this page's
+// onMounted hooks.
+const reducedMotion = usePreferredReducedMotion();
+const heroChip = useTemplateRef<HTMLDivElement>('heroChip');
+const heroTitle = useTemplateRef<HTMLHeadingElement>('heroTitle');
+const heroLead = useTemplateRef<HTMLParagraphElement>('heroLead');
+const heroCtas = useTemplateRef<HTMLDivElement>('heroCtas');
+const heroPills = useTemplateRef<HTMLDivElement>('heroPills');
+// Registers the composables for their (auto-playing) side effects.
+[heroChip, heroTitle, heroLead, heroCtas, heroPills].forEach((el, i) => {
+  useAnimate(
+    el,
+    computed(() =>
+      reducedMotion.value === 'reduce'
+        ? null
+        : [
+            { opacity: 0, transform: 'translateY(14px)' },
+            { opacity: 1, transform: 'translateY(0)' },
+          ],
+    ),
+    {
+      duration: 600,
+      delay: i * 80,
+      easing: 'cubic-bezier(0.2, 0, 0, 1)',
+      fill: 'backwards',
+    },
+  );
+});
+
 // Version shown in the hero chip — keep in sync with the root package.json.
 const KIT_VERSION = 'v0.1.0';
 const REPO_URL = 'https://github.com/hafiznugrahadev/nuxion';
@@ -217,6 +258,7 @@ async function copy(textToCopy: string) {
           <!-- Left: pitch -->
           <div class="flex min-w-0 flex-col items-start gap-6 lg:col-span-7">
             <div
+              ref="heroChip"
               class="inline-flex cursor-default items-center gap-1.5 rounded-full bg-secondary-container px-4 py-0.5 text-xs font-medium text-on-secondary-container shadow-sm"
             >
               <BrandLogo class="h-4" />
@@ -226,6 +268,7 @@ async function copy(textToCopy: string) {
             </div>
 
             <h1
+              ref="heroTitle"
               class="text-4xl font-bold leading-[1.08] tracking-tight text-on-surface sm:text-5xl lg:text-[56px]"
             >
               NestJS + Nuxt<br class="hidden sm:inline" />
@@ -235,11 +278,11 @@ async function copy(textToCopy: string) {
               >
             </h1>
 
-            <p class="max-w-2xl leading-relaxed text-on-surface-variant">
+            <p ref="heroLead" class="max-w-2xl leading-relaxed text-on-surface-variant">
               {{ $t('home.description') }}
             </p>
 
-            <div class="flex w-full flex-wrap items-center gap-3 pt-1 sm:w-auto">
+            <div ref="heroCtas" class="flex w-full flex-wrap items-center gap-3 pt-1 sm:w-auto">
               <Button
                 size="lg"
                 class="bg-brand-teal-deep text-white hover:bg-brand-navy active:scale-[0.98]"
@@ -281,6 +324,7 @@ async function copy(textToCopy: string) {
 
             <!-- Micro spec pills: repo facts only -->
             <div
+              ref="heroPills"
               class="flex flex-wrap items-center gap-3 pt-2 text-xs font-medium text-on-surface-variant"
             >
               <span class="flex items-center gap-1">

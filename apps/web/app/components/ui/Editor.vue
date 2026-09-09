@@ -54,7 +54,8 @@ watch(
   () => props.modelValue,
   (next) => {
     if (editor.value && next !== editor.value.getHTML())
-      editor.value.commands.setContent(next || '', false);
+      // tiptap v3: emitUpdate pindah ke object options (default-nya berubah jadi true).
+      editor.value.commands.setContent(next || '', { emitUpdate: false });
   },
 );
 

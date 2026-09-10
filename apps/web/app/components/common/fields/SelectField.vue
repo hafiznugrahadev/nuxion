@@ -2,7 +2,7 @@
 import { useField } from 'vee-validate';
 import { toRef, ref, computed, watch, nextTick } from 'vue';
 import { cn } from '~/lib/utils';
-import { PopoverRoot, PopoverTrigger, PopoverContent } from 'reka-ui';
+import { PopoverRoot, PopoverTrigger, PopoverPortal, PopoverContent } from 'reka-ui';
 
 const props = defineProps<{
   name: string;
@@ -115,40 +115,44 @@ const isEmpty = computed(() => (props.multiple ? !multiValues.value.length : !si
           <MaterialSymbol name="unfold_more" :size="18" class="ml-auto shrink-0 opacity-50" />
         </button>
       </PopoverTrigger>
-      <PopoverContent
-        class="rounded-md bg-surface-container-high p-0 text-foreground shadow-theme-md"
-        :style="{ width: 'var(--reka-popover-trigger-width)' }"
-        :side-offset="4"
-      >
-        <div class="flex items-center border-b border-outline-variant px-4">
-          <input
-            ref="searchInput"
-            v-model="search"
-            class="flex h-10 w-full bg-transparent text-sm outline-none placeholder:text-on-surface-variant/85"
-            placeholder="Search…"
-            @keydown.esc="open = false"
-          />
-        </div>
-        <ul class="max-h-60 overflow-y-auto p-1.5">
-          <li v-if="!filteredOptions.length" class="px-3 py-2 text-sm text-muted-foreground">
-            No results found.
-          </li>
-          <li
-            v-for="opt in filteredOptions"
-            :key="opt.value"
-            class="flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm transition-colors hover:bg-on-surface-variant/10"
-            @click="select(opt.value)"
-          >
-            <MaterialSymbol
-              name="check"
-              :size="18"
-              class="mr-2 shrink-0"
-              :class="isSelected(opt.value) ? 'opacity-100' : 'opacity-0'"
+      <!-- Portaled so the panel stacks above later positioned siblings
+           (e.g. relative toggle-group chips); rendered inline, they win. -->
+      <PopoverPortal>
+        <PopoverContent
+          class="z-50 rounded-md bg-surface-container-high p-0 text-foreground shadow-theme-md"
+          :style="{ width: 'var(--reka-popover-trigger-width)' }"
+          :side-offset="4"
+        >
+          <div class="flex items-center border-b border-outline-variant px-4">
+            <input
+              ref="searchInput"
+              v-model="search"
+              class="flex h-10 w-full bg-transparent text-sm outline-none placeholder:text-on-surface-variant/85"
+              placeholder="Search…"
+              @keydown.esc="open = false"
             />
-            {{ opt.label }}
-          </li>
-        </ul>
-      </PopoverContent>
+          </div>
+          <ul class="max-h-60 overflow-y-auto p-1.5">
+            <li v-if="!filteredOptions.length" class="px-3 py-2 text-sm text-muted-foreground">
+              No results found.
+            </li>
+            <li
+              v-for="opt in filteredOptions"
+              :key="opt.value"
+              class="flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm transition-colors hover:bg-on-surface-variant/10"
+              @click="select(opt.value)"
+            >
+              <MaterialSymbol
+                name="check"
+                :size="18"
+                class="mr-2 shrink-0"
+                :class="isSelected(opt.value) ? 'opacity-100' : 'opacity-0'"
+              />
+              {{ opt.label }}
+            </li>
+          </ul>
+        </PopoverContent>
+      </PopoverPortal>
     </PopoverRoot>
     <p v-if="errorMessage" class="text-xs text-destructive">{{ errorMessage }}</p>
     <p v-else-if="hint" class="text-xs text-on-surface-variant">{{ hint }}</p>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PopoverRoot, PopoverTrigger, PopoverContent } from 'reka-ui';
+import { PopoverRoot, PopoverTrigger, PopoverPortal, PopoverContent } from 'reka-ui';
 import { useNotificationsStore } from '~/stores/notifications';
 import { useAuthStore } from '~/stores/auth';
 
@@ -60,68 +60,72 @@ async function handleClick(id: string) {
       </button>
     </PopoverTrigger>
 
-    <PopoverContent
-      align="end"
-      :side-offset="8"
-      class="z-50 w-80 rounded-lg bg-surface-container-high p-0 text-foreground shadow-theme-md outline-none"
-    >
-      <!-- Header -->
-      <div class="flex items-center justify-between border-b border-outline-variant px-4 py-3">
-        <span class="text-sm font-semibold text-foreground">{{ $t('notifications.title') }}</span>
-        <button
-          v-if="store.unreadCount > 0"
-          type="button"
-          class="flex items-center gap-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10 rounded-sm px-1.5 py-1"
-          @click="store.markAllRead()"
-        >
-          <MaterialSymbol name="check" :size="14" />
-          {{ $t('notifications.markAllRead') }}
-        </button>
-      </div>
-
-      <!-- List -->
-      <div class="max-h-80 overflow-y-auto">
-        <div v-if="store.loading" class="flex items-center justify-center py-8">
-          <span class="text-sm text-muted-foreground">{{ $t('state.loading') }}</span>
-        </div>
-
-        <div
-          v-else-if="store.notifications.length === 0"
-          class="flex flex-col items-center justify-center gap-1 py-8 text-center"
-        >
-          <MaterialSymbol name="inbox" :size="32" class="text-muted-foreground" />
-          <p class="text-sm font-medium text-foreground">{{ $t('notifications.empty') }}</p>
-          <p class="text-xs text-muted-foreground">{{ $t('notifications.emptyHint') }}</p>
-        </div>
-
-        <ul v-else>
-          <li
-            v-for="n in store.notifications"
-            :key="n.id"
-            class="flex cursor-pointer gap-3 px-4 py-3 transition-colors hover:bg-on-surface-variant/8"
-            :class="{ 'bg-secondary-container/40': !n.readAt }"
-            @click="handleClick(n.id)"
+    <!-- Portaled so the panel stacks above positioned page content; rendered
+         inline, later positioned siblings (sticky cards, relative chips) win. -->
+    <PopoverPortal>
+      <PopoverContent
+        align="end"
+        :side-offset="8"
+        class="z-50 w-80 rounded-lg bg-surface-container-high p-0 text-foreground shadow-theme-md outline-none"
+      >
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b border-outline-variant px-4 py-3">
+          <span class="text-sm font-semibold text-foreground">{{ $t('notifications.title') }}</span>
+          <button
+            v-if="store.unreadCount > 0"
+            type="button"
+            class="flex items-center gap-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10 rounded-sm px-1.5 py-1"
+            @click="store.markAllRead()"
           >
-            <MaterialSymbol
-              :name="typeIcon[n.type] ?? 'info'"
-              :size="18"
-              class="mt-0.5 shrink-0"
-              :class="typeClass[n.type] ?? 'text-muted-foreground'"
-            />
-            <div class="min-w-0 flex-1">
-              <p
-                class="text-sm font-medium text-foreground"
-                :class="{ 'font-semibold': !n.readAt }"
-              >
-                {{ n.title }}
-              </p>
-              <p class="mt-0.5 text-xs text-muted-foreground">{{ n.body }}</p>
-              <p class="mt-1 text-xs text-muted-foreground/70">{{ relativeTime(n.createdAt) }}</p>
-            </div>
-            <span v-if="!n.readAt" class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-error" />
-          </li>
-        </ul>
-      </div>
-    </PopoverContent>
+            <MaterialSymbol name="check" :size="14" />
+            {{ $t('notifications.markAllRead') }}
+          </button>
+        </div>
+
+        <!-- List -->
+        <div class="max-h-80 overflow-y-auto">
+          <div v-if="store.loading" class="flex items-center justify-center py-8">
+            <span class="text-sm text-muted-foreground">{{ $t('state.loading') }}</span>
+          </div>
+
+          <div
+            v-else-if="store.notifications.length === 0"
+            class="flex flex-col items-center justify-center gap-1 py-8 text-center"
+          >
+            <MaterialSymbol name="inbox" :size="32" class="text-muted-foreground" />
+            <p class="text-sm font-medium text-foreground">{{ $t('notifications.empty') }}</p>
+            <p class="text-xs text-muted-foreground">{{ $t('notifications.emptyHint') }}</p>
+          </div>
+
+          <ul v-else>
+            <li
+              v-for="n in store.notifications"
+              :key="n.id"
+              class="flex cursor-pointer gap-3 px-4 py-3 transition-colors hover:bg-on-surface-variant/8"
+              :class="{ 'bg-secondary-container/40': !n.readAt }"
+              @click="handleClick(n.id)"
+            >
+              <MaterialSymbol
+                :name="typeIcon[n.type] ?? 'info'"
+                :size="18"
+                class="mt-0.5 shrink-0"
+                :class="typeClass[n.type] ?? 'text-muted-foreground'"
+              />
+              <div class="min-w-0 flex-1">
+                <p
+                  class="text-sm font-medium text-foreground"
+                  :class="{ 'font-semibold': !n.readAt }"
+                >
+                  {{ n.title }}
+                </p>
+                <p class="mt-0.5 text-xs text-muted-foreground">{{ n.body }}</p>
+                <p class="mt-1 text-xs text-muted-foreground/70">{{ relativeTime(n.createdAt) }}</p>
+              </div>
+              <span v-if="!n.readAt" class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-error" />
+            </li>
+          </ul>
+        </div>
+      </PopoverContent>
+    </PopoverPortal>
   </PopoverRoot>
 </template>

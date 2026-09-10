@@ -309,8 +309,13 @@
   --chart-5: #f2b8b5;
 }
 
-* {
-  border-color: var(--border);
+/* Layered so Tailwind border-color utilities (e.g. border-primary on the
+   active tab) can override this default; unlayered, it would win over
+   everything in @layer utilities. */
+@layer base {
+  * {
+    border-color: var(--border);
+  }
 }
 
 html {

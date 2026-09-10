@@ -12,8 +12,8 @@ export interface TabDef {
 
 /**
  * MD3 primary tabs: fixed top row on the page/content, active tab colored
- * primary with a 2dp bottom indicator, label-large typography. Panel content
- * per tab comes from the `#tab-{value}` slots.
+ * primary with a 3dp bottom indicator and semibold label, label-large
+ * typography. Panel content per tab comes from the `#tab-{value}` slots.
  */
 const props = defineProps<{
   tabs: TabDef[];
@@ -30,7 +30,7 @@ const model = defineModel<string>('modelValue', { default: undefined });
         v-for="tab in tabs"
         :key="tab.value"
         :value="tab.value"
-        class="-mb-px inline-flex items-center gap-2 whitespace-nowrap border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-on-surface-variant transition-colors hover:text-on-surface data-[state=active]:border-primary data-[state=active]:text-primary outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        class="-mb-px inline-flex items-center gap-2 whitespace-nowrap border-b-[3px] border-transparent px-4 py-2.5 text-sm font-medium text-on-surface-variant transition-colors hover:text-on-surface data-[state=active]:border-primary data-[state=active]:font-semibold data-[state=active]:text-primary outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <MaterialSymbol v-if="tab.icon" :name="tab.icon" :size="18" />
         {{ tab.label }}

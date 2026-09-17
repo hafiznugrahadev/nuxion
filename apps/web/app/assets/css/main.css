@@ -550,6 +550,33 @@ body {
     transform: translateX(0);
   }
 }
+/*
+ * MD3 scrim + dialog motion (Modal): scrim fades, panel fades while settling
+ * from a hair of scale. The keyframes animate the standalone `scale` property
+ * (not `transform`) so they can never fight the -translate-1/2 centering.
+ */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    scale: 0.96;
+  }
+}
+@keyframes dialog-out {
+  to {
+    opacity: 0;
+    scale: 0.96;
+  }
+}
 
 /*
  * MD3 state layer: hover/press overlay in the on-color, layered ON TOP of the

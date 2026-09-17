@@ -216,6 +216,12 @@
     "addUser": "Add user",
     "noResults": "No users found",
     "noResultsHint": "Try a different search, or add a new user.",
+    "filter": {
+      "title": "Filter",
+      "desc": "Narrow down the user list.",
+      "roles": "Roles",
+      "reset": "Reset filter"
+    },
     "columns": {
       "user": "User",
       "roles": "Roles",

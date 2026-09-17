@@ -70,8 +70,9 @@ const showFull = computed(() => isMobileOpen.value || isExpanded.value);
       </NuxtLink>
     </div>
 
-    <!-- Nav: active item is the MD3 full pill (secondary-container tonal).
-         Labeled because the page has a second nav landmark (the breadcrumb). -->
+    <!-- Nav: active item is a tonal container with 12dp corners and a
+         black/white border for maximum contrast. Labeled because the page has
+         a second nav landmark (the breadcrumb). -->
     <nav :aria-label="$t('nav.menu')" class="flex-1 overflow-y-auto px-3 py-2">
       <p
         :class="[
@@ -83,20 +84,24 @@ const showFull = computed(() => isMobileOpen.value || isExpanded.value);
       </p>
       <ul class="space-y-1">
         <li v-for="item in visibleItems" :key="item.to">
-          <NuxtLink
-            :to="item.to"
-            :class="[
-              'group relative flex items-center rounded-full text-sm font-medium transition-colors',
-              showFull ? 'gap-3 px-4 py-3' : 'justify-center px-0 py-3',
-              isActive(item.to)
-                ? 'bg-sidebar-accent font-semibold text-sidebar-accent-foreground'
-                : 'text-muted-foreground hover:bg-on-surface/8 hover:text-foreground',
-            ]"
-            @click="closeMobile"
-          >
-            <MaterialSymbol :name="item.icon" :size="22" class="shrink-0" />
-            <span v-if="showFull">{{ $t(item.label) }}</span>
-          </NuxtLink>
+          <!-- Icon-only rail: the label moves into a right-side tooltip;
+               disabled when the sidebar is expanded (the label is visible). -->
+          <Tooltip :text="$t(item.label)" side="right" :disabled="showFull">
+            <NuxtLink
+              :to="item.to"
+              :class="[
+                'group relative flex items-center rounded-lg border text-sm font-medium transition-colors',
+                showFull ? 'gap-3 px-4 py-3' : 'justify-center px-0 py-3',
+                isActive(item.to)
+                  ? 'border-black bg-sidebar-accent font-semibold text-sidebar-accent-foreground dark:border-white'
+                  : 'border-transparent text-muted-foreground hover:bg-on-surface/8 hover:text-foreground',
+              ]"
+              @click="closeMobile"
+            >
+              <MaterialSymbol :name="item.icon" :size="22" class="shrink-0" />
+              <span v-if="showFull">{{ $t(item.label) }}</span>
+            </NuxtLink>
+          </Tooltip>
         </li>
       </ul>
     </nav>

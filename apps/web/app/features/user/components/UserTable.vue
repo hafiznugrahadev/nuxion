@@ -148,7 +148,7 @@ function onSort(next: SortState) {
           <input
             v-model="search"
             :placeholder="$t('users.search')"
-            class="h-10 w-full rounded-sm border border-outline bg-transparent pl-10 pr-4 text-sm text-foreground transition-colors placeholder:text-on-surface-variant/85 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            class="h-10 w-full rounded-full border border-outline bg-transparent pl-10 pr-5 text-sm text-foreground transition-colors placeholder:text-on-surface-variant/85 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
         <!-- Filter trigger: opens the right-side filter sheet. Badge shows how

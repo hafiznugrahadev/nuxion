@@ -158,6 +158,7 @@ function onSort(next: SortState) {
           size="icon"
           class="relative shrink-0"
           :title="$t('users.filter.title')"
+          :aria-label="$t('users.filter.title')"
           @click="filterOpen = true"
         >
           <MaterialSymbol name="filter_list" :size="20" />

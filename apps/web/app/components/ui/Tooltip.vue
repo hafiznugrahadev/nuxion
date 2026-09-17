@@ -18,13 +18,15 @@ import { cn } from '~/lib/utils';
 const props = defineProps<{
   text?: string;
   side?: 'top' | 'right' | 'bottom' | 'left';
+  /** Suppress the tooltip (e.g. the trigger already shows a label). */
+  disabled?: boolean;
   class?: HTMLAttributes['class'];
 }>();
 </script>
 
 <template>
   <TooltipProvider :delay-duration="300">
-    <TooltipRoot>
+    <TooltipRoot :disabled="disabled">
       <TooltipTrigger as-child><slot /></TooltipTrigger>
       <TooltipPortal>
         <TooltipContent

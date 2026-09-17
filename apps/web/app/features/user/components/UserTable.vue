@@ -15,6 +15,7 @@ const canManage = computed(() => auth.isSuperAdmin);
 
 const search = ref('');
 const selectedRoles = ref<string[]>([]);
+const filterOpen = ref(false);
 const page = ref(1);
 // Mirrors the API defaults (newest first) so the first load's arrow is honest.
 const sort = ref<SortState>({ key: 'createdAt', order: 'desc' });
@@ -126,10 +127,19 @@ function onSort(next: SortState) {
 
 <template>
   <div class="space-y-4">
-    <!-- Toolbar -->
+    <!-- Toolbar. Mobile: add button first (full-width), then search + filter
+         side by side; desktop (sm+): search + filter left, add right. -->
     <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-      <div class="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
-        <div class="relative max-w-xs">
+      <Button
+        v-if="canManage"
+        class="order-first w-full sm:order-last sm:w-auto"
+        @click="openCreate"
+      >
+        <MaterialSymbol name="person_add" :size="20" />
+        {{ $t('users.addUser') }}
+      </Button>
+      <div class="flex flex-row items-center gap-3">
+        <div class="relative min-w-0 flex-1 sm:max-w-xs">
           <MaterialSymbol
             name="search"
             :size="18"
@@ -138,45 +148,27 @@ function onSort(next: SortState) {
           <input
             v-model="search"
             :placeholder="$t('users.search')"
-            class="h-10 w-full rounded-sm border border-outline bg-transparent pl-10 pr-4 text-sm text-foreground transition-colors placeholder:text-on-surface-variant/85 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            class="h-10 w-full rounded-full border border-outline bg-transparent pl-10 pr-5 text-sm text-foreground transition-colors placeholder:text-on-surface-variant/85 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
-        <!-- Role filter as MD3 filter chips (server-side; API is source of truth):
-             outlined idle, secondary-container tonal + leading check when on. -->
-        <div class="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            :class="[
-              'touch-target relative inline-flex h-8 items-center gap-1 rounded-md border px-3 text-sm font-medium transition-colors [--touch-slop:-6px]',
-              selectedRoles.length === 0
-                ? 'border-transparent bg-secondary-container text-on-secondary-container'
-                : 'border-outline text-on-surface-variant hover:bg-on-surface/8',
-            ]"
-            @click="clearRoles"
+        <!-- Filter trigger: opens the right-side filter sheet. Badge shows how
+             many role filters are active (server-side; API is source of truth). -->
+        <Button
+          variant="outline"
+          size="icon"
+          class="relative shrink-0"
+          :title="$t('users.filter.title')"
+          @click="filterOpen = true"
+        >
+          <MaterialSymbol name="filter_list" :size="20" />
+          <span
+            v-if="selectedRoles.length"
+            class="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground"
           >
-            {{ $t('users.roles.all') }}
-          </button>
-          <button
-            v-for="opt in roleOptions"
-            :key="opt.value"
-            type="button"
-            :class="[
-              'touch-target relative inline-flex h-8 items-center gap-1 rounded-md border px-3 text-sm font-medium transition-colors [--touch-slop:-6px]',
-              selectedRoles.includes(opt.value)
-                ? 'border-transparent bg-secondary-container text-on-secondary-container'
-                : 'border-outline text-on-surface-variant hover:bg-on-surface/8',
-            ]"
-            @click="toggleRole(opt.value)"
-          >
-            <MaterialSymbol v-if="selectedRoles.includes(opt.value)" name="check" :size="14" />
-            {{ opt.label }}
-          </button>
-        </div>
+            {{ selectedRoles.length }}
+          </span>
+        </Button>
       </div>
-      <Button v-if="canManage" size="sm" @click="openCreate">
-        <MaterialSymbol name="person_add" :size="18" />
-        {{ $t('users.addUser') }}
-      </Button>
     </div>
 
     <ErrorState v-if="isError" :message="(error as Error)?.message" @retry="refetch()" />
@@ -187,66 +179,67 @@ function onSort(next: SortState) {
       :description="$t('users.noResultsHint')"
     />
 
-    <!-- Reusable MD3 data table (bare, no card chrome) -->
-    <Table
-      v-else
-      :sort="sort"
-      :columns="columns"
-      :rows="rows"
-      row-key="id"
-      class="min-w-full"
-      @update:sort="onSort"
-    >
-      <template #cell-name="{ row }">
-        <div class="flex items-center gap-3">
-          <div
-            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-container text-[11px] font-semibold text-on-primary-container"
-          >
-            {{ initials(asUser(row).name) }}
+    <!-- Reusable MD3 data table inside an outlined card shell -->
+    <Card v-else class="overflow-hidden">
+      <Table
+        :sort="sort"
+        :columns="columns"
+        :rows="rows"
+        row-key="id"
+        class="min-w-full"
+        @update:sort="onSort"
+      >
+        <template #cell-name="{ row }">
+          <div class="flex items-center gap-3">
+            <div
+              class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-container text-[11px] font-semibold text-on-primary-container"
+            >
+              {{ initials(asUser(row).name) }}
+            </div>
+            <div class="min-w-0">
+              <span class="block truncate text-sm font-medium text-foreground">{{
+                asUser(row).name
+              }}</span>
+              <span class="block truncate text-xs text-muted-foreground">{{
+                asUser(row).email
+              }}</span>
+            </div>
           </div>
-          <div class="min-w-0">
-            <span class="block truncate text-sm font-medium text-foreground">{{
-              asUser(row).name
-            }}</span>
-            <span class="block truncate text-xs text-muted-foreground">{{
-              asUser(row).email
-            }}</span>
+        </template>
+        <template #cell-roles="{ row }">
+          <div class="flex flex-wrap gap-1">
+            <Badge
+              v-for="role in asUser(row).roles"
+              :key="role"
+              :variant="(roleVariant[role] ?? 'outline') as never"
+            >
+              {{ roleLabel(role, $t) }}
+            </Badge>
           </div>
-        </div>
-      </template>
-      <template #cell-roles="{ row }">
-        <div class="flex flex-wrap gap-1">
-          <Badge
-            v-for="role in asUser(row).roles"
-            :key="role"
-            :variant="(roleVariant[role] ?? 'outline') as never"
-          >
-            {{ roleLabel(role, $t) }}
-          </Badge>
-        </div>
-      </template>
-      <template #cell-createdAt="{ row }">
-        <span class="text-muted-foreground">{{ joined(asUser(row).createdAt) }}</span>
-      </template>
-      <template #cell-actions="{ row }">
-        <div class="flex items-center justify-end gap-1">
-          <button
-            class="touch-target relative flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-on-surface-variant/10 hover:text-foreground"
-            :title="$t('profile.personalInfo.edit')"
-            @click="openEdit(asUser(row))"
-          >
-            <MaterialSymbol name="edit" :size="18" />
-          </button>
-          <button
-            class="touch-target relative flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-error/10 hover:text-error"
-            :title="$t('users.deleteModal.title')"
-            @click="askDelete(asUser(row))"
-          >
-            <MaterialSymbol name="delete" :size="18" />
-          </button>
-        </div>
-      </template>
-    </Table>
+        </template>
+        <template #cell-createdAt="{ row }">
+          <span class="text-muted-foreground">{{ joined(asUser(row).createdAt) }}</span>
+        </template>
+        <template #cell-actions="{ row }">
+          <div class="flex items-center justify-end gap-1">
+            <button
+              class="touch-target relative flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-on-surface-variant/10 hover:text-foreground"
+              :title="$t('profile.personalInfo.edit')"
+              @click="openEdit(asUser(row))"
+            >
+              <MaterialSymbol name="edit" :size="18" />
+            </button>
+            <button
+              class="touch-target relative flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-error/10 hover:text-error"
+              :title="$t('users.deleteModal.title')"
+              @click="askDelete(asUser(row))"
+            >
+              <MaterialSymbol name="delete" :size="18" />
+            </button>
+          </div>
+        </template>
+      </Table>
+    </Card>
 
     <!-- Pagination -->
     <div v-if="meta && meta.totalPages > 1" class="flex items-center justify-between">
@@ -280,6 +273,43 @@ function onSort(next: SortState) {
 
     <!-- Create / edit -->
     <UserFormModal v-model:open="formOpen" :user="editing" @saved="refetch()" />
+
+    <!-- Filter sheet: role multi-select (checkbox list); applies server-side
+         on every toggle, same contract the inline chips had. -->
+    <Sheet
+      v-model:open="filterOpen"
+      :title="$t('users.filter.title')"
+      :description="$t('users.filter.desc')"
+      side="right"
+    >
+      <div class="space-y-6">
+        <div class="space-y-2">
+          <p class="text-sm font-medium text-on-surface">{{ $t('users.filter.roles') }}</p>
+          <label
+            v-for="opt in roleOptions"
+            :key="opt.value"
+            :for="`filter-${opt.value}`"
+            class="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-sm text-on-surface transition-colors hover:bg-on-surface/8"
+          >
+            <Checkbox
+              :id="`filter-${opt.value}`"
+              :model-value="selectedRoles.includes(opt.value)"
+              @update:model-value="toggleRole(opt.value)"
+            />
+            {{ opt.label }}
+          </label>
+        </div>
+        <Button
+          variant="outline"
+          class="w-full"
+          :disabled="selectedRoles.length === 0"
+          @click="clearRoles"
+        >
+          <MaterialSymbol name="filter_alt_off" :size="18" />
+          {{ $t('users.filter.reset') }}
+        </Button>
+      </div>
+    </Sheet>
 
     <!-- Delete confirmation comes from the shared useConfirm() host (app.vue). -->
   </div>

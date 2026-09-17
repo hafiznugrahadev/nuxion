@@ -216,6 +216,12 @@
     "addUser": "Tambah pengguna",
     "noResults": "Tidak ada pengguna ditemukan",
     "noResultsHint": "Coba pencarian lain, atau tambah pengguna baru.",
+    "filter": {
+      "title": "Filter",
+      "desc": "Sempitkan daftar pengguna.",
+      "roles": "Peran",
+      "reset": "Reset filter"
+    },
     "columns": {
       "user": "Pengguna",
       "roles": "Peran",

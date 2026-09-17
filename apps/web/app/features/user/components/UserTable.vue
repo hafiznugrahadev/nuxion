@@ -127,10 +127,19 @@ function onSort(next: SortState) {
 
 <template>
   <div class="space-y-4">
-    <!-- Toolbar -->
+    <!-- Toolbar. Mobile: add button first (full-width), then search + filter
+         side by side; desktop (sm+): search + filter left, add right. -->
     <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-      <div class="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
-        <div class="relative max-w-xs">
+      <Button
+        v-if="canManage"
+        class="order-first w-full sm:order-last sm:w-auto"
+        @click="openCreate"
+      >
+        <MaterialSymbol name="person_add" :size="20" />
+        {{ $t('users.addUser') }}
+      </Button>
+      <div class="flex flex-row items-center gap-3">
+        <div class="relative min-w-0 flex-1 sm:max-w-xs">
           <MaterialSymbol
             name="search"
             :size="18"
@@ -160,10 +169,6 @@ function onSort(next: SortState) {
           </span>
         </Button>
       </div>
-      <Button v-if="canManage" @click="openCreate">
-        <MaterialSymbol name="person_add" :size="20" />
-        {{ $t('users.addUser') }}
-      </Button>
     </div>
 
     <ErrorState v-if="isError" :message="(error as Error)?.message" @retry="refetch()" />

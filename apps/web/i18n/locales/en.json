@@ -262,6 +262,11 @@
       "saving": "Saving…",
       "saveChanges": "Save changes",
       "createUser": "Create user"
+    },
+    "toasts": {
+      "created": "User created",
+      "updated": "User updated",
+      "deleted": "User deleted"
     }
   },
   "profile": {

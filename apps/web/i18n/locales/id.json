@@ -262,6 +262,11 @@
       "saving": "Menyimpan…",
       "saveChanges": "Simpan perubahan",
       "createUser": "Buat pengguna"
+    },
+    "toasts": {
+      "created": "Pengguna dibuat",
+      "updated": "Pengguna diperbarui",
+      "deleted": "Pengguna dihapus"
     }
   },
   "profile": {

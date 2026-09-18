@@ -1,4 +1,5 @@
 import { type MaybeRefOrGetter, toValue } from 'vue';
+import { useI18n } from '#imports';
 import { usePaginatedQuery } from '~/composables/usePaginatedQuery';
 import { useApiMutation } from '~/composables/useApiMutation';
 import { useUserApi } from '../api/user.api';
@@ -17,24 +18,27 @@ export function useUsers(params: MaybeRefOrGetter<UserListParams>) {
 
 export function useCreateUser() {
   const userApi = useUserApi();
+  const { t } = useI18n();
   return useApiMutation((body: CreateUserValues) => userApi.create(body), {
     invalidateKeys: ['users'],
-    successMessage: 'User created',
+    successMessage: t('users.toasts.created'),
   });
 }
 
 export function useUpdateUser() {
   const userApi = useUserApi();
+  const { t } = useI18n();
   return useApiMutation(
     (vars: { id: string; body: UpdateUserValues }) => userApi.update(vars.id, vars.body),
-    { invalidateKeys: ['users'], successMessage: 'User updated' },
+    { invalidateKeys: ['users'], successMessage: t('users.toasts.updated') },
   );
 }
 
 export function useDeleteUser() {
   const userApi = useUserApi();
+  const { t } = useI18n();
   return useApiMutation((id: string) => userApi.remove(id), {
     invalidateKeys: ['users'],
-    successMessage: 'User deleted',
+    successMessage: t('users.toasts.deleted'),
   });
 }

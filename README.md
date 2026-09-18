@@ -29,7 +29,8 @@ nuxion/
   token in an httpOnly cookie (with reuse detection), `/auth/refresh` + `/auth/logout`,
   global JWT & role guards, login rate limiting.
 - **Users datatable** — admin-only `GET /users` (paginated, searchable; password never
-  returned) rendered with a generic, reusable `<DataTable />`.
+  returned) rendered with the generic `ui/Table.vue` data table (server-side sort,
+  search, and role filters).
 - **Reusable components** — shadcn-vue UI primitives, VeeValidate form fields, and
   Error/Empty/Loading state blocks; `BaseRepository`/`BaseCrudService`/`BaseQueryDto`
   on the backend.
@@ -108,7 +109,7 @@ bun run serve
 global `ValidationPipe`, `IsUnique` async validator, `ApiPaginatedResponse` decorator,
 `@Global()` Prisma/Redis modules.
 
-**Frontend** (`apps/web/app`): generic `<DataTable />`, VeeValidate field components,
+**Frontend** (`apps/web/app`): generic `ui/Table.vue` data table, VeeValidate field components,
 single `apiClient` (ofetch) with transparent 401→refresh→retry, `usePaginatedQuery`,
 `useApiMutation`, and shared Error/Empty/Loading blocks. `features/` is intentionally
 **not** auto-imported — explicit barrel imports enforce the dependency rule.

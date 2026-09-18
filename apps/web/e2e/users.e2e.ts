@@ -30,8 +30,8 @@ test.describe('users (super admin)', () => {
       await page.getByRole('button', { name: /add user/i }).click();
       const dialog = page.getByRole('dialog');
       await expect(dialog.getByText('New user')).toBeVisible();
-      await dialog.getByPlaceholder('jane@nuxion.test').fill(email);
-      await dialog.getByPlaceholder('Jane Doe').fill('E2E User');
+      await dialog.getByPlaceholder('name@example.com').fill(email);
+      await dialog.getByPlaceholder('Full name').fill('E2E User');
       await dialog.getByPlaceholder('••••••••').fill('e2e-pass-123');
       await dialog.getByRole('button', { name: /create user/i }).click();
 
@@ -39,9 +39,9 @@ test.describe('users (super admin)', () => {
       await page.getByPlaceholder('Search users…').fill(email);
       await expect(page.getByText(email)).toBeVisible();
 
-      // delete via the row action + confirm dialog
+      // delete via the row action + confirm dialog (AlertDialog → role=alertdialog)
       await page.getByRole('button', { name: 'Delete' }).first().click();
-      const confirm = page.getByRole('dialog');
+      const confirm = page.getByRole('alertdialog');
       await expect(confirm.getByText(/delete user/i)).toBeVisible();
       await confirm.getByRole('button', { name: /^delete$/i }).click();
       await expect(page.getByText(email)).toHaveCount(0);
@@ -70,7 +70,7 @@ test.describe('users (super admin)', () => {
       await page.getByRole('button', { name: 'Edit' }).first().click();
       const dialog = page.getByRole('dialog');
       await expect(dialog.getByText('Edit user')).toBeVisible();
-      await dialog.getByPlaceholder('Jane Doe').fill('Edited Name');
+      await dialog.getByPlaceholder('Full name').fill('Edited Name');
       await dialog.getByRole('button', { name: /save changes/i }).click();
 
       await expect(page.getByText('Edited Name', { exact: true })).toBeVisible();
@@ -79,7 +79,7 @@ test.describe('users (super admin)', () => {
     }
   });
 
-  test('filters the table by role tags (multi-select, server-side)', async ({ page }) => {
+  test('filters the table by roles (filter sheet, multi-select, server-side)', async ({ page }) => {
     await login(page, SUPER_ADMIN.email, SUPER_ADMIN.password);
     await expect(page).toHaveURL(/\/admin\/dashboard/);
     await page.goto('/admin/users');
@@ -88,15 +88,23 @@ test.describe('users (super admin)', () => {
     const table = page.getByRole('table');
     await expect(table.getByText('user@nuxion.test', { exact: true })).toBeVisible();
 
-    // select two tags → users holding ANY of them (super-admin + admin), not the plain user
-    await page.getByRole('button', { name: 'Super Admin', exact: true }).click();
-    await page.getByRole('button', { name: 'Admin', exact: true }).click();
+    // open the filter sheet and check two roles → users holding ANY of them
+    // (super-admin + admin), not the plain user. Close the sheet before
+    // asserting — a modal dialog hides the page from the a11y tree, so
+    // getByRole('table') can't resolve while it's open.
+    await page.getByRole('button', { name: 'Filter', exact: true }).click();
+    const sheet = page.getByRole('dialog');
+    await sheet.getByRole('checkbox', { name: 'Super Admin', exact: true }).click();
+    await sheet.getByRole('checkbox', { name: 'Admin', exact: true }).click();
+    await sheet.getByRole('button', { name: 'Close' }).click();
     await expect(table.getByText('superadmin@nuxion.test', { exact: true })).toBeVisible();
     await expect(table.getByText('admin@nuxion.test', { exact: true })).toBeVisible();
     await expect(page.getByText('user@nuxion.test', { exact: true })).toHaveCount(0);
 
-    // reset with the "All" tag
-    await page.getByRole('button', { name: 'All', exact: true }).click();
+    // reopen, reset, and confirm the unfiltered list is back
+    await page.getByRole('button', { name: 'Filter', exact: true }).click();
+    await sheet.getByRole('button', { name: /reset filter/i }).click();
+    await sheet.getByRole('button', { name: 'Close' }).click();
     await expect(table.getByText('user@nuxion.test', { exact: true })).toBeVisible();
   });
 });

@@ -376,7 +376,7 @@ Sebelum commit, tanya:
 | UI Primitives  | **shadcn-vue** (Reka UI)                                                      | Via `shadcn-nuxt` module, copy-paste & fully ownable          |
 | Forms          | **VeeValidate** + **Zod**                                                     | `@vee-validate/zod`. Zod **hanya** untuk FE schema            |
 | Data Fetching  | **TanStack Query** (`@tanstack/vue-query`) + `useFetch`/`useAsyncData`        | Lihat catatan di bawah                                        |
-| Tables         | **TanStack Table** (`@tanstack/vue-table`)                                    | Headless                                                      |
+| Tables         | **`ui/Table.vue`** (generic MD3 table, hand-rolled)                           | Sort emit-only (`update:sort`) — server-side yang mengurutkan |
 | State (client) | **Pinia** (`@pinia/nuxt`)                                                     | Pengganti Zustand — idiomatik Vue/Nuxt                        |
 | HTTP Client    | **ofetch** (`$fetch` bawaan Nuxt)                                             | Pilih satu, konsisten. Axios hanya kalau perlu fitur spesifik |
 | Icons          | **lucide-vue-next**                                                           | Konsisten dengan shadcn-vue                                   |
@@ -509,11 +509,8 @@ app/                                ← srcDir Nuxt 4 (alias ~ → app/)
 │   │   ├── fields/                 ← TextField, SelectField, DatePicker
 │   │   ├── display/
 │   │   └── layout/
-│   ├── blocks/                     ← Organisms: standalone UI kompleks
-│   │   ├── data-table/
-│   │   ├── error-state/
-│   │   ├── confirm-dialog/
-│   │   └── empty-state/
+│   ├── blocks/                     ← Organisms: standalone UI kompleks (flat —
+│   │                                 PageHeading, EmptyState, ErrorState, LoadingState, dst.)
 │   └── shell/                      ← AppShell, Sidebar, Navbar
 │
 ├── composables/                    ← global composables (auto-import) — pengganti `hooks/`
@@ -624,7 +621,7 @@ export default defineNuxtConfig({
 });
 ```
 
-> Konsekuensi: `<DataTable :columns :data />` bisa dipakai tanpa import (auto), tapi `import { UserTable } from '~/features/user-management'` harus eksplisit. Inilah yang menjaga arsitektur tetap rapi.
+> Konsekuensi: komponen shared (mis. `<PageHeading />`, `<EmptyState />`) bisa dipakai tanpa import (auto), tapi `import { UserTable } from '~/features/user'` harus eksplisit. Inilah yang menjaga arsitektur tetap rapi.
 
 > **Alternatif advanced:** kalau feature makin gede & mau isolasi total, jadikan tiap feature **Nuxt Layer** (`layers/<feature>`). Layer punya `components/`, `composables/`, `pages/` sendiri dan di-`extends` dari root. Overkill untuk app kecil — pertimbangkan kalau sudah > 8–10 feature besar.
 
@@ -632,13 +629,15 @@ export default defineNuxtConfig({
 
 ## DRY Patterns (FE) — Wajib Diterapkan
 
-### 1. Generic DataTable
+### 1. Generic Table
 
-Jangan bikin table per feature. Pakai 1 `<DataTable />` headless (`@tanstack/vue-table`) yang terima `columns` config + `data`. Letakkan di `components/blocks/data-table/`.
+Jangan bikin table per feature. Pakai satu `<Table />` generik (`app/components/ui/Table.vue`, MD3 hand-rolled — bukan TanStack vue-table): terima `columns` config + `rows`, murni view (sorting hanya emit `update:sort`, tabel tidak pernah mengurutkan sendiri), kustomisasi sel via slot `#cell-{key}`. Sort/filter/pagination tetap server-side di feature (API = source of truth).
 
 ```
 <!-- pakai di feature -->
-<DataTable :columns="userColumns" :data="data" :is-loading="pending" />
+<Table :columns="userColumns" :rows="rows" :sort="sort" @update:sort="onSort">
+  <template #cell-name="{ row }">…</template>
+</Table>
 ```
 
 ### 2. Field Components
@@ -759,7 +758,7 @@ shared/   ← satu-satunya jembatan antara app/ dan server/
 
 Sebelum commit, tanya:
 
-- [ ] Ada `<table>` custom per feature? → pakai `<DataTable />` generic
+- [ ] Ada `<table>` custom per feature? → pakai `ui/Table.vue` generic
 - [ ] Ada `<input>` + label + error ditulis manual berulang? → pakai `common/fields/`
 - [ ] Ada validasi muncul di > 2 form? → angkat ke `lib/schemas/`
 - [ ] Ada `$fetch`/axios di-setup ulang per feature? → pakai `apiClient` dari `lib/`

@@ -30,9 +30,9 @@ const metrics = computed(() => [
       />
     </div>
 
-    <!-- Charts -->
+    <!-- Charts: cards fill their grid cells so both tracks share one height -->
     <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      <div class="lg:col-span-2">
+      <div class="h-full lg:col-span-2">
         <MonthlySalesChart />
       </div>
       <MonthlyTarget />

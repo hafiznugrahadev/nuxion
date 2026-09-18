@@ -40,7 +40,8 @@ const options = computed<ApexOptions>(() => ({
 </script>
 
 <template>
-  <div class="rounded-lg border border-outline-variant bg-card p-5 sm:p-6">
+  <!-- h-full: mirrors MonthlySalesChart so either card can set the row height. -->
+  <div class="h-full rounded-lg border border-outline-variant bg-card p-5 sm:p-6">
     <div class="mb-2">
       <h2 class="text-sm font-semibold text-foreground">Monthly Target</h2>
       <p class="mt-1 text-sm text-muted-foreground">Target you've set for this month</p>

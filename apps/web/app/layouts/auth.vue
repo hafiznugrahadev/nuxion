@@ -61,7 +61,7 @@ onMounted(() => {
         draggable="false"
         @load="remoteLoaded = true"
       />
-      <div class="absolute inset-0 bg-black/65" aria-hidden="true"></div>
+      <div class="absolute inset-0 bg-black/30" aria-hidden="true"></div>
       <div
         class="absolute inset-x-0 bottom-0 h-full bg-linear-to-t from-black/70 to-transparent"
         aria-hidden="true"

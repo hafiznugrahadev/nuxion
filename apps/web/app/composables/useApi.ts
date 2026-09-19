@@ -1,4 +1,5 @@
 import { createApiClient } from '~/lib/api-client';
+import { xhrProgressEnd, xhrProgressStart } from '~/lib/xhr-progress';
 import { useAuthStore } from '~/stores/auth';
 
 interface ApiCallOptions extends Record<string, unknown> {
@@ -31,6 +32,9 @@ export function useApi() {
   const client = createApiClient({
     baseURL: config.public.apiBase as string,
     getToken: () => auth.accessToken,
+    // YouTube-style top bar: one shared bar for every API call through this client.
+    onStart: xhrProgressStart,
+    onEnd: xhrProgressEnd,
   });
 
   return async function apiFetch<T>(url: string, options?: ApiCallOptions): Promise<T> {

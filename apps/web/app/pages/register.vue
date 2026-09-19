@@ -7,7 +7,7 @@ import { toast } from 'vue-sonner';
 import { useAuthStore } from '~/stores/auth';
 import { APP_NAME } from '~/lib/constants';
 
-definePageMeta({ layout: 'auth' });
+definePageMeta({ layout: 'auth', middleware: ['guest'] });
 const { t } = useI18n();
 useHead({ title: `Sign Up · ${APP_NAME}` });
 

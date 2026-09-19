@@ -3,25 +3,29 @@ import { APP_NAME } from '~/lib/constants';
 
 /*
  * Auth layout: form on the left, photo panel on the right (lg+ only, the
- * form takes the full width below that). The panel is two stacked photos:
- * a bundled local base (instant, offline-safe) and a daily Lorem Picsum
- * shot seeded with today's date that fades in on top once it loads —
- * offline/blocked, the base simply stays visible. The fixed dark scrim
- * keeps the overlaid copy AA in both themes even over a worst-case
- * pure-white photo (white-on-scrim ≈ 6.5:1).
+ * form takes the full width below that). The panel shows one photo picked
+ * at random from the bundled `public/images/auth-panels/` set (space, teal
+ * seas, blossoms). The pick happens on mount — client-only — so SSR never
+ * renders a different photo than the client would (no hydration mismatch);
+ * the photo fades in over the scrim-colored fallback once it loads. The
+ * fixed scrim + bottom gradient keep the white copy AA in both themes even
+ * over a worst-case bright photo (≈5.7:1).
  */
+const AUTH_PANELS = [
+  'moon-earth',
+  'nebula',
+  'milky-way',
+  'teal-reef',
+  'teal-wave',
+  'blossom',
+  'lavender',
+] as const;
 
-// en-CA locale → YYYY-MM-DD: same photo for everyone that day, rotating
-// at local midnight.
-const REMOTE_PANEL = `https://picsum.photos/seed/${new Date().toLocaleDateString('en-CA')}/1600/2000.webp`;
-
-const remoteImg = ref<HTMLImageElement | null>(null);
-const remoteLoaded = ref(false);
+const panel = ref<string | null>(null);
+const panelLoaded = ref(false);
 
 onMounted(() => {
-  // If the daily photo finished loading before hydration, the load event
-  // was missed — recover via the element's complete flag.
-  if (remoteImg.value?.complete) remoteLoaded.value = true;
+  panel.value = AUTH_PANELS[Math.floor(Math.random() * AUTH_PANELS.length)];
 });
 </script>
 
@@ -40,28 +44,21 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Brand side: layered photo panel under a fixed scrim that keeps the
-         overlaid copy AA in both themes. -->
-    <div class="relative hidden overflow-hidden lg:flex lg:items-center lg:justify-center">
-      <!-- Base layer: bundled local photo, instant + offline-safe -->
+    <!-- Brand side: random bundled photo under a scrim that keeps the
+         overlaid copy readable in both themes. -->
+    <div
+      class="relative hidden overflow-hidden bg-brand-navy lg:flex lg:items-center lg:justify-center"
+    >
       <img
-        src="/images/auth-panel.webp"
-        alt=""
-        class="absolute inset-0 h-full w-full select-none object-cover"
-        draggable="false"
-      />
-      <!-- Daily layer: date-seeded Picsum, fades in when loaded; stays
-           transparent when offline so the base remains visible -->
-      <img
-        ref="remoteImg"
-        :src="REMOTE_PANEL"
+        v-if="panel"
+        :src="`/images/auth-panels/${panel}.webp`"
         alt=""
         class="absolute inset-0 h-full w-full select-none object-cover transition-opacity duration-700"
-        :class="remoteLoaded ? 'opacity-100' : 'opacity-0'"
+        :class="panelLoaded ? 'opacity-100' : 'opacity-0'"
         draggable="false"
-        @load="remoteLoaded = true"
+        @load="panelLoaded = true"
       />
-      <div class="absolute inset-0 bg-black/30" aria-hidden="true"></div>
+      <div class="absolute inset-0 bg-black/40" aria-hidden="true"></div>
       <div
         class="absolute inset-x-0 bottom-0 h-full bg-linear-to-t from-black/70 to-transparent"
         aria-hidden="true"

@@ -25,7 +25,8 @@ const panel = ref<string | null>(null);
 const panelLoaded = ref(false);
 
 onMounted(() => {
-  panel.value = AUTH_PANELS[Math.floor(Math.random() * AUTH_PANELS.length)];
+  // ?? null satisfies noUncheckedIndexedAccess (indexing is always in-range).
+  panel.value = AUTH_PANELS[Math.floor(Math.random() * AUTH_PANELS.length)] ?? null;
 });
 </script>
 

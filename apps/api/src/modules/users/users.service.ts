@@ -47,7 +47,7 @@ export class UsersService extends BaseCrudService<
     const page = await this.usersRepository.paginate(query, {
       where,
       include: { roles: true },
-      omit: { password: true },
+      omit: { password: true, twoFactorSecret: true, recoveryCodes: true },
     });
 
     const result: PaginatedResult<UserEntity> = {

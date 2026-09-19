@@ -19,15 +19,38 @@ model User {
   name          String
   password      String
   avatarUrl     String?        // public URL of the user's avatar (storage module)
+  // TOTP two-factor. The secret is AES-256-GCM encrypted at rest (two-factor.service.ts);
+  // twoFactorEnabled only flips to true once activation is confirmed with a valid code.
+  twoFactorEnabled Boolean     @default(false)
+  twoFactorSecret  String?
+  recoveryCodes    String?     // JSON array of SHA-256 hashes; plaintext is shown once
   // Many-to-many: a user can hold multiple roles (scalable RBAC).
   roles               Role[]               @relation("UserRoles")
   refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
   notifications       Notification[]
+  passkeys            Passkey[]
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
 
   @@map("users")
+}
+
+model Passkey {
+  id         String    @id // base64url credential ID from the authenticator
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  publicKey  String    // base64url COSE public key
+  counter    BigInt    @default(0) // signature counter (clone detection)
+  transports String[]  @default([]) // internal | hybrid | nfc | smart-card | usb
+  deviceType String?   // singleDevice | multiDevice
+  backedUp   Boolean   @default(false)
+  name       String?   // user label, e.g. "MacBook Touch ID"
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@map("passkeys")
 }
 
 model Notification {

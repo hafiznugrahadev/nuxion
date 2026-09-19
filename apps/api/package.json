@@ -32,9 +32,10 @@
     "@nestjs/platform-express": "^12.0.3",
     "@nestjs/swagger": "^12.0.1",
     "@nestjs/throttler": "^6.5.0",
+    "@nuxion/shared-types": "workspace:*",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7",
-    "@nuxion/shared-types": "workspace:*",
+    "@simplewebauthn/server": "^14.0.2",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
@@ -43,12 +44,14 @@
     "ioredis": "^6.0.0",
     "nestjs-pino": "^5.1.0",
     "nodemailer": "^10.0.0",
+    "otplib": "^13.5.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pg": "^8.21.0",
     "pino": "^10.0.0",
     "pino-http": "^11.0.0",
     "pino-pretty": "^13.0.0",
+    "qrcode": "^1.5.4",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
@@ -62,6 +65,7 @@
     "@types/node": "^26.4.0",
     "@types/passport-jwt": "^4.0.1",
     "@types/pg": "^8.20.0",
+    "@types/qrcode": "^1.5.6",
     "@types/supertest": "^7.2.1",
     "dotenv": "^17.4.2",
     "eslint": "^10.9.1",
@@ -70,6 +74,7 @@
     "supertest": "^7.0.0",
     "tsc-alias": "^1.8.17",
     "typescript": "^5.7.2",
+    "unplugin-swc": "^1.6.0",
     "vitest": "^5.0.0"
   }
 }

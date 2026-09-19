@@ -30,7 +30,9 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{ select: [item: DropdownMenuItemDef] }>();
 
-const open = defineModel<boolean>('open', { default: undefined });
+// No options object: newer vue-tsc overloads reject `{ default: undefined }`;
+// a bare defineModel is exactly "optional, no default".
+const open = defineModel<boolean>('open');
 </script>
 
 <template>

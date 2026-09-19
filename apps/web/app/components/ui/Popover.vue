@@ -17,7 +17,7 @@ const props = withDefaults(
   { side: 'bottom', align: 'center' },
 );
 
-const open = defineModel<boolean>('open', { default: undefined });
+const open = defineModel<boolean>('open');
 </script>
 
 <template>

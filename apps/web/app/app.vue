@@ -3,6 +3,9 @@ import { Toaster } from 'vue-sonner';
 </script>
 
 <template>
+  <!-- YouTube-style top progress bar: animates on route navigation AND while
+       API XHRs are in flight (one bar merges both signals). -->
+  <XhrProgressBar />
   <NuxtLayout>
     <NuxtPage />
   </NuxtLayout>

@@ -4,6 +4,10 @@ export interface ApiClientOptions {
   baseURL: string;
   /** Returns the current in-memory access token (attached as a Bearer header). */
   getToken?: () => string | null | undefined;
+  /** Called when a request starts / settles (success or error) — wired by
+   * `useApi()` to the YouTube-style top progress bar (see lib/xhr-progress.ts). */
+  onStart?: () => void;
+  onEnd?: () => void;
 }
 
 /**
@@ -13,16 +17,26 @@ export interface ApiClientOptions {
  * transparent 401 → refresh → retry behaviour. `credentials: 'include'` lets the
  * browser send the httpOnly refresh cookie on `/auth/*` calls.
  */
-export function createApiClient({ baseURL, getToken }: ApiClientOptions) {
+export function createApiClient({ baseURL, getToken, onStart, onEnd }: ApiClientOptions) {
   return $fetch.create({
     baseURL,
     credentials: 'include',
     onRequest({ options }) {
+      onStart?.();
       const token = getToken?.();
       if (token) {
         options.headers = new Headers(options.headers);
         options.headers.set('Authorization', `Bearer ${token}`);
       }
+    },
+    onResponse() {
+      onEnd?.();
+    },
+    onRequestError() {
+      onEnd?.();
+    },
+    onResponseError() {
+      onEnd?.();
     },
   });
 }

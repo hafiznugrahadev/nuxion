@@ -8,6 +8,10 @@ import {
   SEED_USERS,
 } from './helpers/app.helper';
 
+// The suite logs in far more than the 5/60s per-route login throttle allows.
+// Vitest isolates spec files in separate workers, so this cannot leak elsewhere.
+process.env.THROTTLE_DISABLED = 'true';
+
 describe('Auth (e2e)', () => {
   let app: INestApplication;
   let server: ReturnType<INestApplication['getHttpServer']>;

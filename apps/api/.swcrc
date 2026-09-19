@@ -1,0 +1,16 @@
+{
+  "$schema": "https://unpkg.com/@swc/core@3/schema.json",
+  "jsc": {
+    "parser": {
+      "syntax": "typescript",
+      "decorators": true
+    },
+    "transform": {
+      "legacyDecorator": true
+    },
+    "target": "es2022"
+  },
+  "module": {
+    "type": "es6"
+  }
+}

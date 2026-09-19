@@ -5,9 +5,10 @@ import { toTypedSchema } from '@vee-validate/zod';
 import { z } from 'zod';
 import { toast } from 'vue-sonner';
 import { useAuthStore } from '~/stores/auth';
+import { intendedRedirect } from '~/lib/intended-redirect';
 import { APP_NAME } from '~/lib/constants';
 
-definePageMeta({ layout: 'auth' });
+definePageMeta({ layout: 'auth', middleware: ['guest'] });
 const { t } = useI18n();
 useHead({ title: `Sign In · ${APP_NAME}` });
 
@@ -32,8 +33,7 @@ const onSubmit = handleSubmit(async (values) => {
   try {
     await auth.login(values.email, values.password);
     toast.success(t('auth.welcomeBack'));
-    const redirect = (route.query.redirect as string) || '/admin/dashboard';
-    await navigateTo(redirect);
+    await navigateTo(intendedRedirect(route.query));
   } catch {
     toast.error(t('auth.invalidCredentials'));
   } finally {

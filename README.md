@@ -28,6 +28,14 @@ nuxion/
 - **Auth** — email/password login, short-lived JWT access token + rotating refresh
   token in an httpOnly cookie (with reuse detection), `/auth/refresh` + `/auth/logout`,
   global JWT & role guards, login rate limiting.
+- **Two-factor auth (TOTP)** — mandatory when `AUTH_2FA_ENABLED=true`: login splits
+  into password → one-time code (or single-use recovery code), and the web keeps
+  un-activated users on `/two-factor/setup` until they scan the QR. Fully dormant
+  when the flag is off. Secrets are encrypted at rest; challenges live in Redis.
+- **Passkeys (WebAuthn)** — opt-in via `AUTH_PASSKEY_ENABLED=true` with
+  `WEBAUTHN_RP_ID`/`WEBAUTHN_ORIGINS` pointing at the web app: discoverable passkey
+  sign-in on `/login`, plus register/remove passkeys from the profile Security
+  section. A user-verified passkey satisfies the mandatory TOTP step.
 - **Users datatable** — admin-only `GET /users` (paginated, searchable; password never
   returned) rendered with the generic `ui/Table.vue` data table (server-side sort,
   search, and role filters).

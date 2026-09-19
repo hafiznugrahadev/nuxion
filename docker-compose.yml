@@ -120,6 +120,15 @@ services:
       MAIL_SMTP_SECURE: 'false'
       # Self-service registration (dev: on). Keep the API + web flags in sync.
       AUTH_REGISTRATION_ENABLED: ${REGISTRATION_ENABLED:-true}
+      # Mandatory TOTP 2FA (login challenge + forced setup). Keep in sync with
+      # the web's NUXT_PUBLIC_2FA_ENABLED below.
+      AUTH_2FA_ENABLED: ${AUTH_2FA_ENABLED:-false}
+      # Passkey (WebAuthn) sign-in — independent of TOTP. The ceremony runs on
+      # the WEB origin; this API verifies, hence RP ID/origins.
+      AUTH_PASSKEY_ENABLED: ${AUTH_PASSKEY_ENABLED:-false}
+      WEBAUTHN_RP_NAME: ${WEBAUTHN_RP_NAME:-Nuxion}
+      WEBAUTHN_RP_ID: ${WEBAUTHN_RP_ID:-nuxion-dev.orb.local}
+      WEBAUTHN_ORIGINS: ${WEBAUTHN_ORIGINS:-https://web.nuxion-dev.orb.local}
       # File storage — defaults to local; set STORAGE_DRIVER=s3 in .env to use RustFS.
       STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
       S3_ENDPOINT: ${S3_ENDPOINT:-http://nuxion-rustfs:9000}
@@ -163,6 +172,10 @@ services:
       # Client-side calls hit the API's OrbStack domain.
       NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-http://localhost:${API_PORT:-8000}/api}
       NUXT_PUBLIC_REGISTRATION_ENABLED: ${REGISTRATION_ENABLED:-true}
+      # Mirrors the API's AUTH_2FA_ENABLED / AUTH_PASSKEY_ENABLED so the UI can
+      # show the OTP step, setup funnel and passkey buttons.
+      NUXT_PUBLIC_2FA_ENABLED: ${AUTH_2FA_ENABLED:-false}
+      NUXT_PUBLIC_PASSKEY_ENABLED: ${AUTH_PASSKEY_ENABLED:-false}
       # Bind-mount file events don't cross into the container on macOS/Windows,
       # so Vite must poll for HMR to work. See nuxt.config.ts.
       NUXT_DEV_POLLING: 'true'

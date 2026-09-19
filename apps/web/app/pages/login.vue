@@ -55,8 +55,9 @@ const notImplemented = (provider: string) =>
       <p class="mt-2 text-sm text-muted-foreground">{{ $t('auth.signInSubtitle') }}</p>
     </div>
 
-    <!-- Social sign-in: MD3 outlined buttons -->
-    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <!-- Social sign-in: MD3 outlined buttons, stacked full-width — localized
+         labels ("Masuk dengan Google") don't fit two-up in the 384px form. -->
+    <div class="grid grid-cols-1 gap-3">
       <button
         type="button"
         class="inline-flex h-10 items-center justify-center gap-3 rounded-full border border-outline bg-transparent text-sm font-medium text-foreground transition-colors hover:bg-on-surface/8"

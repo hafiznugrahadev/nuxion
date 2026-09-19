@@ -28,7 +28,7 @@ import { APP_NAME } from '~/lib/constants';
     <!-- Brand side: photo panel (Earth at night, Unsplash) under a scrim that
          keeps the overlaid copy AA in both themes — worst case (photo at 255)
          white-on-scrim ≈ 6.5:1. -->
-    <div class="relative hidden overflow-hidden lg:flex">
+    <div class="relative hidden overflow-hidden lg:flex lg:items-center lg:justify-center">
       <img
         src="/images/auth-panel.webp"
         alt=""
@@ -37,10 +37,10 @@ import { APP_NAME } from '~/lib/constants';
       />
       <div class="absolute inset-0 bg-black/65" aria-hidden="true"></div>
       <div
-        class="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/70 to-transparent"
+        class="absolute inset-x-0 bottom-0 h-full bg-linear-to-t from-black/70 to-transparent"
         aria-hidden="true"
       ></div>
-      <div class="relative z-10 max-w-md px-8 text-center text-white">
+      <div id="auth-brand" class="relative z-10 max-w-md px-8 text-center text-white">
         <BrandLogo class="mx-auto mb-6 h-16" />
         <h2 class="text-2xl font-semibold tracking-tight">{{ APP_NAME }}</h2>
         <p class="mt-3 text-sm text-white/80">{{ $t('appTagline') }}</p>

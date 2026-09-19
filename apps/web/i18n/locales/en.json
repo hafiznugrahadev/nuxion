@@ -58,11 +58,48 @@
     "invalidToken": "Invalid or missing reset token."
   },
   "error": {
-    "notFound": "Page not found",
-    "generic": "Something went wrong",
-    "notFoundDesc": "The page you're looking for doesn't exist or may have moved.",
-    "genericDesc": "An unexpected error occurred. Please try again.",
-    "backHome": "Back to home"
+    "backHome": "Back to home",
+    "notFound": {
+      "badge": "Error 404 · Page lost in orbit",
+      "title": "Oops! You seem to be lost in space.",
+      "description": "The page you're looking for may have been moved, renamed, or is temporarily unavailable. Don't worry — our navigation system is ready to take you back.",
+      "coordinate": "Coordinates: 0x404_VOID",
+      "signal": "Radar signal: disconnected",
+      "links": "Helpful links:",
+      "dashboard": "Dashboard",
+      "login": "Log in"
+    },
+    "forbidden": {
+      "badge": "Error 403 · Access denied",
+      "title": "Restricted area! You don't have access.",
+      "description": "Your current account or session doesn't have the permission required to view this page. Contact your team's administrator, or sign in with an account that has the right access.",
+      "protocol": "Security protocol: restricted access",
+      "permission": "Session permission",
+      "guest": "Guest session",
+      "signOut": "Switch account",
+      "backToDashboard": "Back to dashboard",
+      "helpTitle": "Navigation help",
+      "profile": "Profile",
+      "home": "Home"
+    },
+    "serverError": {
+      "badge": "Error 500 · Internal server error",
+      "title": "Oops! Something went wrong on our server.",
+      "description": "Sorry for the inconvenience. Our technical team has been automatically notified and is working on a fix. Please try reloading the page in a few moments.",
+      "diagnostics": "Diagnostics: being handled",
+      "telemetry": "Telemetry & diagnostics",
+      "copyDetails": "Copy details",
+      "copied": "Copied",
+      "statusCode": "Status code",
+      "path": "Page",
+      "time": "Occurred at",
+      "reload": "Reload page"
+    },
+    "generic": {
+      "badge": "Error {code}",
+      "title": "Something went wrong",
+      "description": "An unexpected error occurred. Please try again, or head back home."
+    }
   },
   "state": {
     "loading": "Loading…",

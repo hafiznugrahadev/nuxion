@@ -58,11 +58,48 @@
     "invalidToken": "Token reset tidak valid atau tidak ada."
   },
   "error": {
-    "notFound": "Halaman tidak ditemukan",
-    "generic": "Terjadi kesalahan",
-    "notFoundDesc": "Halaman yang Anda cari tidak ada atau mungkin telah dipindahkan.",
-    "genericDesc": "Terjadi kesalahan tak terduga. Silakan coba lagi.",
-    "backHome": "Kembali ke beranda"
+    "backHome": "Kembali ke beranda",
+    "notFound": {
+      "badge": "Error 404 · Halaman hilang di orbit",
+      "title": "Oops! Sepertinya Anda tersesat di luar angkasa.",
+      "description": "Halaman yang Anda cari mungkin telah dipindahkan, diganti tautannya, atau sementara tidak tersedia. Tenang, sistem navigasi kami siap membantu Anda kembali.",
+      "coordinate": "Koordinat: 0x404_VOID",
+      "signal": "Sinyal radar: terputus",
+      "links": "Tautan berguna:",
+      "dashboard": "Dasbor",
+      "login": "Masuk"
+    },
+    "forbidden": {
+      "badge": "Error 403 · Akses ditolak",
+      "title": "Area terbatas! Anda tidak memiliki akses.",
+      "description": "Akun atau sesi Anda saat ini tidak memiliki izin yang diperlukan untuk melihat halaman ini. Silakan hubungi administrator tim Anda, atau masuk dengan akun yang memiliki hak akses.",
+      "protocol": "Protokol keamanan: akses dibatasi",
+      "permission": "Status izin sesi",
+      "guest": "Sesi tamu",
+      "signOut": "Ganti akun",
+      "backToDashboard": "Kembali ke dasbor",
+      "helpTitle": "Navigasi bantuan",
+      "profile": "Profil",
+      "home": "Beranda"
+    },
+    "serverError": {
+      "badge": "Error 500 · Gangguan server internal",
+      "title": "Ups! Terjadi masalah pada server kami.",
+      "description": "Maaf atas ketidaknyamanan ini. Tim teknis kami telah menerima laporan otomatis dan sedang berupaya memperbaikinya secepat mungkin. Silakan coba muat ulang halaman beberapa saat lagi.",
+      "diagnostics": "Diagnostik: sedang ditangani",
+      "telemetry": "Telemetri & log diagnostik",
+      "copyDetails": "Salin detail",
+      "copied": "Tersalin",
+      "statusCode": "Kode status",
+      "path": "Halaman",
+      "time": "Waktu kejadian",
+      "reload": "Muat ulang halaman"
+    },
+    "generic": {
+      "badge": "Error {code}",
+      "title": "Terjadi kesalahan",
+      "description": "Terjadi kesalahan tak terduga. Silakan coba lagi, atau kembali ke beranda."
+    }
   },
   "state": {
     "loading": "Memuat…",

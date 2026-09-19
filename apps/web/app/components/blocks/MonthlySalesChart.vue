@@ -62,12 +62,16 @@ const options = computed<ApexOptions>(() => ({
 </script>
 
 <template>
-  <div class="rounded-lg border border-outline-variant bg-card p-5 sm:p-6">
+  <!-- h-full + flex-col: the card fills the (stretched) grid cell and the
+       chart area flexes to whatever height is left beside MonthlyTarget. -->
+  <div class="flex h-full flex-col rounded-lg border border-outline-variant bg-card p-5 sm:p-6">
     <div class="mb-4 flex items-center justify-between">
       <h2 class="text-sm font-semibold text-foreground">Monthly Sales</h2>
     </div>
     <ClientOnly>
-      <apexchart type="bar" height="320" :options="options" :series="series" />
+      <div class="min-h-[320px] flex-1">
+        <apexchart type="bar" height="100%" :options="options" :series="series" />
+      </div>
       <template #fallback>
         <div class="h-[320px] animate-pulse rounded-lg bg-muted" />
       </template>

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import type { PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser';
 import { UserRole, type ApiResponse, type User } from '@nuxion/shared-types';
+import { xhrProgressEnd, xhrProgressStart } from '~/lib/xhr-progress';
 
 interface SessionPayload {
   accessToken: string;
@@ -22,6 +23,27 @@ export type LoginResult = SessionPayload | TwoFactorChallenge;
 export interface PasskeyLoginOptions {
   challengeId: string;
   options: PublicKeyCredentialRequestOptionsJSON;
+}
+
+/**
+ * Bare $fetch with the YouTube-style top progress bar — for the auth store's
+ * user-visible calls that deliberately bypass useApi (see login below).
+ * `refresh()` stays untracked: it runs silently on load / token expiry.
+ */
+async function trackedFetch<T>(
+  apiBase: string,
+  url: string,
+  opts: {
+    method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
+    body?: Record<string, unknown>;
+  } = {},
+): Promise<T> {
+  xhrProgressStart();
+  try {
+    return await $fetch<T>(url, { baseURL: apiBase, credentials: 'include', ...opts });
+  } finally {
+    xhrProgressEnd();
+  }
 }
 
 /**
@@ -66,12 +88,10 @@ export const useAuthStore = defineStore('auth', {
      * and call verifyTwoFactor() to finish.
      */
     async login(email: string, password: string): Promise<LoginResult> {
-      // Bare $fetch (not useApi) so login/refresh never recurse through the 401 retry.
-      const res = await $fetch<ApiResponse<LoginResult>>('/auth/login', {
-        baseURL: this.apiBase(),
+      // trackedFetch (bare $fetch) so login never recurses through the 401 retry.
+      const res = await trackedFetch<ApiResponse<LoginResult>>(this.apiBase(), '/auth/login', {
         method: 'POST',
         body: { email, password },
-        credentials: 'include',
       });
       if (!res.success) throw new Error('Login failed');
       if ('twoFactorRequired' in res.data) return res.data;
@@ -81,35 +101,36 @@ export const useAuthStore = defineStore('auth', {
 
     /** Second step of login: consume the challenge with a TOTP/recovery code. */
     async verifyTwoFactor(challengeId: string, code: string): Promise<void> {
-      const res = await $fetch<ApiResponse<SessionPayload>>('/auth/2fa/verify', {
-        baseURL: this.apiBase(),
-        method: 'POST',
-        body: { challengeId, code },
-        credentials: 'include',
-      });
+      const res = await trackedFetch<ApiResponse<SessionPayload>>(
+        this.apiBase(),
+        '/auth/2fa/verify',
+        {
+          method: 'POST',
+          body: { challengeId, code },
+        },
+      );
       if (!res.success) throw new Error('Two-factor verification failed');
       this.setSession(res.data);
     },
 
     /** Fetch a discoverable-credential login challenge (passkey sign-in). */
     async passkeyLoginOptions(): Promise<PasskeyLoginOptions> {
-      const res = await $fetch<ApiResponse<PasskeyLoginOptions>>('/auth/webauthn/login/options', {
-        baseURL: this.apiBase(),
-        method: 'POST',
-        credentials: 'include',
-      });
+      const res = await trackedFetch<ApiResponse<PasskeyLoginOptions>>(
+        this.apiBase(),
+        '/auth/webauthn/login/options',
+        { method: 'POST' },
+      );
       if (!res.success) throw new Error('Could not start passkey login');
       return res.data;
     },
 
     /** Verify the browser's assertion; returns a session or a 2FA challenge. */
     async passkeyLoginVerify(challengeId: string, response: unknown): Promise<LoginResult> {
-      const res = await $fetch<ApiResponse<LoginResult>>('/auth/webauthn/login/verify', {
-        baseURL: this.apiBase(),
-        method: 'POST',
-        body: { challengeId, response },
-        credentials: 'include',
-      });
+      const res = await trackedFetch<ApiResponse<LoginResult>>(
+        this.apiBase(),
+        '/auth/webauthn/login/verify',
+        { method: 'POST', body: { challengeId, response } },
+      );
       if (!res.success) throw new Error('Passkey verification failed');
       if ('twoFactorRequired' in res.data) return res.data;
       this.setSession(res.data);
@@ -118,12 +139,14 @@ export const useAuthStore = defineStore('auth', {
 
     /** Self-service registration (when enabled on the API). Logs the user in. */
     async register(name: string, email: string, password: string) {
-      const res = await $fetch<ApiResponse<SessionPayload>>('/auth/register', {
-        baseURL: this.apiBase(),
-        method: 'POST',
-        body: { name, email, password },
-        credentials: 'include',
-      });
+      const res = await trackedFetch<ApiResponse<SessionPayload>>(
+        this.apiBase(),
+        '/auth/register',
+        {
+          method: 'POST',
+          body: { name, email, password },
+        },
+      );
       if (!res.success) throw new Error('Registration failed');
       this.setSession(res.data);
     },
@@ -149,11 +172,7 @@ export const useAuthStore = defineStore('auth', {
 
     async logout() {
       try {
-        await $fetch('/auth/logout', {
-          baseURL: this.apiBase(),
-          method: 'POST',
-          credentials: 'include',
-        });
+        await trackedFetch(this.apiBase(), '/auth/logout', { method: 'POST' });
       } catch {
         // Ignore — clear local state regardless.
       }
@@ -162,17 +181,16 @@ export const useAuthStore = defineStore('auth', {
 
     /** Request a password-reset email. Resolves regardless of account existence. */
     async forgotPassword(email: string): Promise<void> {
-      await $fetch<ApiResponse<{ message: string }>>('/auth/forgot-password', {
-        baseURL: this.apiBase(),
-        method: 'POST',
-        body: { email },
-      });
+      await trackedFetch<ApiResponse<{ message: string }>>(
+        this.apiBase(),
+        '/auth/forgot-password',
+        { method: 'POST', body: { email } },
+      );
     },
 
     /** Complete a password reset with the emailed token. Throws on invalid/expired. */
     async resetPassword(token: string, newPassword: string): Promise<void> {
-      await $fetch<ApiResponse<{ message: string }>>('/auth/reset-password', {
-        baseURL: this.apiBase(),
+      await trackedFetch<ApiResponse<{ message: string }>>(this.apiBase(), '/auth/reset-password', {
         method: 'POST',
         body: { token, newPassword },
       });

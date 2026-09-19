@@ -20,7 +20,7 @@ const props = defineProps<{
   class?: HTMLAttributes['class'];
 }>();
 
-const model = defineModel<string>('modelValue', { default: undefined });
+const model = defineModel<string>('modelValue');
 </script>
 
 <template>

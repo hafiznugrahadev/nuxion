@@ -23,7 +23,7 @@ const props = withDefaults(
   { type: 'single' },
 );
 
-const model = defineModel<string | string[]>('modelValue', { default: undefined });
+const model = defineModel<string | string[]>('modelValue');
 </script>
 
 <template>

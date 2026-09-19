@@ -2,14 +2,14 @@
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
-import Placeholder from '@tiptap/extension-placeholder';
+import { Placeholder } from '@tiptap/extensions';
 import { toast } from 'vue-sonner';
 import { useUpload } from '~/composables/useUpload';
 import type { HTMLAttributes } from 'vue';
 import { cn } from '~/lib/utils';
 
 /**
- * MD3 WYSIWYG editor (tiptap v2). Outlined-field chrome, toolbar of icon
+ * MD3 WYSIWYG editor (tiptap v3). Outlined-field chrome, toolbar of icon
  * toggles (aria-pressed → secondary-container tonal, never data-state: the
  * toolbar buttons are not as-child merged, but aria-pressed stays the
  * collision-proof convention), undo/redo, and image upload through the
@@ -38,7 +38,12 @@ const editor = useEditor({
   extensions: [
     StarterKit,
     Image.configure({ inline: false, allowBase64: false }),
-    Placeholder.configure({ placeholder: props.placeholder || '' }),
+    // v3 default empty-node class is `is-empty`; keep the v2 class the
+    // main.css placeholder rule targets.
+    Placeholder.configure({
+      placeholder: props.placeholder || '',
+      emptyEditorClass: 'is-editor-empty',
+    }),
   ],
   editorProps: {
     attributes: {
@@ -54,7 +59,8 @@ watch(
   () => props.modelValue,
   (next) => {
     if (editor.value && next !== editor.value.getHTML())
-      editor.value.commands.setContent(next || '', false);
+      // tiptap v3: emitUpdate pindah ke object options (default-nya berubah jadi true).
+      editor.value.commands.setContent(next || '', { emitUpdate: false });
   },
 );
 

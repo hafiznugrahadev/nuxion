@@ -187,6 +187,11 @@ export default defineNuxtConfig({
       apiBase: process.env.NUXT_PUBLIC_API_BASE ?? 'http://localhost:4400/api',
       // Mirror the API's AUTH_REGISTRATION_ENABLED so the UI can show/hide sign-up.
       registrationEnabled: process.env.NUXT_PUBLIC_REGISTRATION_ENABLED === 'true',
+      // Mirror AUTH_2FA_ENABLED — when true, the auth middleware funnels users
+      // without an activated authenticator to /two-factor/setup.
+      twoFactorEnabled: process.env.NUXT_PUBLIC_2FA_ENABLED === 'true',
+      // Mirror AUTH_PASSKEY_ENABLED — toggles the passkey UI (login + management).
+      passkeyEnabled: process.env.NUXT_PUBLIC_PASSKEY_ENABLED === 'true',
     },
   },
 

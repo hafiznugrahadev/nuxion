@@ -65,12 +65,13 @@ export default defineNuxtConfig({
       // tag priority than app.head, so this wins). Canonical/OG injection
       // from mergeWithSiteConfig is unaffected.
       titleTemplate: '%s',
-      // MD3 tokens resolve under [data-theme]; setting it on the SSR'd <html>
-      // means the scheme is defined on the very first paint, and the script
-      // below only ever flips theme to dark.
-      htmlAttrs: {
-        'data-theme': 'light',
-      },
+      // NOTE: do NOT put `data-theme` in htmlAttrs. SSR'ing a static
+      // `data-theme="light"` here makes unhead re-assert it during hydration,
+      // clobbering whatever the anti-FOUC script below resolved pre-paint —
+      // every reload landed on light even with dark/system mode. The inline
+      // script (synchronous, in <head>) sets the attribute before first paint,
+      // and :root in main.css already defaults to the light tokens, so the
+      // attribute is simply absent from the SSR'd HTML.
       // Type system: Google Sans (UI) + Poppins (headings, see the heading
       // rule in main.css) + Material Symbols Outlined for icons. The icon
       // font uses display=block so ligature names never flash as raw text

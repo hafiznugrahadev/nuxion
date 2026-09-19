@@ -59,6 +59,7 @@
   },
   "error": {
     "backHome": "Kembali ke beranda",
+    "devDetails": "Detail pengembang",
     "notFound": {
       "badge": "Error 404 · Halaman hilang di orbit",
       "title": "Oops! Sepertinya Anda tersesat di luar angkasa.",

@@ -93,6 +93,29 @@ const statusMessage = computed(() =>
   variant.value === 'generic' ? props.error?.statusMessage || props.error?.message || '' : '',
 );
 
+/**
+ * Dev builds keep the raw message + stack on-screen for debugging (Nuxt's own
+ * overlay only covers some error classes; fatal ones land here). The
+ * import.meta.dev gate strips this from production bundles entirely.
+ */
+const devErrorDetails = computed(() => {
+  if (!import.meta.dev) return null;
+  const e = props.error;
+  if (!e) return null;
+  const lines: string[] = [];
+  const message = (e.message ?? '').trim();
+  const stack = (e.stack ?? '').trim();
+  // Nuxt often clones statusMessage into message, and Error.stack already
+  // starts with the message — avoid printing either twice.
+  if (e.statusMessage && e.statusMessage.trim() !== message) lines.push(e.statusMessage);
+  if (message && !stack.startsWith(message)) lines.push(message);
+  if (stack) {
+    if (lines.length) lines.push('');
+    lines.push(stack);
+  }
+  return lines.length ? lines.join('\n') : null;
+});
+
 /** Telemetry card (500): time only exists client-side, so fill it on mount. */
 const occurredAt = ref('—');
 const copied = ref(false);
@@ -375,6 +398,25 @@ useHead({
                 <dd class="font-mono text-sm font-semibold text-on-surface">{{ occurredAt }}</dd>
               </div>
             </dl>
+          </div>
+
+          <!-- Dev builds only: raw message + stack trace (stripped in prod). -->
+          <div
+            v-if="devErrorDetails"
+            class="mt-6 w-full max-w-xl rounded-xl border border-outline-variant/50 bg-surface-container-low p-4 shadow-sm"
+            data-testid="error-dev-details"
+          >
+            <div class="mb-2 flex items-center gap-1.5 text-sm font-semibold text-on-surface">
+              <MaterialSymbol
+                name="terminal"
+                :size="18"
+                class="text-brand-teal-deep dark:text-brand-mint"
+              />
+              {{ $t('error.devDetails') }}
+            </div>
+            <pre
+              class="max-h-64 overflow-auto rounded-lg bg-surface-container-lowest/80 p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap text-on-surface"
+              >{{ devErrorDetails }}</pre>
           </div>
 
           <!-- CTAs. -->

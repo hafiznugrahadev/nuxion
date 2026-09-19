@@ -59,6 +59,7 @@
   },
   "error": {
     "backHome": "Back to home",
+    "devDetails": "Developer details",
     "notFound": {
       "badge": "Error 404 · Page lost in orbit",
       "title": "Oops! You seem to be lost in space.",

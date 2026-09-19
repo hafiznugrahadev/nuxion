@@ -3,8 +3,11 @@ import { BaseRepository, PrismaDelegate } from '@common/repositories/base.reposi
 import { PrismaService } from '@infrastructure/database/prisma.service';
 import { UserEntity } from './entities/user.entity';
 
-/** A user row with its roles included and the password omitted. */
+/** A user row with its roles included and the secrets omitted. */
 export type UserWithRoles = Omit<UserEntity, 'roles'> & { roles: { name: string }[] };
+
+/** Secrets that must never leave the repository (SPEC: secrets omitted here). */
+const USER_SECRETS = { password: true, twoFactorSecret: true, recoveryCodes: true } as const;
 
 @Injectable()
 export class UsersRepository extends BaseRepository<UserEntity> {
@@ -22,7 +25,7 @@ export class UsersRepository extends BaseRepository<UserEntity> {
     return this.prisma.user.findUnique({
       where: { id },
       include: { roles: true },
-      omit: { password: true },
+      omit: USER_SECRETS,
     }) as unknown as Promise<UserWithRoles | null>;
   }
 
@@ -42,7 +45,7 @@ export class UsersRepository extends BaseRepository<UserEntity> {
     return this.prisma.user.create({
       data: { ...data, roles: { connect: roleNames.map((name) => ({ name })) } },
       include: { roles: true },
-      omit: { password: true },
+      omit: USER_SECRETS,
     }) as unknown as Promise<UserWithRoles>;
   }
 
@@ -58,7 +61,7 @@ export class UsersRepository extends BaseRepository<UserEntity> {
         ...(roleNames ? { roles: { set: roleNames.map((name) => ({ name })) } } : {}),
       },
       include: { roles: true },
-      omit: { password: true },
+      omit: USER_SECRETS,
     }) as unknown as Promise<UserWithRoles>;
   }
 }

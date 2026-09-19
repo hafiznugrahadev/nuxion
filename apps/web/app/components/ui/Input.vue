@@ -9,6 +9,10 @@ import { cn } from '~/lib/utils';
 const props = defineProps<{ class?: HTMLAttributes['class']; prefixIcon?: string }>();
 const model = defineModel<string | number>();
 
+// Fallthrough attrs (e.g. inputmode/maxlength from TextField) must reach the
+// <input>, not the wrapping div used when a prefix icon is present.
+defineOptions({ inheritAttrs: false });
+
 const BASE =
   'flex h-10 w-full rounded-sm border border-outline bg-transparent px-4 text-sm text-foreground transition-colors placeholder:text-on-surface-variant/85 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50';
 </script>
@@ -20,7 +24,7 @@ const BASE =
       :size="18"
       class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant"
     />
-    <input v-model="model" :class="cn(BASE, 'pl-10', props.class)" />
+    <input v-bind="$attrs" v-model="model" :class="cn(BASE, 'pl-10', props.class)" />
   </div>
-  <input v-else v-model="model" :class="cn(BASE, props.class)" />
+  <input v-else v-bind="$attrs" v-model="model" :class="cn(BASE, props.class)" />
 </template>

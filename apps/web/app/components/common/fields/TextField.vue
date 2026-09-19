@@ -17,6 +17,10 @@ const props = defineProps<{
   prefixIcon?: string;
   /** MD3 supporting text below the field; the error replaces it when present. */
   hint?: string;
+  /** HTML inputmode hint (e.g. 'numeric' for OTP entry). */
+  inputmode?: 'text' | 'numeric' | 'tel' | 'email' | 'url';
+  /** Hard character cap (e.g. OTP codes). */
+  maxlength?: number;
 }>();
 
 const { value, errorMessage } = useField<string>(toRef(props, 'name'));
@@ -34,6 +38,8 @@ const { value, errorMessage } = useField<string>(toRef(props, 'name'));
       :type="type ?? 'text'"
       :placeholder="placeholder"
       :prefix-icon="prefixIcon"
+      :inputmode="inputmode"
+      :maxlength="maxlength"
       :class="
         cn(errorMessage && 'border-destructive focus:border-destructive focus:ring-destructive')
       "

@@ -10,6 +10,8 @@ import { NotificationsModule } from '@modules/notifications/notifications.module
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
+import { TwoFactorService } from './two-factor.service';
+import { WebAuthnService } from './webauthn.service';
 
 @Module({
   imports: [
@@ -30,6 +32,8 @@ import { JwtStrategy } from './jwt.strategy';
   providers: [
     AuthService,
     JwtStrategy,
+    TwoFactorService,
+    WebAuthnService,
     // Secure-by-default: global JWT + role guards. Use @Public() / @Roles() to vary.
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },

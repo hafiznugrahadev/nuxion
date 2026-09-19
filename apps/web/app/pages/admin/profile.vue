@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Explicit barrel import — features/ is NOT auto-imported (SPEC boundary rule).
 import { ChangePasswordCard, PersonalInfoCard, ProfileHeaderCard, useMe } from '~/features/profile';
+import { SecuritySection } from '~/features/security';
 import { APP_NAME } from '~/lib/constants';
 
 definePageMeta({ layout: 'admin', middleware: ['auth'] });
@@ -26,6 +27,7 @@ const { data: user, isLoading, isError, error, refetch } = useMe();
       <ProfileHeaderCard :user="user" />
       <PersonalInfoCard :user="user" />
       <ChangePasswordCard />
+      <SecuritySection />
     </div>
   </div>
 </template>

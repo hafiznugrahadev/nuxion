@@ -17,8 +17,9 @@
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
-    "@nuxtjs/i18n": "^10.4.0",
     "@nuxion/shared-types": "workspace:*",
+    "@nuxtjs/i18n": "^10.4.0",
+    "@simplewebauthn/browser": "^14.0.0",
     "@tanstack/vue-query": "^5.62.0",
     "@tanstack/vue-table": "^8.20.5",
     "@tiptap/extension-image": "^3.31.3",
@@ -52,6 +53,7 @@
     "@vueuse/nuxt": "^14.4.0",
     "eslint": "^10.9.1",
     "nuxt": "^4.5.2",
+    "otplib": "^13.5.0",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.2",
     "vitest": "^4.1.8",

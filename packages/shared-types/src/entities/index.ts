@@ -18,4 +18,6 @@ export interface User extends BaseModel {
   avatarUrl?: string | null;
   /** Role names the user holds (e.g. ['ADMIN', 'USER']). */
   roles: string[];
+  /** Whether TOTP two-factor auth is active on the account. */
+  twoFactorEnabled: boolean;
 }

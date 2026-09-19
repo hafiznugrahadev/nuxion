@@ -186,6 +186,35 @@ export class EnvironmentVariables {
   @IsOptional()
   AUTH_REGISTRATION_ENABLED = false;
 
+  // ── Two-factor auth (TOTP). Mandatory for every account when enabled; the
+  //    whole mechanism (challenge on login, setup endpoints) is dormant when off.
+  @Transform(toBool)
+  @IsBoolean()
+  @IsOptional()
+  AUTH_2FA_ENABLED = false;
+
+  // ── Passkeys (WebAuthn). Independent of TOTP: usable for sign-in even while
+  //    AUTH_2FA_ENABLED=false. The ceremony runs on the web app's origin; this
+  //    API only generates/verifies challenges, hence the RP/origin vars.
+  @Transform(toBool)
+  @IsBoolean()
+  @IsOptional()
+  AUTH_PASSKEY_ENABLED = false;
+
+  @IsString()
+  @IsOptional()
+  WEBAUTHN_RP_NAME = 'Nuxion';
+
+  // Relying Party ID = the web app's registrable domain (defaults to APP_URL's host).
+  @IsString()
+  @IsOptional()
+  WEBAUTHN_RP_ID?: string;
+
+  // Comma-separated list of origins the ceremony may run on (defaults to APP_URL).
+  @IsString()
+  @IsOptional()
+  WEBAUTHN_ORIGINS?: string;
+
   // ── Database backups (read-only; consumed by `db:restore`) ─────────────────
   // All optional: the app must boot fine without any backup config. The CLI
   // validates what it actually needs at run time.

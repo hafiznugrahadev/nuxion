@@ -21,16 +21,23 @@ import {
   hashToken,
 } from '@common/utils/token.util';
 import type { JwtPayload } from './jwt.strategy';
+import { TwoFactorService } from './two-factor.service';
+import { toSessionUser, type SessionUser, type UserWithRoles } from './session-user';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
-export interface SessionUser {
-  id: string;
-  email: string;
-  name: string;
-  avatarUrl: string | null;
-  roles: string[];
+export type { SessionUser } from './session-user';
+
+/**
+ * Returned by login when the password step succeeded but the account has TOTP
+ * enabled: no tokens are issued until /auth/2fa/verify consumes the challenge.
+ */
+export interface TwoFactorLoginChallenge {
+  twoFactorRequired: true;
+  challengeId: string;
 }
+
+export type LoginResult = AuthTokens | TwoFactorLoginChallenge;
 
 export interface AuthTokens {
   accessToken: string;
@@ -49,15 +56,24 @@ export class AuthService {
     private readonly mail: MailService,
     private readonly users: UsersService,
     private readonly notifications: NotificationsService,
+    private readonly twoFactor: TwoFactorService,
   ) {}
 
-  async login(dto: LoginDto): Promise<AuthTokens> {
+  async login(dto: LoginDto): Promise<LoginResult> {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
       include: { roles: true },
     });
     if (!user || !(await verifyPassword(dto.password, user.password))) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+    // Accounts with TOTP enabled (and the feature flag on) stop here — the
+    // session is only issued after the challenge is verified. Users who have
+    // NOT set 2FA up yet still get a session; the web middleware funnels them
+    // to the setup page instead.
+    if (this.config.get<boolean>('app.twoFactor.enabled') && user.twoFactorEnabled) {
+      const challengeId = await this.twoFactor.issueLoginChallenge(user.id);
+      return { twoFactorRequired: true, challengeId };
     }
     return this.issueTokens(user, generateTokenFamily());
   }
@@ -215,18 +231,21 @@ export class AuthService {
     return this.config.get<number>('app.jwt.refreshExpiresInDays') ?? 7;
   }
 
-  private async issueTokens(
-    user: {
-      id: string;
-      email: string;
-      name: string;
-      avatarUrl: string | null;
-      roles: { name: string }[];
-    },
-    familyId: string,
-  ): Promise<AuthTokens> {
-    const roles = user.roles.map((r) => r.name);
-    const payload: JwtPayload = { sub: user.id, email: user.email, roles };
+  /**
+   * Issue a brand-new session for an already-verified user — used by the 2FA
+   * and passkey login completions, where the password/credential check happens
+   * in a dedicated service before tokens may be minted.
+   */
+  async issueSession(user: UserWithRoles): Promise<AuthTokens> {
+    return this.issueTokens(user, generateTokenFamily());
+  }
+
+  private async issueTokens(user: UserWithRoles, familyId: string): Promise<AuthTokens> {
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      roles: user.roles.map((r) => r.name),
+    };
     const accessToken = await this.jwt.signAsync(payload);
 
     const refreshToken = generateRefreshToken();
@@ -235,10 +254,6 @@ export class AuthService {
       data: { userId: user.id, familyId, tokenHash: hashToken(refreshToken), expiresAt },
     });
 
-    return {
-      accessToken,
-      refreshToken,
-      user: { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl, roles },
-    };
+    return { accessToken, refreshToken, user: toSessionUser(user) };
   }
 }

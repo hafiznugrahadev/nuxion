@@ -22,12 +22,14 @@ function makeService(redisGet: unknown = null) {
 const query = { page: 1, limit: 10, order: 'desc', sortBy: 'createdAt' } as QueryUserDto;
 
 describe('UsersService.findAll', () => {
-  it('omits the password column from the query', async () => {
+  it('omits secret columns (password, TOTP secret, recovery hashes) from the query', async () => {
     const { service, repository } = makeService();
     await service.findAll(query);
     expect(repository.paginate).toHaveBeenCalledWith(
       query,
-      expect.objectContaining({ omit: { password: true } }),
+      expect.objectContaining({
+        omit: { password: true, twoFactorSecret: true, recoveryCodes: true },
+      }),
     );
   });
 

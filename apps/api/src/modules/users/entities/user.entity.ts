@@ -7,4 +7,5 @@ export class UserEntity extends BaseEntity {
   @ApiProperty() name!: string;
   @ApiPropertyOptional({ nullable: true }) avatarUrl?: string | null;
   @ApiProperty({ type: [String], example: ['ADMIN', 'USER'] }) roles!: string[];
+  @ApiProperty({ example: false }) twoFactorEnabled!: boolean;
 }

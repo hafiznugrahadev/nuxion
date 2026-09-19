@@ -65,12 +65,13 @@ export default defineNuxtConfig({
       // tag priority than app.head, so this wins). Canonical/OG injection
       // from mergeWithSiteConfig is unaffected.
       titleTemplate: '%s',
-      // MD3 tokens resolve under [data-theme]; setting it on the SSR'd <html>
-      // means the scheme is defined on the very first paint, and the script
-      // below only ever flips theme to dark.
-      htmlAttrs: {
-        'data-theme': 'light',
-      },
+      // NOTE: do NOT put `data-theme` in htmlAttrs. SSR'ing a static
+      // `data-theme="light"` here makes unhead re-assert it during hydration,
+      // clobbering whatever the anti-FOUC script below resolved pre-paint —
+      // every reload landed on light even with dark/system mode. The inline
+      // script (synchronous, in <head>) sets the attribute before first paint,
+      // and :root in main.css already defaults to the light tokens, so the
+      // attribute is simply absent from the SSR'd HTML.
       // Type system: Google Sans (UI) + Poppins (headings, see the heading
       // rule in main.css) + Material Symbols Outlined for icons. The icon
       // font uses display=block so ligature names never flash as raw text
@@ -187,6 +188,11 @@ export default defineNuxtConfig({
       apiBase: process.env.NUXT_PUBLIC_API_BASE ?? 'http://localhost:4400/api',
       // Mirror the API's AUTH_REGISTRATION_ENABLED so the UI can show/hide sign-up.
       registrationEnabled: process.env.NUXT_PUBLIC_REGISTRATION_ENABLED === 'true',
+      // Mirror AUTH_2FA_ENABLED — when true, the auth middleware funnels users
+      // without an activated authenticator to /two-factor/setup.
+      twoFactorEnabled: process.env.NUXT_PUBLIC_2FA_ENABLED === 'true',
+      // Mirror AUTH_PASSKEY_ENABLED — toggles the passkey UI (login + management).
+      passkeyEnabled: process.env.NUXT_PUBLIC_PASSKEY_ENABLED === 'true',
     },
   },
 

@@ -8,6 +8,18 @@ interface ApiCallOptions extends Record<string, unknown> {
 }
 
 /**
+ * Pre-auth endpoints excluded from the 401-retry: retrying them with a refreshed
+ * token makes no sense (they mint the tokens) and would recurse. Authenticated
+ * endpoints under /auth/* (e.g. /auth/2fa/setup, /auth/passkeys) DO get the retry.
+ */
+const NO_RETRY_AUTH_ROUTES = [
+  '/auth/login',
+  '/auth/refresh',
+  '/auth/2fa/verify',
+  '/auth/webauthn/login/',
+];
+
+/**
  * Runtime-config-aware API client with a transparent 401 → refresh → retry.
  * When a request fails with 401 (expired access token), it silently calls
  * `auth.refresh()` once and replays the request with the new token. Auth routes
@@ -26,8 +38,8 @@ export function useApi() {
       return await client<T>(url, options as never);
     } catch (err) {
       const status = (err as { response?: { status?: number } })?.response?.status;
-      const isAuthRoute = url.startsWith('/auth/');
-      if (status === 401 && !isAuthRoute) {
+      const noRetry = NO_RETRY_AUTH_ROUTES.some((route) => url.startsWith(route));
+      if (status === 401 && !noRetry) {
         const refreshed = await auth.refresh();
         if (refreshed) return await client<T>(url, options as never);
       }

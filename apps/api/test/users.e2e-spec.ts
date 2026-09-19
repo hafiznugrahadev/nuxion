@@ -221,14 +221,15 @@ describe('Users (e2e)', () => {
       expect(res.body.data).not.toHaveProperty('password');
     });
 
-    it('returns 409 when email already exists', async () => {
+    it('returns 400 when email already exists (async IsUnique validation)', async () => {
       const res = await request(server)
         .post('/api/users')
         .set('Authorization', `Bearer ${superAdminToken}`)
         .send(newUser)
-        .expect(409);
+        .expect(400);
 
       expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('email already exists');
     });
 
     it('returns 400 for missing required fields', async () => {

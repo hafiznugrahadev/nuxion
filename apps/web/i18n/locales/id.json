@@ -55,7 +55,34 @@
     "requestNewLink": "Minta tautan baru",
     "resetSuccess": "Kata sandi berhasil direset. Silakan masuk.",
     "resetInvalidExpired": "Tautan reset ini tidak valid atau telah kedaluwarsa.",
-    "invalidToken": "Token reset tidak valid atau tidak ada."
+    "invalidToken": "Token reset tidak valid atau tidak ada.",
+    "twoFactor": {
+      "title": "Verifikasi dua langkah",
+      "subtitle": "Masukkan kode 6 digit dari aplikasi authenticator Anda.",
+      "recoverySubtitle": "Masukkan salah satu kode pemulihan Anda.",
+      "code": "Kode verifikasi",
+      "recoveryCode": "Kode pemulihan",
+      "useRecovery": "Gunakan kode pemulihan",
+      "useTotp": "Gunakan kode authenticator",
+      "invalidCode": "Kode salah atau kedaluwarsa.",
+      "back": "Kembali ke halaman masuk",
+      "otpRequired": "Masukkan kode authenticator untuk menyelesaikan login.",
+      "setupTitle": "Siapkan autentikasi dua langkah",
+      "setupSubtitle": "Akun Anda memerlukan aplikasi authenticator sebelum dapat melanjutkan.",
+      "stepScan": "Pindai kode QR dengan aplikasi authenticator Anda (Google Authenticator, Authy, 1Password…).",
+      "stepEnter": "Masukkan kode 6 digit yang muncul untuk konfirmasi.",
+      "qrAlt": "Kode QR TOTP",
+      "manualSecret": "Tidak bisa memindai? Masukkan secret ini manual:",
+      "activate": "Aktifkan",
+      "activated": "Autentikasi dua langkah aktif.",
+      "activatedTitle": "Simpan kode pemulihan Anda",
+      "continue": "Lanjutkan",
+      "signOut": "Keluar saja"
+    },
+    "passkey": {
+      "signIn": "Masuk dengan passkey",
+      "failed": "Login passkey gagal."
+    }
   },
   "error": {
     "backHome": "Kembali ke beranda",
@@ -340,5 +367,55 @@
     "placeholder": "Cari atau ketik perintah…",
     "noResults": "Tidak ada hasil ditemukan.",
     "navigation": "Navigasi"
+  },
+  "common": {
+    "cancel": "Batal",
+    "done": "Selesai",
+    "working": "Memproses…"
+  },
+  "security": {
+    "twoFactor": {
+      "title": "Autentikasi dua langkah",
+      "subtitle": "Kode sekali pakai dari aplikasi authenticator wajib saat login.",
+      "active": "Aktif",
+      "pending": "Belum aktif",
+      "incomplete": "Autentikasi dua langkah wajib untuk akun Anda.",
+      "setUp": "Selesaikan penyiapan"
+    },
+    "recovery": {
+      "title": "Buat ulang kode pemulihan",
+      "description": "Konfirmasi password Anda untuk membuat set kode pemulihan baru. Kode lama tidak berlaku lagi.",
+      "subtitle": "Setiap kode pemulihan hanya bisa dipakai sekali jika Anda kehilangan akses authenticator.",
+      "regenerate": "Buat ulang kode",
+      "regenerated": "Kode pemulihan berhasil dibuat ulang.",
+      "failed": "Gagal membuat ulang kode pemulihan.",
+      "showOnce": "Kode ini hanya ditampilkan sekali — simpan di tempat aman.",
+      "copy": "Salin kode",
+      "copied": "Tersalin ke clipboard.",
+      "password": "Password saat ini"
+    },
+    "passkeys": {
+      "title": "Passkey",
+      "subtitle": "Login instan dengan Touch ID, Windows Hello, atau kunci keamanan.",
+      "add": "Tambah passkey",
+      "addTitle": "Tambah passkey",
+      "addDescription": "Beri nama perangkat, lalu ikuti perintah browser Anda.",
+      "nameLabel": "Nama perangkat (opsional)",
+      "namePlaceholder": "mis. MacBook Touch ID",
+      "nameHint": "Ditampilkan di daftar passkey agar mudah dikenali.",
+      "continue": "Lanjutkan",
+      "empty": "Belum ada passkey.",
+      "unnamed": "Passkey tanpa nama",
+      "lastUsed": "Terakhir dipakai {date}",
+      "neverUsed": "Belum pernah dipakai",
+      "addedOn": "Ditambahkan {date}",
+      "added": "Passkey ditambahkan.",
+      "addFailed": "Gagal menambahkan passkey.",
+      "remove": "Hapus",
+      "removeTitle": "Hapus passkey?",
+      "removeDescription": "Hapus \"{name}\"? Anda tidak bisa memakainya untuk login lagi.",
+      "removed": "Passkey dihapus.",
+      "removeFailed": "Gagal menghapus passkey."
+    }
   }
 }

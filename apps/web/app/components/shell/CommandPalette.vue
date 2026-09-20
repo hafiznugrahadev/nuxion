@@ -22,6 +22,7 @@ const allCommands = computed<Command[]>(() => [
     action: () => router.push('/admin/dashboard'),
   },
   { label: t('nav.users'), icon: 'group', action: () => router.push('/admin/users') },
+  { label: t('nav.settings'), icon: 'settings', action: () => router.push('/admin/settings') },
   { label: t('nav.profile'), icon: 'person', action: () => router.push('/admin/profile') },
 ]);
 

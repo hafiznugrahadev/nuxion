@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { toast } from 'vue-sonner';
 import type { DropdownMenuItemDef } from '~/components/ui/DropdownMenu.vue';
-import { APP_NAME } from '~/lib/constants';
+import { useBranding } from '~/composables/useBranding';
 
 definePageMeta({ layout: 'admin', middleware: ['auth'] });
-useHead({ title: `Components · ${APP_NAME}` });
+const branding = useBranding();
+useHead({ title: () => `Components · ${branding.value.appName}` });
 
 // ── local demo state ────────────────────────────────────────────────────────
 const progress = ref(72);

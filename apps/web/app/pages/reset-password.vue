@@ -5,11 +5,12 @@ import { toTypedSchema } from '@vee-validate/zod';
 import { z } from 'zod';
 import { toast } from 'vue-sonner';
 import { useAuthStore } from '~/stores/auth';
-import { APP_NAME } from '~/lib/constants';
+import { useBranding } from '~/composables/useBranding';
 
 definePageMeta({ layout: 'auth' });
 const { t } = useI18n();
-useHead({ title: `Reset Password · ${APP_NAME}` });
+const branding = useBranding();
+useHead({ title: () => `Reset Password · ${branding.value.appName}` });
 
 const auth = useAuthStore();
 const route = useRoute();

@@ -7,7 +7,7 @@ import { toast } from 'vue-sonner';
 import { useSecurityApi, type TwoFactorSetupPayload } from '~/features/security';
 import { useAuthStore } from '~/stores/auth';
 import { intendedRedirect } from '~/lib/intended-redirect';
-import { APP_NAME } from '~/lib/constants';
+import { useBranding } from '~/composables/useBranding';
 
 /**
  * Forced TOTP setup. When AUTH_2FA_ENABLED is on, the auth middleware keeps
@@ -15,7 +15,8 @@ import { APP_NAME } from '~/lib/constants';
  * hatch is signing out — activation itself is the only way forward.
  */
 definePageMeta({ layout: 'auth', middleware: ['auth'] });
-useHead({ title: `Two-Factor Setup · ${APP_NAME}` });
+const branding = useBranding();
+useHead({ title: () => `Two-Factor Setup · ${branding.value.appName}` });
 
 const { t } = useI18n();
 const auth = useAuthStore();

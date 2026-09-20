@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { APP_NAME } from '~/lib/constants';
+import { useBranding } from '~/composables/useBranding';
 
 definePageMeta({ layout: 'admin', middleware: ['auth'] });
-useHead({ title: `Dashboard · ${APP_NAME}` });
+const branding = useBranding();
+useHead({ title: () => `Dashboard · ${branding.value.appName}` });
 
 const { t } = useI18n();
 

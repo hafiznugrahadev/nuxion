@@ -5,11 +5,12 @@ import { toTypedSchema } from '@vee-validate/zod';
 import { z } from 'zod';
 import { toast } from 'vue-sonner';
 import { useAuthStore } from '~/stores/auth';
-import { APP_NAME } from '~/lib/constants';
+import { useBranding } from '~/composables/useBranding';
 
 definePageMeta({ layout: 'auth', middleware: ['guest'] });
 const { t } = useI18n();
-useHead({ title: `Sign Up · ${APP_NAME}` });
+const branding = useBranding();
+useHead({ title: () => `Sign Up · ${branding.value.appName}` });
 
 const auth = useAuthStore();
 const config = useRuntimeConfig();

@@ -172,6 +172,10 @@ services:
       # Client-side calls hit the API's OrbStack domain.
       NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-http://localhost:${API_PORT:-8000}/api}
       NUXT_PUBLIC_REGISTRATION_ENABLED: ${REGISTRATION_ENABLED:-true}
+      # Server-side (SSR) fetch base: plain http over the compose network —
+      # node/undici rejects the *.orb.local self-signed https CA the browser
+      # trusts, which would silently break SSR data (e.g. branding).
+      NUXT_API_INTERNAL_BASE: http://api:${API_PORT:-8000}/api
       # Mirrors the API's AUTH_2FA_ENABLED / AUTH_PASSKEY_ENABLED so the UI can
       # show the OTP step, setup funnel and passkey buttons.
       NUXT_PUBLIC_2FA_ENABLED: ${AUTH_2FA_ENABLED:-false}

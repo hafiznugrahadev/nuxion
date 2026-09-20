@@ -2,7 +2,9 @@
 import { computed, onMounted, ref } from 'vue';
 import type { NuxtError } from '#app';
 import { useAuthStore } from '~/stores/auth';
-import { APP_NAME } from '~/lib/constants';
+import { useBranding } from '~/composables/useBranding';
+
+const branding = useBranding();
 
 /*
  * Dedicated error page (404 / 403 / 500 + generic fallback), adapted from the
@@ -175,7 +177,7 @@ async function copyDetails() {
 }
 
 useHead({
-  title: `${props.error?.statusCode ?? 500} · ${APP_NAME}`,
+  title: `${props.error?.statusCode ?? 500} · ${branding.value.appName}`,
   meta: [{ name: 'robots', content: 'noindex' }],
 });
 </script>
@@ -190,7 +192,7 @@ useHead({
         <a href="/" class="flex shrink-0 items-center gap-3" @click.prevent="go('/')">
           <BrandLogo class="h-8" />
           <span class="text-base font-semibold tracking-tight text-on-surface">
-            {{ APP_NAME }}
+            {{ branding.appName }}
           </span>
         </a>
         <div class="flex items-center gap-2">
@@ -549,7 +551,7 @@ useHead({
 
     <footer class="border-t border-outline-variant/40 py-4">
       <p class="mx-auto max-w-7xl px-4 text-center text-xs text-on-surface-variant sm:px-6">
-        © {{ year }} {{ APP_NAME }}
+        © {{ year }} {{ branding.appName }}
       </p>
     </footer>
   </div>

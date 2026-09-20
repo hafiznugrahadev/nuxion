@@ -1,5 +1,21 @@
 <script setup lang="ts">
 import { Toaster } from 'vue-sonner';
+import { useBranding } from '~/composables/useBranding';
+
+// Favicon lives here (not as static nuxt.config links) so the uploaded
+// branding favicon wins once set; the state is SSR-seeded, so the right icon
+// is in the HTML from the first paint.
+const branding = useBranding();
+useHead({
+  link: [
+    {
+      rel: 'icon',
+      type: 'image/png',
+      href: () => branding.value.faviconUrl || '/favicon.png',
+    },
+    { rel: 'apple-touch-icon', href: () => branding.value.faviconUrl || '/apple-touch-icon.png' },
+  ],
+});
 </script>
 
 <template>

@@ -7,11 +7,12 @@ import { toast } from 'vue-sonner';
 import { startAuthentication } from '@simplewebauthn/browser';
 import { useAuthStore, type TwoFactorChallenge } from '~/stores/auth';
 import { intendedRedirect } from '~/lib/intended-redirect';
-import { APP_NAME } from '~/lib/constants';
+import { useBranding } from '~/composables/useBranding';
 
 definePageMeta({ layout: 'auth', middleware: ['guest'] });
 const { t } = useI18n();
-useHead({ title: `Sign In · ${APP_NAME}` });
+const branding = useBranding();
+useHead({ title: () => `Sign In · ${branding.value.appName}` });
 
 const auth = useAuthStore();
 const route = useRoute();

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { toast } from 'vue-sonner';
 import { useAuthStore } from '~/stores/auth';
-import { APP_NAME } from '~/lib/constants';
+import { useBranding } from '~/composables/useBranding';
 
 // Public landing page — no auth required. Redesign after a Google Stitch
 // mockup, mapped onto the kit's MD3 lime tokens. Every number shown here is a
@@ -12,7 +12,8 @@ const auth = useAuthStore();
 const { t } = useI18n();
 
 // Judul tab mengikuti locale aktif (getter = reaktif saat bahasa diganti).
-useHead({ title: () => t('home.metaTitle', { app: APP_NAME }) });
+const branding = useBranding();
+useHead({ title: () => t('home.metaTitle', { app: branding.value.appName }) });
 
 // Meta description (juga dipakai untuk og:description oleh @nuxtjs/seo).
 useSeoMeta({ description: () => t('home.metaDescription') });
@@ -262,7 +263,7 @@ async function copy(textToCopy: string) {
               class="inline-flex cursor-default items-center gap-1.5 rounded-full bg-secondary-container px-4 py-0.5 text-xs font-medium text-on-secondary-container shadow-sm"
             >
               <BrandLogo class="h-4" />
-              <span>{{ APP_NAME }}</span>
+              <span>{{ branding.appName }}</span>
               <span class="mx-1 h-1.5 w-1.5 rounded-full bg-brand-teal" aria-hidden="true" />
               <span class="font-mono text-[11px] text-on-surface-variant">{{ KIT_VERSION }}</span>
             </div>
@@ -1023,7 +1024,7 @@ NUXT_PUBLIC_API_BASE=http://localhost:8000/api</code></pre>
           <div class="flex items-center gap-3">
             <BrandLogo class="h-8" />
             <div>
-              <p class="text-base font-semibold text-on-surface">{{ APP_NAME }}</p>
+              <p class="text-base font-semibold text-on-surface">{{ branding.appName }}</p>
               <p class="text-xs text-on-surface-variant">{{ $t('home.footer.tagline') }}</p>
             </div>
           </div>
@@ -1056,7 +1057,7 @@ NUXT_PUBLIC_API_BASE=http://localhost:8000/api</code></pre>
         </div>
         <div class="flex flex-col items-center justify-between gap-3 pt-2 md:flex-row">
           <p class="text-xs text-on-surface-variant">
-            © {{ year }} {{ APP_NAME }} · {{ $t('home.footer.license') }}
+            © {{ year }} {{ branding.appName }} · {{ $t('home.footer.license') }}
           </p>
           <div class="flex items-center gap-2">
             <span

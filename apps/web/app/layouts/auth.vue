@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { APP_NAME } from '~/lib/constants';
+import { useBranding } from '~/composables/useBranding';
+
+const branding = useBranding();
 
 /*
  * Auth layout: form on the left, photo panel on the right (lg+ only, the
@@ -66,7 +68,7 @@ onMounted(() => {
       ></div>
       <div id="auth-brand" class="relative z-10 max-w-md px-8 text-center text-white">
         <BrandLogo class="mx-auto mb-6 h-16" />
-        <h2 class="text-2xl font-semibold tracking-tight">{{ APP_NAME }}</h2>
+        <h2 class="text-2xl font-semibold tracking-tight">{{ branding.appName }}</h2>
         <p class="mt-3 text-sm text-white/80">{{ $t('appTagline') }}</p>
       </div>
     </div>

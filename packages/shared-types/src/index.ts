@@ -12,3 +12,4 @@ export type {
 } from './types/api-response';
 export type { BaseQuery } from './types/query';
 export type { BaseModel, User, Role } from './entities';
+export type { BrandingSettings } from './entities/branding';

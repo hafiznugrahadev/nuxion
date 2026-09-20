@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useAuthStore } from '~/stores/auth';
-import { APP_NAME } from '~/lib/constants';
+import { useBranding } from '~/composables/useBranding';
+
+const branding = useBranding();
 
 const auth = useAuthStore();
 </script>
@@ -18,7 +20,7 @@ const auth = useAuthStore();
           <BrandLogo class="h-8" />
           <div class="flex flex-col leading-none">
             <span class="text-base font-semibold tracking-tight text-on-surface">
-              {{ APP_NAME }}
+              {{ branding.appName }}
             </span>
             <span class="mt-1 font-mono text-[11px] text-on-surface-variant">
               NestJS + Nuxt Monorepo

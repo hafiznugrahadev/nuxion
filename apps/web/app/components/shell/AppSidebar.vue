@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useAuthStore } from '~/stores/auth';
-import { APP_NAME } from '~/lib/constants';
+import { useBranding } from '~/composables/useBranding';
+
+const branding = useBranding();
 
 const auth = useAuthStore();
 const route = useRoute();
@@ -17,6 +19,7 @@ interface NavItem {
 const items: NavItem[] = [
   { label: 'nav.dashboard', to: '/admin/dashboard', icon: 'grid_view' },
   { label: 'nav.users', to: '/admin/users', icon: 'group', adminOnly: true },
+  { label: 'nav.settings', to: '/admin/settings', icon: 'settings', adminOnly: true },
   { label: 'nav.fieldsDemo', to: '/admin/demo/fields', icon: 'science' },
   { label: 'nav.componentsDemo', to: '/admin/demo/components', icon: 'widgets' },
 ];
@@ -66,7 +69,9 @@ const showFull = computed(() => isMobileOpen.value || isExpanded.value);
         @click="closeMobile"
       >
         <BrandLogo class="h-10" />
-        <span v-if="showFull" class="text-base tracking-tight text-foreground">{{ APP_NAME }}</span>
+        <span v-if="showFull" class="text-base tracking-tight text-foreground">{{
+          branding.appName
+        }}</span>
       </NuxtLink>
     </div>
 

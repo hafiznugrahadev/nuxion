@@ -5,10 +5,11 @@ import { toTypedSchema } from '@vee-validate/zod';
 import { z } from 'zod';
 import { toast } from 'vue-sonner';
 import { useUpload } from '~/composables/useUpload';
-import { APP_NAME } from '~/lib/constants';
+import { useBranding } from '~/composables/useBranding';
 
 definePageMeta({ layout: 'admin', middleware: ['auth'] });
-useHead({ title: `Fields Showcase · ${APP_NAME}` });
+const branding = useBranding();
+useHead({ title: () => `Fields Showcase · ${branding.value.appName}` });
 
 const schema = toTypedSchema(
   z.object({

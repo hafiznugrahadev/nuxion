@@ -9,7 +9,8 @@
     "componentsDemo": "Demo Komponen",
     "profile": "Profil",
     "signOut": "Keluar",
-    "login": "Masuk"
+    "login": "Masuk",
+    "settings": "Pengaturan"
   },
   "auth": {
     "email": "Email",
@@ -136,9 +137,9 @@
     "retry": "Coba lagi"
   },
   "home": {
-    "metaTitle": "{app} · Nuxion NestJS + Nuxt",
+    "metaTitle": "{app} · Starter kit NestJS + Nuxt",
     "metaDescription": "Starter kit monorepo NestJS + Nuxt siap produksi: autentikasi JWT, akses berbasis peran, tabel data pengguna, dan komponen yang dapat dipakai ulang. Kloning, konfigurasi, rilis.",
-    "eyebrow": "Nuxion NestJS + Nuxt",
+    "eyebrow": "{app} NestJS + Nuxt",
     "description": "Starter kit monorepo NestJS + Nuxt, autentikasi, akses berbasis peran, tabel data pengguna, dan komponen yang siap dikembangkan.",
     "goToDashboard": "Ke dasbor",
     "signIn": "Masuk",
@@ -416,6 +417,32 @@
       "removeDescription": "Hapus \"{name}\"? Anda tidak bisa memakainya untuk login lagi.",
       "removed": "Passkey dihapus.",
       "removeFailed": "Gagal menghapus passkey."
+    }
+  },
+  "settings": {
+    "title": "Pengaturan",
+    "tabs": {
+      "branding": "Branding"
+    },
+    "branding": {
+      "title": "Branding aplikasi",
+      "subtitle": "Nama aplikasi, logo, dan favicon yang tampil di seluruh UI.",
+      "appName": "Nama aplikasi",
+      "save": "Simpan perubahan",
+      "saving": "Menyimpan…",
+      "saved": "Branding diperbarui.",
+      "uploadLogo": "Unggah logo",
+      "uploadFavicon": "Unggah favicon",
+      "uploaded": "Berkas terunggah — simpan untuk menerapkan.",
+      "uploadFailed": "Gagal mengunggah.",
+      "useDefault": "Pakai bawaan",
+      "logoHint": "PNG atau WebP, latar transparan, maks 5 MB. Logo bentuk lebar paling pas.",
+      "faviconHint": "PNG persegi disarankan (32–512 px), maks 5 MB.",
+      "logoAlt": "Pratinjau logo",
+      "faviconAlt": "Pratinjau favicon",
+      "notImage": "Pilih berkas gambar.",
+      "tooLarge": "Ukuran berkas melebihi {mb} MB.",
+      "superAdminOnly": "Hanya Super Admin yang dapat mengubah branding."
     }
   }
 }

@@ -7,7 +7,9 @@ import { createTestApp, extractAccessToken, getPrisma, SEED_USERS } from './help
 // This suite exercises the mandatory-2FA mode; existing suites run with it off.
 // Vitest isolates each spec file in its own worker, so these process.env writes
 // cannot leak into auth.e2e-spec.ts. Throttling is off: the flow logs in a lot.
+// PASSKEY is pinned off explicitly — the root .env may set it true (dev setup).
 process.env.AUTH_2FA_ENABLED = 'true';
+process.env.AUTH_PASSKEY_ENABLED = 'false';
 process.env.THROTTLE_DISABLED = 'true';
 
 const ADMIN = SEED_USERS.admin;

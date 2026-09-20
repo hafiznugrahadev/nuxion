@@ -1,10 +1,11 @@
 <script setup lang="ts">
 // Explicit barrel import — features/ is NOT auto-imported (SPEC boundary rule).
 import { UserTable } from '~/features/user';
-import { APP_NAME } from '~/lib/constants';
+import { useBranding } from '~/composables/useBranding';
 
 definePageMeta({ layout: 'admin', middleware: ['auth', 'admin'] });
-useHead({ title: `Users · ${APP_NAME}` });
+const branding = useBranding();
+useHead({ title: () => `Users · ${branding.value.appName}` });
 </script>
 
 <template>

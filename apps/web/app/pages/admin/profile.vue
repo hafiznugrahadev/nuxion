@@ -2,10 +2,11 @@
 // Explicit barrel import — features/ is NOT auto-imported (SPEC boundary rule).
 import { ChangePasswordCard, PersonalInfoCard, ProfileHeaderCard, useMe } from '~/features/profile';
 import { SecuritySection } from '~/features/security';
-import { APP_NAME } from '~/lib/constants';
+import { useBranding } from '~/composables/useBranding';
 
 definePageMeta({ layout: 'admin', middleware: ['auth'] });
-useHead({ title: `Profile · ${APP_NAME}` });
+const branding = useBranding();
+useHead({ title: () => `Profile · ${branding.value.appName}` });
 
 const { data: user, isLoading, isError, error, refetch } = useMe();
 </script>

@@ -21,6 +21,7 @@ const props = defineProps<{
   inputmode?: 'text' | 'numeric' | 'tel' | 'email' | 'url';
   /** Hard character cap (e.g. OTP codes). */
   maxlength?: number;
+  disabled?: boolean;
 }>();
 
 const { value, errorMessage } = useField<string>(toRef(props, 'name'));
@@ -40,6 +41,7 @@ const { value, errorMessage } = useField<string>(toRef(props, 'name'));
       :prefix-icon="prefixIcon"
       :inputmode="inputmode"
       :maxlength="maxlength"
+      :disabled="disabled"
       :class="
         cn(errorMessage && 'border-destructive focus:border-destructive focus:ring-destructive')
       "

@@ -76,11 +76,9 @@ export default defineNuxtConfig({
       // rule in main.css) + Material Symbols Outlined for icons. The icon
       // font uses display=block so ligature names never flash as raw text
       // while the font loads.
-      // Favicon: PNG because Safari ignores WebP icons; both are square
-      // center-crops generated from public/images/nuxion.webp.
+      // Favicon links are NOT static here — app.vue sets them reactively so an
+      // uploaded branding favicon (Settings → Branding) wins once set.
       link: [
-        { rel: 'icon', type: 'image/png', href: '/favicon.png' },
-        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         {
@@ -183,6 +181,11 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
+    // Server-side base URL for SSR fetches (e.g. the branding plugin). Falls
+    // back to the public apiBase — but in dev the public one is https on an
+    // OrbStack domain whose CA node/undici does NOT trust, so the dev compose
+    // sets NUXT_API_INTERNAL_BASE to the plain-http in-network address.
+    apiInternalBase: process.env.NUXT_API_INTERNAL_BASE ?? '',
     // server-only secrets go here
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE ?? 'http://localhost:4400/api',

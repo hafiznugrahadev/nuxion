@@ -53,6 +53,17 @@ model Passkey {
   @@map("passkeys")
 }
 
+// App-wide settings grouped by key (e.g. 'branding'). The row's value shape is
+// validated by the settings module's DTOs — new groups need no schema migration.
+model Setting {
+  key       String   @id
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
 model Notification {
   id        String    @id @default(cuid())
   userId    String

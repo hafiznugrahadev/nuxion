@@ -275,7 +275,7 @@ async function copy(textToCopy: string) {
               NestJS + Nuxt<br class="hidden sm:inline" />
               <span
                 class="bg-gradient-to-r from-brand-navy via-brand-blue to-brand-teal bg-clip-text text-transparent dark:from-brand-mint dark:via-brand-teal dark:to-brand-mint"
-                >Nuxion</span
+                >{{ branding.appName }}</span
               >
             </h1>
 

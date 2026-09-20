@@ -156,7 +156,7 @@ async function signOut() {
 
 async function copyDetails() {
   const lines = [
-    'Nuxion error report',
+    `${branding.value.appName} error report`,
     `Status: ${props.error?.statusCode ?? 500}`,
     `Page: ${route.fullPath}`,
     `Time: ${occurredAt.value}`,

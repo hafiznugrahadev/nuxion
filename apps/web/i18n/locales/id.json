@@ -173,7 +173,7 @@
         "install": "Instal dependensi (workspace Bun)",
         "init": "Jadikan proyek MILIK ANDA (rename scope, container, volume, DB)",
         "services": "Service pendukung (Postgres + Redis)",
-        "prisma": "Prisma client, migrasi, dan data seed",
+        "migrate": "Migrasi database dan data seed",
         "serve": "Jalankan semuanya (API + web, satu perintah)"
       },
       "checks": {

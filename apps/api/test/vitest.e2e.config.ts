@@ -13,15 +13,20 @@ export default defineConfig({
     environment: 'node',
     include: ['test/**/*.e2e-spec.ts'],
     testTimeout: 30_000,
+    // Spec files share mutable seed rows (users flips the seed user's password,
+    // two-factor resets the seed admin, settings rewrites the branding row).
+    // Serialize files — parallel workers made those writes race each other's
+    // logins. Each file still runs in its own isolated worker.
+    fileParallelism: false,
   },
   resolve: {
     alias: {
       '@common': resolve(__dirname, '../src/common'),
       '@config': resolve(__dirname, '../src/config'),
+      '@db': resolve(__dirname, '../src/db'),
       '@infrastructure': resolve(__dirname, '../src/infrastructure'),
       '@modules': resolve(__dirname, '../src/modules'),
       '@shared': resolve(__dirname, '../src/shared'),
-      '@generated': resolve(__dirname, '../src/generated'),
     },
   },
 });

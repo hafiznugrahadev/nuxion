@@ -2,7 +2,7 @@ import * as bcrypt from 'bcrypt';
 
 /**
  * Password hashing helpers — single source of truth for both the auth module and
- * the Prisma seed. Uses bcrypt with a sane cost factor (OWASP-recommended >= 10).
+ * the database seed. Uses bcrypt with a sane cost factor (OWASP-recommended >= 10).
  */
 const SALT_ROUNDS = 12;
 

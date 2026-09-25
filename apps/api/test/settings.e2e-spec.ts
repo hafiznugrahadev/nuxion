@@ -1,8 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
+import { eq } from 'drizzle-orm';
+import { settings } from '../src/db/schema';
 import { RedisService } from '@infrastructure/redis/redis.service';
-import { createTestApp, extractAccessToken, getPrisma, SEED_USERS } from './helpers/app.helper';
+import { createTestApp, extractAccessToken, getDb, SEED_USERS } from './helpers/app.helper';
 
 // Rapid repeated logins; the suite hits /settings/branding often too.
 process.env.THROTTLE_DISABLED = 'true';
@@ -13,13 +15,17 @@ describe('Settings (e2e)', () => {
   let superAdminToken: string;
   let adminToken: string;
 
+  const DEFAULT_VALUE = { appName: 'Nuxion', logoUrl: null, faviconUrl: null };
+
   const resetBranding = async () => {
-    const prisma = await getPrisma(app);
-    await prisma.setting.upsert({
-      where: { key: 'branding' },
-      update: { value: { appName: 'Nuxion', logoUrl: null, faviconUrl: null } },
-      create: { key: 'branding', value: { appName: 'Nuxion', logoUrl: null, faviconUrl: null } },
-    });
+    const db = await getDb(app);
+    await db
+      .insert(settings)
+      .values({ key: 'branding', value: DEFAULT_VALUE })
+      .onConflictDoUpdate({
+        target: settings.key,
+        set: { value: DEFAULT_VALUE, updatedAt: new Date() },
+      });
     // Direct DB writes bypass the service — drop the read cache too, or the
     // next suite run within the 60s TTL sees this suite's leftover values.
     await app.get(RedisService).del('settings:branding');
@@ -56,8 +62,8 @@ describe('Settings (e2e)', () => {
     });
 
     it('returns defaults when the row is missing', async () => {
-      const prisma = await getPrisma(app);
-      await prisma.setting.delete({ where: { key: 'branding' } }).catch(() => {});
+      const db = await getDb(app);
+      await db.delete(settings).where(eq(settings.key, 'branding'));
       await app.get(RedisService).del('settings:branding');
       const res = await request(server).get('/api/settings/branding').expect(200);
       expect(res.body.data).toEqual({ appName: 'Nuxion', logoUrl: null, faviconUrl: null });

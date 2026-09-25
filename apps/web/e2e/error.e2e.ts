@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { login } from './helpers';
 
-/** Seed demo user with the plain USER role (see apps/api/prisma/seed.ts). */
+/** Seed demo user with the plain USER role (see apps/api/src/db/seed.ts). */
 const DEMO_USER = { email: 'demo.002@nuxion.test', password: 'demo1234' } as const;
 
 test.describe('error pages', () => {

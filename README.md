@@ -7,7 +7,7 @@ conventions.
 ```
 nuxion/
 ├── apps/
-│   ├── api/            NestJS 11 + Prisma 7 backend (JWT auth, class-validator, Swagger, Pino)
+│   ├── api/            NestJS 11 + Drizzle backend (JWT auth, class-validator, Swagger, Pino)
 │   └── web/            Nuxt 4 (Vue 3) frontend (shadcn-vue, Pinia, TanStack Query)
 ├── packages/
 │   └── shared-types/   TS contracts (UserRole, API envelope, entities) shared by both
@@ -19,7 +19,7 @@ nuxion/
 
 | Layer    | Tech                                                                         |
 | -------- | ---------------------------------------------------------------------------- |
-| Backend  | Bun · NestJS 11 · Prisma 7 (driver adapter) · PostgreSQL · Redis · JWT       |
+| Backend  | Bun · NestJS 11 · Drizzle ORM · PostgreSQL · Redis · JWT                     |
 | Frontend | Nuxt 4 · Vue 3 · Tailwind v4 · shadcn-vue (Reka UI) · Pinia · TanStack Query |
 | Shared   | `@nuxion/shared-types` (UserRole + API contracts, compiled to CJS/ESM)       |
 
@@ -70,9 +70,8 @@ bun run init            # or: bun run init --name portal-desa --yes
 # 3. Start backing services (Postgres + Redis)
 docker compose up -d postgres redis
 
-# 4. Generate the Prisma client, migrate, seed
-bun run --filter @nuxion/api prisma:generate
-bun run --filter @nuxion/api prisma:deploy   # apply migrations
+# 4. Migrate + seed the database
+bun run --filter @nuxion/api db:migrate   # apply drizzle migrations
 bun run --filter @nuxion/api db:seed
 
 # 5. Run everything (one command for api + web)
@@ -115,7 +114,7 @@ bun run serve
 **Backend** (`apps/api/src/common`): `BaseEntity`, `BaseQueryDto`, `PaginatedDto`,
 `BaseRepository<T>` (with `omit` support), `BaseCrudService`, `ResponseInterceptor`,
 global `ValidationPipe`, `IsUnique` async validator, `ApiPaginatedResponse` decorator,
-`@Global()` Prisma/Redis modules.
+`@InjectDrizzle()` database + Redis module (global).
 
 **Frontend** (`apps/web/app`): generic `ui/Table.vue` data table, VeeValidate field components,
 single `apiClient` (ofetch) with transparent 401→refresh→retry, `usePaginatedQuery`,
@@ -189,8 +188,8 @@ revertible with `git checkout .`. It refuses to run on a dirty working tree
 unless you pass `--force`. **Commit any new files first** — untracked files are
 invisible to the rename.
 
-Afterwards: `bun install` (regenerates `bun.lock` with the new package names) and
-`prisma:generate`. The old `nuxion_*` Docker volumes stick around under the
+Afterwards: `bun install` (regenerates `bun.lock` with the new package names).
+The old `nuxion_*` Docker volumes stick around under the
 previous name — remove them with `docker volume ls | grep nuxion`.
 
 ## Restoring the database (`bun run db:restore`)

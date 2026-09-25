@@ -173,7 +173,7 @@
         "install": "Install dependencies (Bun workspaces)",
         "init": "Make it YOUR project (rename scope, containers, volumes, DB)",
         "services": "Backing services (Postgres + Redis)",
-        "prisma": "Prisma client, migrations, seed data",
+        "migrate": "Database migrations, seed data",
         "serve": "Run everything (API + web, one command)"
       },
       "checks": {

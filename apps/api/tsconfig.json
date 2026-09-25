@@ -26,12 +26,12 @@
     "paths": {
       "@common/*": ["src/common/*"],
       "@config/*": ["src/config/*"],
+      "@db/*": ["src/db/*"],
       "@infrastructure/*": ["src/infrastructure/*"],
       "@modules/*": ["src/modules/*"],
-      "@shared/*": ["src/shared/*"],
-      "@generated/*": ["src/generated/*"]
+      "@shared/*": ["src/shared/*"]
     }
   },
-  "include": ["src/**/*", "prisma/**/*", "test/**/*"],
+  "include": ["src/**/*", "test/**/*"],
   "exclude": ["node_modules", "dist"]
 }

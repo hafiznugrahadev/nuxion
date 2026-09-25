@@ -1,14 +1,16 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
+import { eq, like } from 'drizzle-orm';
+import { users } from '../src/db/schema';
+import type { Database } from '../src/db/relations';
 import {
   createTestApp,
   extractAccessToken,
-  getPrisma,
+  getDb,
   E2E_PREFIX,
   SEED_USERS,
 } from './helpers/app.helper';
-import type { PrismaService } from '../src/infrastructure/database/prisma.service';
 
 /** Login shorthand returning a Bearer token string. */
 async function loginAs(
@@ -23,7 +25,7 @@ async function loginAs(
 describe('Users (e2e)', () => {
   let app: INestApplication;
   let server: ReturnType<INestApplication['getHttpServer']>;
-  let prisma: PrismaService;
+  let db: Database;
 
   let superAdminToken: string;
   let adminToken: string;
@@ -32,7 +34,7 @@ describe('Users (e2e)', () => {
   beforeAll(async () => {
     app = await createTestApp();
     server = app.getHttpServer();
-    prisma = await getPrisma(app);
+    db = await getDb(app);
 
     [superAdminToken, adminToken, userToken] = await Promise.all([
       loginAs(server, SEED_USERS.superAdmin.email, SEED_USERS.superAdmin.password),
@@ -43,7 +45,7 @@ describe('Users (e2e)', () => {
 
   afterAll(async () => {
     // Remove any e2e-created users so the DB stays clean.
-    await prisma.user.deleteMany({ where: { email: { startsWith: E2E_PREFIX } } });
+    await db.delete(users).where(like(users.email, `${E2E_PREFIX}%`));
     await app.close();
   });
 
@@ -206,7 +208,7 @@ describe('Users (e2e)', () => {
     };
 
     afterAll(async () => {
-      await prisma.user.deleteMany({ where: { email: newUser.email } });
+      await db.delete(users).where(eq(users.email, newUser.email));
     });
 
     it('creates a user as SUPER_ADMIN', async () => {
@@ -318,9 +320,7 @@ describe('Users (e2e)', () => {
     });
 
     afterAll(async () => {
-      await prisma.user.deleteMany({
-        where: { email: `${E2E_PREFIX}patch-target@nuxion.test` },
-      });
+      await db.delete(users).where(eq(users.email, `${E2E_PREFIX}patch-target@nuxion.test`));
     });
 
     it('updates user name as SUPER_ADMIN', async () => {
@@ -362,7 +362,7 @@ describe('Users (e2e)', () => {
     });
 
     afterEach(async () => {
-      await prisma.user.deleteMany({ where: { email: `${E2E_PREFIX}delete-me@nuxion.test` } });
+      await db.delete(users).where(eq(users.email, `${E2E_PREFIX}delete-me@nuxion.test`));
     });
 
     it('deletes a user as SUPER_ADMIN', async () => {

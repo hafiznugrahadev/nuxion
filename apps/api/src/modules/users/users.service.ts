@@ -1,5 +1,4 @@
 import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { BaseCrudService } from '@common/services/base-crud.service';
 import { PaginatedResult } from '@common/interfaces/paginated-result.interface';
 import { hashPassword, verifyPassword } from '@common/utils/password';
 import { RedisService } from '@infrastructure/redis/redis.service';
@@ -13,17 +12,13 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 
 /**
  * User management (super-admin CRUD). The password hash never leaves the
- * repository (`omit`), roles are assigned via the M2M relation, and the cached
- * list is invalidated by bumping a generation counter on every write.
+ * repository (explicit column selection), roles are assigned via the M2M join,
+ * and the cached list is invalidated by bumping a generation counter on every
+ * write.
  */
 @Injectable()
-export class UsersService extends BaseCrudService<
-  UserEntity,
-  CreateUserDto,
-  UpdateUserDto,
-  QueryUserDto
-> {
-  protected readonly entityName = 'User';
+export class UsersService {
+  private readonly entityName = 'User';
 
   private readonly logger = new Logger(UsersService.name);
   private readonly cacheTtlSeconds = 30;
@@ -32,40 +27,32 @@ export class UsersService extends BaseCrudService<
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly redis: RedisService,
-  ) {
-    super(usersRepository);
-  }
+  ) {}
 
-  override async findAll(query: QueryUserDto): Promise<PaginatedResult<UserEntity>> {
+  async findAll(query: QueryUserDto): Promise<PaginatedResult<UserEntity>> {
     const cacheKey = await this.listCacheKey(query);
 
     const cached = await this.safe(() => this.redis.get<PaginatedResult<UserEntity>>(cacheKey));
     if (cached) return cached;
 
-    const where: Record<string, unknown> = {};
-    if (query.roles?.length) where.roles = { some: { name: { in: query.roles } } };
-    const page = await this.usersRepository.paginate(query, {
-      where,
-      include: { roles: true },
-      omit: { password: true, twoFactorSecret: true, recoveryCodes: true },
-    });
+    const page = await this.usersRepository.paginate(query, { roles: query.roles });
 
     const result: PaginatedResult<UserEntity> = {
       ...page,
-      data: page.data.map((u) => this.toEntity(u as unknown as UserWithRoles)),
+      data: page.data.map((u) => this.toEntity(u)),
     };
 
     await this.safe(() => this.redis.set(cacheKey, result, this.cacheTtlSeconds));
     return result;
   }
 
-  override async findOne(id: string): Promise<UserEntity> {
+  async findOne(id: string): Promise<UserEntity> {
     const user = await this.usersRepository.findWithRoles(id);
     if (!user) throw new NotFoundException(`${this.entityName} with id "${id}" not found`);
     return this.toEntity(user);
   }
 
-  override async create(dto: CreateUserDto): Promise<UserEntity> {
+  async create(dto: CreateUserDto): Promise<UserEntity> {
     const { roles, password, ...rest } = dto;
     const created = await this.usersRepository.createWithRoles(
       { ...rest, password: await hashPassword(password) },
@@ -75,7 +62,7 @@ export class UsersService extends BaseCrudService<
     return this.toEntity(created);
   }
 
-  override async update(id: string, dto: UpdateUserDto): Promise<UserEntity> {
+  async update(id: string, dto: UpdateUserDto): Promise<UserEntity> {
     await this.findOne(id); // 404 if missing
     const { roles, password, ...rest } = dto;
     const data = password ? { ...rest, password: await hashPassword(password) } : rest;
@@ -84,7 +71,7 @@ export class UsersService extends BaseCrudService<
     return this.toEntity(updated);
   }
 
-  override async remove(id: string): Promise<UserEntity> {
+  async remove(id: string): Promise<UserEntity> {
     const existing = await this.findOne(id); // 404 if missing
     await this.usersRepository.delete(id);
     await this.invalidateList();
@@ -97,7 +84,7 @@ export class UsersService extends BaseCrudService<
    */
   async updateProfile(id: string, dto: UpdateProfileDto): Promise<UserEntity> {
     await this.findOne(id); // 404 if missing
-    // Prisma ignores `undefined`, so only the provided fields are written.
+    // Undefined fields are ignored by the update — only provided fields are written.
     const updated = await this.usersRepository.updateWithRoles(id, {
       name: dto.name,
       avatarUrl: dto.avatarUrl,

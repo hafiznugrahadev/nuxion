@@ -6,6 +6,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { desc, eq } from 'drizzle-orm';
 import {
   generateAuthenticationOptions,
   generateRegistrationOptions,
@@ -17,7 +19,9 @@ import {
   type RegistrationResponseJSON,
 } from '@simplewebauthn/server';
 import { isoBase64URL } from '@simplewebauthn/server/helpers';
-import { PrismaService } from '@infrastructure/database/prisma.service';
+import type { Database } from '@db/relations';
+import { roleNamesFor } from '@db/user-roles';
+import { passkeys, users } from '@db/schema';
 import { RedisService } from '@infrastructure/redis/redis.service';
 import { generateOpaqueToken } from '@common/utils/token.util';
 import { PasskeyEntity } from './entities/passkey.entity';
@@ -35,23 +39,25 @@ const CHALLENGE_TTL_SECONDS = 5 * 60;
 @Injectable()
 export class WebAuthnService {
   constructor(
-    private readonly prisma: PrismaService,
+    @InjectDrizzle()
+    private readonly db: Database,
     private readonly redis: RedisService,
     private readonly config: ConfigService,
   ) {}
 
   async registrationOptions(userId: string): Promise<PublicKeyCredentialCreationOptionsJSON> {
     this.assertEnabled();
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, email: true, name: true },
-    });
+    const [user] = await this.db
+      .select({ id: users.id, email: users.email, name: users.name })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
     if (!user) throw new NotFoundException('User not found');
 
-    const existing = await this.prisma.passkey.findMany({
-      where: { userId: user.id },
-      select: { id: true, transports: true },
-    });
+    const existing = await this.db
+      .select({ id: passkeys.id, transports: passkeys.transports })
+      .from(passkeys)
+      .where(eq(passkeys.userId, user.id));
 
     const options = await generateRegistrationOptions({
       rpName: this.rpName,
@@ -90,8 +96,9 @@ export class WebAuthnService {
     }
     const { credential, credentialDeviceType, credentialBackedUp } = registrationInfo;
 
-    const created = await this.prisma.passkey.create({
-      data: {
+    const [created] = await this.db
+      .insert(passkeys)
+      .values({
         id: credential.id,
         userId,
         publicKey: isoBase64URL.fromBuffer(credential.publicKey),
@@ -100,8 +107,8 @@ export class WebAuthnService {
         deviceType: credentialDeviceType,
         backedUp: credentialBackedUp,
         name: name?.trim() || null,
-      },
-    });
+      })
+      .returning();
     return this.toEntity(created);
   }
 
@@ -132,15 +139,11 @@ export class WebAuthnService {
     const challenge = await this.redis.get<string>(LOGIN_KEY(challengeId));
     if (!challenge) throw new BadRequestException('Passkey challenge expired — try again');
 
-    const passkey = await this.prisma.passkey.findUnique({
-      where: { id: response.id },
-      include: {
-        user: {
-          include: { roles: true },
-          omit: { password: true, twoFactorSecret: true, recoveryCodes: true },
-        },
-      },
-    });
+    const [passkey] = await this.db
+      .select()
+      .from(passkeys)
+      .where(eq(passkeys.id, response.id))
+      .limit(1);
     if (!passkey) throw new UnauthorizedException('Unknown passkey');
 
     const { verified, authenticationInfo } = await verifyAuthenticationResponse({
@@ -159,37 +162,54 @@ export class WebAuthnService {
     await this.redis.del(LOGIN_KEY(challengeId));
     if (!verified) throw new UnauthorizedException('Passkey verification failed');
 
-    await this.prisma.passkey.update({
-      where: { id: passkey.id },
-      data: {
+    await this.db
+      .update(passkeys)
+      .set({
         counter: BigInt(authenticationInfo.newCounter),
         deviceType: authenticationInfo.credentialDeviceType,
         backedUp: authenticationInfo.credentialBackedUp,
         lastUsedAt: new Date(),
-      },
-    });
+      })
+      .where(eq(passkeys.id, passkey.id));
 
-    return { user: passkey.user, userVerified: authenticationInfo.userVerified };
+    const [userRow] = await this.db
+      .select({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        avatarUrl: users.avatarUrl,
+        twoFactorEnabled: users.twoFactorEnabled,
+      })
+      .from(users)
+      .where(eq(users.id, passkey.userId))
+      .limit(1);
+    if (!userRow) throw new UnauthorizedException('Unknown passkey');
+
+    return {
+      user: { ...userRow, roles: await roleNamesFor(this.db, passkey.userId) },
+      userVerified: authenticationInfo.userVerified,
+    };
   }
 
   async listPasskeys(userId: string): Promise<PasskeyEntity[]> {
     this.assertEnabled();
-    const passkeys = await this.prisma.passkey.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    });
-    return passkeys.map((p) => this.toEntity(p));
+    const rows = await this.db
+      .select()
+      .from(passkeys)
+      .where(eq(passkeys.userId, userId))
+      .orderBy(desc(passkeys.createdAt));
+    return rows.map((p) => this.toEntity(p));
   }
 
   async removePasskey(userId: string, id: string): Promise<void> {
     this.assertEnabled();
-    const passkey = await this.prisma.passkey.findUnique({ where: { id } });
+    const [passkey] = await this.db.select().from(passkeys).where(eq(passkeys.id, id)).limit(1);
     if (!passkey) throw new NotFoundException('Passkey not found');
     if (passkey.userId !== userId) {
       // Don't leak other users' passkey IDs — treat foreign credentials as absent.
       throw new NotFoundException('Passkey not found');
     }
-    await this.prisma.passkey.delete({ where: { id } });
+    await this.db.delete(passkeys).where(eq(passkeys.id, id));
   }
 
   private get rpName(): string {

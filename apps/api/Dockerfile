@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# Multi-stage build for @nuxion/api (NestJS + Prisma 7 on Bun).
+# Multi-stage build for @nuxion/api (NestJS + Drizzle on Bun).
 # Build context MUST be the repo root: `docker build -f apps/api/Dockerfile .`
 
 # ─────────────────────────────── deps ────────────────────────────────────────
@@ -19,11 +19,7 @@ FROM deps AS build
 WORKDIR /app
 COPY packages/shared-types ./packages/shared-types
 COPY apps/api ./apps/api
-# shared-types first (api imports it). Prisma 7 generate reads prisma.config.ts,
-# which expects DATABASE_URL to exist (value unused at generate time).
-ENV DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder
 RUN bun run --filter @nuxion/shared-types build \
- && bun run --filter @nuxion/api prisma:generate \
  && bun run --filter @nuxion/api build
 
 # ─────────────────────────────── runtime ─────────────────────────────────────
@@ -34,19 +30,20 @@ WORKDIR /app/apps/api
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ca-certificates \
  && rm -rf /var/lib/apt/lists/*
-# Prisma 7 is Rust-free (driver adapter) — no engine binary. Bun installs per
-# workspace, so copy BOTH the hoisted root node_modules and the api's own
-# node_modules (which holds its deps + the `.bin/prisma` CLI for migrate deploy).
+# Bun installs per workspace, so copy BOTH the hoisted root node_modules and
+# the api's own node_modules (its deps + drizzle-orm for the migrator script).
+# `bun run db:migrate` executes scripts/db-migrate.ts on the fly — no CLI, no
+# generated client needed at runtime.
 COPY --from=build /app/node_modules /app/node_modules
 COPY --from=build /app/packages/shared-types/dist /app/packages/shared-types/dist
 COPY --from=build /app/packages/shared-types/package.json /app/packages/shared-types/package.json
 COPY --from=build /app/apps/api/node_modules ./node_modules
 COPY --from=build /app/apps/api/dist ./dist
+COPY --from=build /app/apps/api/drizzle ./drizzle
+COPY --from=build /app/apps/api/scripts ./scripts
 COPY --from=build /app/apps/api/package.json ./package.json
-COPY --from=build /app/apps/api/prisma ./prisma
-COPY --from=build /app/apps/api/prisma.config.ts ./prisma.config.ts
-# Entrypoint script: migrate deploy, then boot (see docker/prod-api.sh). For
-# multiple replicas, run migrate deploy as a separate release step instead.
+# Entrypoint script: migrate, then boot (see docker/prod-api.sh). For multiple
+# replicas, run the migration as a separate release step instead.
 COPY docker/prod-api.sh /app/docker/prod-api.sh
 EXPOSE 4400
 ENTRYPOINT ["sh", "/app/docker/prod-api.sh"]

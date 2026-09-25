@@ -22,15 +22,11 @@ function makeService(redisGet: unknown = null) {
 const query = { page: 1, limit: 10, order: 'desc', sortBy: 'createdAt' } as QueryUserDto;
 
 describe('UsersService.findAll', () => {
-  it('omits secret columns (password, TOTP secret, recovery hashes) from the query', async () => {
+  it('delegates to the repository with the role filter (secrets are omitted inside it)', async () => {
     const { service, repository } = makeService();
-    await service.findAll(query);
-    expect(repository.paginate).toHaveBeenCalledWith(
-      query,
-      expect.objectContaining({
-        omit: { password: true, twoFactorSecret: true, recoveryCodes: true },
-      }),
-    );
+    const rolesQuery = { ...query, roles: ['ADMIN'] } as QueryUserDto;
+    await service.findAll(rolesQuery);
+    expect(repository.paginate).toHaveBeenCalledWith(rolesQuery, { roles: ['ADMIN'] });
   });
 
   it('serves from cache without hitting the repository', async () => {

@@ -214,10 +214,9 @@ async function main(): Promise<void> {
   console.log(`
 ${bold('Langkah berikutnya')}
   1. bun install                 ${dim('# regenerate bun.lock dengan nama paket baru')}
-  2. bun run --filter @${slug}/api prisma:generate  ${dim('# generated client masih menyimpan nama lama')}
-  3. docker compose up -d        ${dim(`# volume/container baru: ${slug}-postgres, dll.`)}
-  4. bun run --filter @${slug}/api prisma:migrate
-  5. bun run --filter @${slug}/api db:seed
+  2. docker compose up -d        ${dim(`# volume/container baru: ${slug}-postgres, dll.`)}
+  3. bun run --filter @${slug}/api db:migrate
+  4. bun run --filter @${slug}/api db:seed
 ${
   opts.resetGit
     ? dim('  (git history direset — commit pertama masih menunggu)')

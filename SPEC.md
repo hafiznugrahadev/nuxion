@@ -20,7 +20,7 @@ sebelum implementasi tech stack wajib tanya saya terlebih dahulu pada plan mode.
 | ---------------- | ------------------------------------------- | ------------------------------------------------------------------------------- |
 | Runtime          | **Bun** / Node.js LTS                       | Bun untuk greenfield, Node untuk legacy                                         |
 | Framework        | **NestJS**                                  | Modular, DI, decorator-based                                                    |
-| ORM              | **Prisma**                                  | Type-safe, auto-migration                                                       |
+| ORM              | **Drizzle**                                 | Type-safe, SQL-first, tanpa codegen                                             |
 | Database (SQL)   | **PostgreSQL**                              | Default untuk transactional                                                     |
 | Database (NoSQL) | **MongoDB** (Mongoose)                      | Hanya jika benar-benar butuh document-store                                     |
 | Cache / Queue    | **Redis** + BullMQ                          | Cache, rate-limit, background jobs                                              |
@@ -101,7 +101,7 @@ src/
 │   └── utils/                             ← Pure helpers
 │
 ├── infrastructure/
-│   ├── database/                          ← Prisma client + service
+│   ├── database/                          ← koneksi DB (Drizzle via DrizzleModule)
 │   ├── redis/                             ← Cache service
 │   ├── storage/                           ← S3/MinIO/RustFS adapter
 │   ├── queue/                             ← BullMQ setup
@@ -119,11 +119,18 @@ src/
 │
 ├── app.module.ts
 └── main.ts                                ← Global pipes, filters, interceptors
+```
 
-prisma/
-├── schema.prisma
-├── migrations/
-└── seed.ts
+DB schema & seed hidup di dalam src:
+
+```
+src/db/
+├── schema.ts                             ← Drizzle table definitions
+├── relations.ts                          ← defineRelations() + type Database
+├── user-roles.ts                         ← helper join M2M user ↔ role
+└── seed.ts                               ← seed idempoten
+
+drizzle/                                  ← SQL migrations (drizzle-kit generate)
 ```
 
 ### Layer Responsibilities
@@ -132,7 +139,7 @@ prisma/
 | ----------------- | ------------------------------------------------ | ----------------------------- |
 | `controller`      | Routing, parsing request, return response        | `service`                     |
 | `service`         | Business logic, orchestration, transaction       | `repository`, other `service` |
-| `repository`      | DB access via Prisma                             | Prisma client only            |
+| `repository`      | DB access via Drizzle query builder              | injected database only        |
 | `dto`             | Validasi input (class-validator), shape response | —                             |
 | `common/`         | Cross-cutting concerns + base abstractions       | —                             |
 | `infrastructure/` | Adapter ke external system                       | External libraries            |
@@ -311,12 +318,11 @@ export const ApiPaginatedResponse = <T extends Type<unknown>>(model: T) =>
   applyDecorators(ApiExtraModels(PaginatedDto, model), ApiOkResponse({/* schema gabungan */}));
 ```
 
-### 10. Module Forwarding — Prisma/Redis/Storage module global, jangan import berulang
+### 10. Module Forwarding — database (Drizzle)/Redis/Storage global, jangan import berulang
 
 ```tsx
-@Global()
-@Module({ providers: [PrismaService], exports: [PrismaService] })
-export class PrismaModule {}
+// Database via @nestjs/drizzle — global, cukup @InjectDrizzle() di constructor.
+DrizzleModule.forRootAsync({ inject: [ConfigService], useFactory: ... });
 ```
 
 ---
@@ -331,7 +337,7 @@ Sebelum commit, tanya:
 - [ ] Apakah ada validasi yang muncul di > 2 DTO? → buat custom validator decorator
 - [ ] Apakah ada query pagination yang ditulis manual? → pakai `BaseQueryDto`
 - [ ] Apakah ada response shape yang tidak seragam? → pastikan `ResponseInterceptor` global
-- [ ] Apakah Prisma/Redis/Storage di-inject manual per module? → jadikan `@Global()`
+- [ ] Apakah Redis/Storage di-inject manual per module? → jadikan `@Global()` (database Drizzle sudah global via `@InjectDrizzle()`)
 
 ---
 
@@ -354,7 +360,7 @@ Sebelum commit, tanya:
 | ---------------- | ------------------------------------------- | --------------------------------------------------------- |
 | Runtime          | **Bun** / Node.js LTS                       | Bun untuk greenfield, Node untuk legacy                   |
 | Framework        | **NestJS**                                  | Modular, DI, decorator-based                              |
-| ORM              | **Prisma**                                  | Type-safe, auto-migration                                 |
+| ORM              | **Drizzle**                                 | Type-safe, SQL-first, tanpa codegen                       |
 | Database (SQL)   | **PostgreSQL**                              | Default untuk transactional                               |
 | Database (NoSQL) | **MongoDB** (Mongoose)                      | Hanya jika benar-benar butuh document-store               |
 | Cache / Queue    | **Redis** + BullMQ                          | Cache, rate-limit, background jobs                        |
@@ -442,7 +448,7 @@ src/
 │   └── utils/                             ← Pure helpers
 │
 ├── infrastructure/
-│   ├── database/                          ← Prisma client + service
+│   ├── database/                          ← koneksi DB (Drizzle via DrizzleModule)
 │   ├── redis/                             ← Cache service
 │   ├── storage/                           ← S3/MinIO/RustFS adapter
 │   ├── queue/                             ← BullMQ setup
@@ -460,11 +466,18 @@ src/
 │
 ├── app.module.ts
 └── main.ts                                ← Global pipes, filters, interceptors
+```
 
-prisma/
-├── schema.prisma
-├── migrations/
-└── seed.ts
+DB schema & seed hidup di dalam src:
+
+```
+src/db/
+├── schema.ts                             ← Drizzle table definitions
+├── relations.ts                          ← defineRelations() + type Database
+├── user-roles.ts                         ← helper join M2M user ↔ role
+└── seed.ts                               ← seed idempoten
+
+drizzle/                                  ← SQL migrations (drizzle-kit generate)
 ```
 
 ### Layer Responsibilities
@@ -473,7 +486,7 @@ prisma/
 | ----------------- | ------------------------------------------------ | ----------------------------- |
 | `controller`      | Routing, parsing request, return response        | `service`                     |
 | `service`         | Business logic, orchestration, transaction       | `repository`, other `service` |
-| `repository`      | DB access via Prisma                             | Prisma client only            |
+| `repository`      | DB access via Drizzle query builder              | injected database only        |
 | `dto`             | Validasi input (class-validator), shape response | —                             |
 | `common/`         | Cross-cutting concerns + base abstractions       | —                             |
 | `infrastructure/` | Adapter ke external system                       | External libraries            |
@@ -489,7 +502,7 @@ prisma/
 
 ### DRY Patterns (BE) — Wajib Diterapkan
 
-Tetap sama seperti standar NestJS: `BaseEntity`, `BaseQueryDto`, **Mapped Types** (`PartialType`/`PickType`/`OmitType`), `PaginatedDto<T>`, `BaseCrudService`, `ResponseInterceptor` global, `ValidationPipe` global, custom validator (`IsUnique`), composable decorators (`ApiPaginatedResponse`), dan module `@Global()` untuk Prisma/Redis/Storage.
+Tetap sama seperti standar NestJS: `BaseEntity`, `BaseQueryDto`, **Mapped Types** (`PartialType`/`PickType`/`OmitType`), `PaginatedDto<T>`, `BaseCrudService`, `ResponseInterceptor` global, `ValidationPipe` global, custom validator (`IsUnique`), composable decorators (`ApiPaginatedResponse`), dan database global (`@InjectDrizzle()`) + module `@Global()` untuk Redis/Storage.
 
 > Detail implementasi tidak berubah dari guide aslinya — yang berubah hanya FE. Lihat lampiran BE jika perlu kode lengkap.
 

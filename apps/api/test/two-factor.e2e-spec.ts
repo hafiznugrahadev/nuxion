@@ -1,8 +1,10 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
+import { eq } from 'drizzle-orm';
 import { generate } from 'otplib';
-import { createTestApp, extractAccessToken, getPrisma, SEED_USERS } from './helpers/app.helper';
+import { users } from '../src/db/schema';
+import { createTestApp, extractAccessToken, getDb, SEED_USERS } from './helpers/app.helper';
 
 // This suite exercises the mandatory-2FA mode; existing suites run with it off.
 // Vitest isolates each spec file in its own worker, so these process.env writes
@@ -16,11 +18,11 @@ const ADMIN = SEED_USERS.admin;
 
 /** Reset the shared seed admin to a clean pre-2FA state. */
 async function resetTwoFactor(app: INestApplication) {
-  const prisma = await getPrisma(app);
-  await prisma.user.update({
-    where: { email: ADMIN.email },
-    data: { twoFactorEnabled: false, twoFactorSecret: null, recoveryCodes: null },
-  });
+  const db = await getDb(app);
+  await db
+    .update(users)
+    .set({ twoFactorEnabled: false, twoFactorSecret: null, recoveryCodes: null })
+    .where(eq(users.email, ADMIN.email));
 }
 
 type TestServer = ReturnType<INestApplication['getHttpServer']>;

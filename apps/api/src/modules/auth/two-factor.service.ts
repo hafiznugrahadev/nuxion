@@ -6,10 +6,14 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectDrizzle } from '@nestjs/drizzle';
 import { createCipheriv, createDecipheriv, randomInt, randomBytes, scryptSync } from 'node:crypto';
+import { eq } from 'drizzle-orm';
 import { generateSecret, generateURI, verify } from 'otplib';
 import QRCode from 'qrcode';
-import { PrismaService } from '@infrastructure/database/prisma.service';
+import type { Database } from '@db/relations';
+import { roleNamesFor } from '@db/user-roles';
+import { users } from '@db/schema';
 import { RedisService } from '@infrastructure/redis/redis.service';
 import { verifyPassword } from '@common/utils/password';
 import { generateOpaqueToken, hashToken } from '@common/utils/token.util';
@@ -42,7 +46,8 @@ export class TwoFactorService {
   private readonly encryptionKey: Buffer;
 
   constructor(
-    private readonly prisma: PrismaService,
+    @InjectDrizzle()
+    private readonly db: Database,
     private readonly redis: RedisService,
     private readonly config: ConfigService,
   ) {
@@ -60,10 +65,11 @@ export class TwoFactorService {
     secret: string;
   }> {
     this.assertEnabled();
-    const existing = await this.prisma.user.findUnique({
-      where: { id: user.id },
-      select: { twoFactorEnabled: true },
-    });
+    const [existing] = await this.db
+      .select({ twoFactorEnabled: users.twoFactorEnabled })
+      .from(users)
+      .where(eq(users.id, user.id))
+      .limit(1);
     if (existing?.twoFactorEnabled) {
       throw new ConflictException('Two-factor auth is already enabled for this account');
     }
@@ -93,19 +99,27 @@ export class TwoFactorService {
     }
 
     const recoveryCodes = this.generateRecoveryCodes();
-    const updated = await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
+    const [updated] = await this.db
+      .update(users)
+      .set({
         twoFactorEnabled: true,
         twoFactorSecret: this.encrypt(pending.secret),
         recoveryCodes: JSON.stringify(recoveryCodes.map((c) => hashToken(c))),
-      },
-      include: { roles: true },
-      omit: { password: true, twoFactorSecret: true, recoveryCodes: true },
-    });
+      })
+      .where(eq(users.id, user.id))
+      .returning({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        avatarUrl: users.avatarUrl,
+        twoFactorEnabled: users.twoFactorEnabled,
+      });
     await this.redis.del(SETUP_KEY(user.id));
 
-    return { user: toSessionUser(updated), recoveryCodes };
+    return {
+      user: toSessionUser({ ...updated, roles: await roleNamesFor(this.db, user.id) }),
+      recoveryCodes,
+    };
   }
 
   /** A challenge is only issued after the password step already succeeded. */
@@ -143,11 +157,19 @@ export class TwoFactorService {
 
     // Internal read: the secret + recovery hashes are needed for verification.
     // They never leave this method — the result flows through toSessionUser.
-    const user = await this.prisma.user.findUnique({
-      where: { id: challenge.userId },
-      include: { roles: true },
-      omit: { password: true },
-    });
+    const [user] = await this.db
+      .select({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        avatarUrl: users.avatarUrl,
+        twoFactorEnabled: users.twoFactorEnabled,
+        twoFactorSecret: users.twoFactorSecret,
+        recoveryCodes: users.recoveryCodes,
+      })
+      .from(users)
+      .where(eq(users.id, challenge.userId))
+      .limit(1);
     if (!user?.twoFactorEnabled || !user.twoFactorSecret) {
       await this.redis.del(CHALLENGE_KEY(challengeId));
       throw new BadRequestException('Two-factor is not enabled for this account');
@@ -156,7 +178,7 @@ export class TwoFactorService {
     const secret = this.decrypt(user.twoFactorSecret);
     if (await this.isValidTotp(secret, code)) {
       await this.redis.del(CHALLENGE_KEY(challengeId));
-      return user;
+      return { ...user, roles: await roleNamesFor(this.db, user.id) };
     }
 
     // Fall back to recovery codes (normalized: trimmed + uppercased).
@@ -166,12 +188,12 @@ export class TwoFactorService {
     const index = hashes.indexOf(match);
     if (index !== -1) {
       hashes.splice(index, 1); // single-use: consume it
-      await this.prisma.user.update({
-        where: { id: user.id },
-        data: { recoveryCodes: JSON.stringify(hashes) },
-      });
+      await this.db
+        .update(users)
+        .set({ recoveryCodes: JSON.stringify(hashes) })
+        .where(eq(users.id, user.id));
       await this.redis.del(CHALLENGE_KEY(challengeId));
-      return user;
+      return { ...user, roles: await roleNamesFor(this.db, user.id) };
     }
 
     return fail();
@@ -180,7 +202,7 @@ export class TwoFactorService {
   /** Re-mint recovery codes after re-verifying the account password. */
   async regenerateRecoveryCodes(userId: string, password: string): Promise<string[]> {
     this.assertEnabled();
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const [user] = await this.db.select().from(users).where(eq(users.id, userId)).limit(1);
     if (!user) throw new UnauthorizedException();
     if (!user.twoFactorEnabled) {
       throw new BadRequestException('Two-factor is not enabled for this account');
@@ -190,10 +212,10 @@ export class TwoFactorService {
     }
 
     const recoveryCodes = this.generateRecoveryCodes();
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { recoveryCodes: JSON.stringify(recoveryCodes.map((c) => hashToken(c))) },
-    });
+    await this.db
+      .update(users)
+      .set({ recoveryCodes: JSON.stringify(recoveryCodes.map((c) => hashToken(c))) })
+      .where(eq(users.id, userId));
     return recoveryCodes;
   }
 

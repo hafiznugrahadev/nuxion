@@ -83,10 +83,9 @@ const cloneSteps = computed<CloneStep[]>(() => [
     lines: [{ cmd: 'docker', rest: ' compose up -d postgres redis' }],
   },
   {
-    comment: `# 4. ${t('home.install.steps.prisma')}`,
+    comment: `# 4. ${t('home.install.steps.migrate')}`,
     lines: [
-      { cmd: 'bun', rest: ' run --filter @nuxion/api prisma:generate' },
-      { cmd: 'bun', rest: ' run --filter @nuxion/api prisma:deploy' },
+      { cmd: 'bun', rest: ' run --filter @nuxion/api db:migrate' },
       { cmd: 'bun', rest: ' run --filter @nuxion/api db:seed' },
     ],
   },

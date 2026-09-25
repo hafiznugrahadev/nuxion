@@ -3,10 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 import { useContainer } from 'class-validator';
+import { getDrizzleToken } from '@nestjs/drizzle';
 import { AppModule } from '../../src/app.module';
 import { ResponseInterceptor } from '../../src/common/interceptors/response.interceptor';
 import { AllExceptionsFilter } from '../../src/common/filters/all-exceptions.filter';
-import { PrismaService } from '../../src/infrastructure/database/prisma.service';
+import type { Database } from '../../src/db/relations';
 
 export async function createTestApp(): Promise<INestApplication> {
   const moduleRef = await Test.createTestingModule({
@@ -43,8 +44,8 @@ export async function createTestApp(): Promise<INestApplication> {
   return app;
 }
 
-export async function getPrisma(app: INestApplication): Promise<PrismaService> {
-  return app.get(PrismaService);
+export async function getDb(app: INestApplication): Promise<Database> {
+  return app.get<Database>(getDrizzleToken());
 }
 
 /** Extract access token from a login response body. */

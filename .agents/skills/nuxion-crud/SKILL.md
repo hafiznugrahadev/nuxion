@@ -1,6 +1,6 @@
 ---
 name: nuxion-crud
-description: Codifies Nuxion's canonical full-stack CRUD pattern — NestJS API module (Prisma + BaseCrudService/BaseRepository/BaseQueryDto) plus Nuxt admin feature slice (TanStack Query + ui/Table + Modal/Sheet) — extracted from the users module. Use whenever adding or changing any CRUD resource in this monorepo: new API module, endpoint, DTO, admin list page, datatable, create/edit modal, filters, or pagination — even when only one side (API or web) is touched, and when reviewing CRUD code for consistency.
+description: Codifies Nuxion's canonical full-stack CRUD pattern — NestJS API module (Drizzle + explicit repository + BaseQueryDto) plus Nuxt admin feature slice (TanStack Query + ui/Table + Modal/Sheet) — extracted from the users module. Use whenever adding or changing any CRUD resource in this monorepo: new API module, endpoint, DTO, admin list page, datatable, create/edit modal, filters, or pagination — even when only one side (API or web) is touched, and when reviewing CRUD code for consistency.
 ---
 
 # nuxion-crud
@@ -27,11 +27,11 @@ Do NOT use it for: auth/session flows (`modules/auth`), public landing pages
 ## Architecture at a Glance
 
 ```
-apps/api (NestJS + Prisma + PostgreSQL)          apps/web (Nuxt 4 admin SPA)
+apps/api (NestJS + Drizzle + PostgreSQL)         apps/web (Nuxt 4 admin SPA)
   modules/<feature>/                               app/features/<feature>/
     <feature>.controller.ts   routes, roles          api/<feature>.api.ts      fetchers
-    <feature>.service.ts      BaseCrudService        composables/use<Feature>  query/mutations
-    <feature>.repository.ts   only Prisma layer      components/<Feature>Table table + toolbar
+    <feature>.service.ts      business logic         composables/use<Feature>  query/mutations
+    <feature>.repository.ts   only Drizzle layer     components/<Feature>Table table + toolbar
     entities/, dto/            response + input      components/<Feature>FormModal
                                                   schemas/  zod, types.ts, index.ts barrel
                                                   pages/admin/<feature>/index.vue  (thin)
@@ -39,8 +39,8 @@ packages/shared-types  ← User, UserRole, ApiResponse, Paginated — the shared
 ```
 
 Request path: `UserTable` → `useUsers` → `userApi.list` → `useApi()` (adds Bearer
-token, transparent 401→refresh→replay) → NestJS controller → `BaseCrudService`
-→ `BaseRepository.paginate()` → Prisma. Response envelope `{ success, data, meta }`
+token, transparent 401→refresh→replay) → NestJS controller → service
+→ repository (`@InjectDrizzle()` query builder). Response envelope `{ success, data, meta }`
 is unwrapped by `unwrapPaginated` into `{ data, meta }`.
 
 ## Hard Contracts
@@ -54,13 +54,13 @@ review round-trip.
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | Envelope `{ success: true, data, meta? }`; errors `{ success: false, statusCode, message, error, path, timestamp }`                                       | `ResponseInterceptor` + `AllExceptionsFilter` are global — never shape responses by hand |
 | Query params are `page`, `limit` (max 100), `search`, `order` (`asc`\|`desc`), `sortBy`                                                                   | NOT `perPage`/`sortDir`/`q` — mirrors `BaseQueryDto`                                     |
-| Every feature QueryDto **overrides `sortBy` with an `@IsIn(SORTABLE_FIELDS)` whitelist**                                                                  | An unknown column (e.g. a relation) must be a 400, not a Prisma 500 from `orderBy`       |
-| The repository is the **only** layer that touches Prisma; feature repositories extend `BaseRepository<Entity>` and set `delegate` + `searchableFields`    | Keeps Prisma query syntax in one auditable place                                         |
-| Secrets are excluded at the repository level (`omit: { password: true }`)                                                                                 | The hash must never reach a service, entity, or response                                 |
+| Every feature QueryDto **overrides `sortBy` with an `@IsIn(SORTABLE_FIELDS)` whitelist**                                                                  | An unknown column (e.g. a relation) must be a 400, not a database 500 from `orderBy`     |
+| The repository is the **only** layer that touches the database; it injects Drizzle via `@InjectDrizzle()` and writes explicit queries                     | Query syntax stays in one auditable place                                                |
+| Secrets are excluded at the repository level (explicit column `select`, never a bare `select()` on the whole table)                                       | The hash must never reach a service, entity, or response                                 |
 | Roles: reads `@Roles(ADMIN, SUPER_ADMIN)`, writes `@Roles(SUPER_ADMIN)`; guards are global (`APP_GUARD`), `@Public()` opts out; `@Roles` is ANY-semantics | Secure by default; controllers declare policy, not mechanics                             |
 | Literal routes (`me`) declared **before** `:id`; `ParseUUIDPipe` on `:id`; `@HttpCode(HttpStatus.OK)` on DELETE                                           | Otherwise "me" is captured as a UUID and malformed ids 500                               |
-| Entities extend `BaseEntity` and define the response shape — never return Prisma models                                                                   | Swagger stays honest; API contract is deliberate                                         |
-| Unique columns use `@IsUnique({ model, column })`                                                                                                         | 409 with a readable message instead of a raw P2002 leaking                               |
+| Entities extend `BaseEntity` and define the response shape — never return raw database rows                                                               | Swagger stays honest; API contract is deliberate                                         |
+| Unique columns use `@IsUnique({ model, column })` (model → table registry in the validator)                                                               | 409 with a readable message instead of a raw pg 23505 leaking                            |
 | Tests are **vitest**: unit spec per service (`vi.fn()` mocks), e2e via `createTestApp()` + `SEED_USERS` + `E2E_PREFIX`                                    | Supertest against the real pipeline catches guard/validation regressions                 |
 
 ### Web (apps/web)
@@ -85,8 +85,10 @@ review round-trip.
 
 - `main` is protected: work on a feature branch, open a PR, squash-merge.
   Commit subjects follow commitlint (`feat|fix|chore|refactor|docs|test|build|ci|perf|style|revert(scope): …`).
-- New Prisma model → `bun run --filter @nuxion/api prisma:migrate` (dev) +
-  regenerate; seed data goes in `apps/api/prisma/seed.ts` and must be idempotent.
+- New table → add it to `apps/api/src/db/schema.ts`, then
+  `bun run --filter @nuxion/api db:generate` (author the SQL migration) +
+  `db:migrate` (apply). Seed data goes in `apps/api/src/db/seed.ts` and must be
+  idempotent (`onConflictDoNothing`/`onConflictDoUpdate`).
 - Shared types (`User`, enums, `ApiResponse`, `Paginated`) live in
   `packages/shared-types` — add cross-boundary types there, not duplicated.
 
@@ -97,8 +99,8 @@ review round-trip.
    `entities/`, `dto/`). Web side: `apps/web/app/features/user/` (all six files)
    and `apps/web/app/pages/admin/users/index.vue`. They answer most style
    questions by example.
-2. **API first.** Follow [references/api.md](references/api.md): Prisma model →
-   migrate → entity → DTOs (with the `sortBy` whitelist) → repository → service
+2. **API first.** Follow [references/api.md](references/api.md): schema table →
+   generate migration → entity → DTOs (with the `sortBy` whitelist) → repository → service
    → controller → module → register in `app.module.ts` → unit spec (+ e2e spec
    for anything beyond CRUD).
 3. **Then the web slice.** Follow [references/web.md](references/web.md):
@@ -171,7 +173,7 @@ These have all appeared in this repo and been reverted — do not reintroduce:
 ## Reference Documents
 
 - [references/api.md](references/api.md) — file-by-file backend recipe with real
-  excerpts from the users module: Prisma model conventions, DTO patterns (the
+  excerpts from the users module: Drizzle schema conventions, DTO patterns (the
   `sortBy` whitelist, array filters, `IsUnique`), repository/service/controller
   anatomy, module registration, seeding, unit + e2e testing recipes.
 - [references/web.md](references/web.md) — file-by-file frontend recipe: feature

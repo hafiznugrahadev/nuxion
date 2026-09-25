@@ -45,9 +45,6 @@ bun.lockb
 .cache/
 tmp/
 
-# Prisma 7 generated client (run `prisma generate`)
-apps/api/src/generated
-
 # Local file uploads (storage driver = local)
 apps/api/storage/
 

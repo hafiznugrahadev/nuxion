@@ -16,10 +16,10 @@ export default defineConfig({
     alias: {
       '@common': resolve(__dirname, 'src/common'),
       '@config': resolve(__dirname, 'src/config'),
+      '@db': resolve(__dirname, 'src/db'),
       '@infrastructure': resolve(__dirname, 'src/infrastructure'),
       '@modules': resolve(__dirname, 'src/modules'),
       '@shared': resolve(__dirname, 'src/shared'),
-      '@generated': resolve(__dirname, 'src/generated'),
     },
   },
 });

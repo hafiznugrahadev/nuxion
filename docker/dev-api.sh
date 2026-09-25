@@ -11,11 +11,8 @@ bun install --frozen-lockfile --ignore-scripts
 echo "› Building @nuxion/shared-types…"
 bun run --filter @nuxion/shared-types build
 
-echo "› Generating Prisma client…"
-bun run --filter @nuxion/api prisma:generate
-
 echo "› Applying database migrations…"
-bun run --filter @nuxion/api prisma:deploy
+bun run --filter @nuxion/api db:migrate
 
 echo "› Seeding database (idempotent)…"
 bun run --filter @nuxion/api db:seed

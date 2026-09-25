@@ -2,6 +2,8 @@ import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { DrizzleModule } from '@nestjs/drizzle';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import type { Request } from 'express';
 import { LoggerModule } from 'nestjs-pino';
 import { multistream, type Level } from 'pino';
@@ -23,7 +25,7 @@ import {
 } from '@infrastructure/logging/mattermost.transport';
 import { RequestIdMiddleware } from '@common/middleware/request-id.middleware';
 import { IsUniqueConstraint } from '@common/validators/is-unique.validator';
-import { PrismaModule } from '@infrastructure/database/prisma.module';
+import { relations } from '@db/relations';
 import { RedisModule } from '@infrastructure/redis/redis.module';
 import { StorageModule } from '@infrastructure/storage/storage.module';
 import { MailModule } from '@infrastructure/mail/mail.module';
@@ -116,7 +118,16 @@ import { SettingsModule } from '@modules/settings/settings.module';
         skipIf: () => config.get<boolean>('app.throttle.disabled') ?? false,
       }),
     }),
-    PrismaModule,
+    // PostgreSQL via Drizzle (@InjectDrizzle() anywhere; the pool is closed on
+    // app shutdown). Connection string comes from the validated env config.
+    DrizzleModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        drizzle,
+        connection: config.getOrThrow<string>('database.url'),
+        relations,
+      }),
+    }),
     RedisModule,
     StorageModule,
     MailModule,

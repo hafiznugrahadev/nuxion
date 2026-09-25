@@ -4,12 +4,24 @@ import {
   ForbiddenException,
   Injectable,
   Logger,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectDrizzle } from '@nestjs/drizzle';
 import { JwtService } from '@nestjs/jwt';
+import { and, eq, isNull } from 'drizzle-orm';
 import { UserRole } from '@nuxion/shared-types';
-import { PrismaService } from '@infrastructure/database/prisma.service';
+import type { Database } from '@db/relations';
+import { roleNamesFor } from '@db/user-roles';
+import {
+  passwordResetTokens,
+  refreshTokens,
+  roles as rolesTable,
+  userRoles,
+  users,
+  type UserRow,
+} from '@db/schema';
 import { MailService } from '@infrastructure/mail/mail.service';
 import { UsersService } from '@modules/users/users.service';
 import { NotificationsService } from '@modules/notifications/notifications.service';
@@ -45,12 +57,16 @@ export interface AuthTokens {
   user: SessionUser;
 }
 
+/** Full user row plus role names — the shape the auth flow works with. */
+type UserRowWithRoles = UserRow & { roles: { name: string }[] };
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    @InjectDrizzle()
+    private readonly db: Database,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly mail: MailService,
@@ -60,10 +76,7 @@ export class AuthService {
   ) {}
 
   async login(dto: LoginDto): Promise<LoginResult> {
-    const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
-      include: { roles: true },
-    });
+    const user = await this.findUserByEmail(dto.email);
     if (!user || !(await verifyPassword(dto.password, user.password))) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -87,18 +100,35 @@ export class AuthService {
     if (!this.config.get<boolean>('app.registration.enabled')) {
       throw new ForbiddenException('Registration is disabled');
     }
-    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const [existing] = await this.db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, dto.email))
+      .limit(1);
     if (existing) throw new ConflictException('Email is already registered');
 
-    const user = await this.prisma.user.create({
-      data: {
-        name: dto.name,
-        email: dto.email,
-        password: await hashPassword(dto.password),
-        roles: { connect: [{ name: UserRole.USER }] },
-      },
-      include: { roles: true },
+    const user = await this.db.transaction(async (tx) => {
+      const [row] = await tx
+        .insert(users)
+        .values({
+          name: dto.name,
+          email: dto.email,
+          password: await hashPassword(dto.password),
+        })
+        .returning();
+      const [userRole] = await tx
+        .select({ id: rolesTable.id })
+        .from(rolesTable)
+        .where(eq(rolesTable.name, UserRole.USER))
+        .limit(1);
+      if (!userRole) throw new NotFoundException('Record not found');
+      await tx.insert(userRoles).values({ userId: row.id, roleId: userRole.id });
+      return row;
     });
+    const userWithRoles: UserRowWithRoles = {
+      ...user,
+      roles: await roleNamesFor(this.db, user.id),
+    };
     // Keep the admin users list cache fresh (registration bypasses UsersService).
     await this.users.invalidateList();
     // Welcome notification (fire-and-forget — never block registration on it).
@@ -110,7 +140,7 @@ export class AuthService {
       })
       .catch(() => {});
     this.logger.log(`New user registered: ${user.email}`);
-    return this.issueTokens(user, generateTokenFamily());
+    return this.issueTokens(userWithRoles, generateTokenFamily());
   }
 
   /**
@@ -121,41 +151,54 @@ export class AuthService {
   async refresh(rawToken: string | undefined): Promise<AuthTokens> {
     if (!rawToken) throw new UnauthorizedException('Missing refresh token');
 
-    const stored = await this.prisma.refreshToken.findUnique({
-      where: { tokenHash: hashToken(rawToken) },
-      include: { user: { include: { roles: true } } },
-    });
+    const [stored] = await this.db
+      .select()
+      .from(refreshTokens)
+      .where(eq(refreshTokens.tokenHash, hashToken(rawToken)))
+      .limit(1);
     if (!stored) throw new UnauthorizedException('Invalid refresh token');
 
     if (stored.revokedAt) {
       this.logger.warn(
         `Refresh token reuse detected for user ${stored.userId}; revoking token family`,
       );
-      await this.prisma.refreshToken.deleteMany({ where: { familyId: stored.familyId } });
+      await this.db.delete(refreshTokens).where(eq(refreshTokens.familyId, stored.familyId));
       throw new UnauthorizedException('Refresh token reuse detected');
     }
 
     if (stored.expiresAt < new Date()) {
-      await this.prisma.refreshToken.delete({ where: { id: stored.id } });
+      await this.db.delete(refreshTokens).where(eq(refreshTokens.id, stored.id));
       throw new UnauthorizedException('Expired refresh token');
     }
 
-    await this.prisma.refreshToken.update({
-      where: { id: stored.id },
-      data: { revokedAt: new Date() },
-    });
-    return this.issueTokens(stored.user, stored.familyId);
+    await this.db
+      .update(refreshTokens)
+      .set({ revokedAt: new Date() })
+      .where(eq(refreshTokens.id, stored.id));
+
+    const [userRow] = await this.db
+      .select()
+      .from(users)
+      .where(eq(users.id, stored.userId))
+      .limit(1);
+    if (!userRow) throw new UnauthorizedException('Invalid refresh token');
+    const user: UserRowWithRoles = {
+      ...userRow,
+      roles: await roleNamesFor(this.db, stored.userId),
+    };
+    return this.issueTokens(user, stored.familyId);
   }
 
   /** Revoke the whole family the token belongs to. Idempotent — never throws. */
   async logout(rawToken: string | undefined): Promise<void> {
     if (!rawToken) return;
-    const stored = await this.prisma.refreshToken.findUnique({
-      where: { tokenHash: hashToken(rawToken) },
-      select: { familyId: true },
-    });
+    const [stored] = await this.db
+      .select({ familyId: refreshTokens.familyId })
+      .from(refreshTokens)
+      .where(eq(refreshTokens.tokenHash, hashToken(rawToken)))
+      .limit(1);
     if (stored) {
-      await this.prisma.refreshToken.deleteMany({ where: { familyId: stored.familyId } });
+      await this.db.delete(refreshTokens).where(eq(refreshTokens.familyId, stored.familyId));
     }
   }
 
@@ -165,21 +208,23 @@ export class AuthService {
    * time-boxed token (only its hash is stored) and email the reset link.
    */
   async forgotPassword(email: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({ where: { email } });
+    const [user] = await this.db.select().from(users).where(eq(users.email, email)).limit(1);
     if (!user) {
       this.logger.log(`Password reset requested for unknown email: ${email}`);
       return;
     }
 
     // One active token per user — drop any prior unused ones.
-    await this.prisma.passwordResetToken.deleteMany({ where: { userId: user.id, usedAt: null } });
+    await this.db
+      .delete(passwordResetTokens)
+      .where(and(eq(passwordResetTokens.userId, user.id), isNull(passwordResetTokens.usedAt)));
 
     const rawToken = generateOpaqueToken();
     const ttlMinutes = this.config.get<number>('app.passwordReset.ttlMinutes') ?? 30;
     const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000);
-    await this.prisma.passwordResetToken.create({
-      data: { userId: user.id, tokenHash: hashToken(rawToken), expiresAt },
-    });
+    await this.db
+      .insert(passwordResetTokens)
+      .values({ userId: user.id, tokenHash: hashToken(rawToken), expiresAt });
 
     const baseUrl =
       this.config.get<string>('app.passwordReset.url') ?? 'http://localhost:4300/reset-password';
@@ -207,22 +252,24 @@ export class AuthService {
    * so any existing sessions are forced to re-authenticate.
    */
   async resetPassword(rawToken: string, newPassword: string): Promise<void> {
-    const stored = await this.prisma.passwordResetToken.findUnique({
-      where: { tokenHash: hashToken(rawToken) },
-    });
+    const [stored] = await this.db
+      .select()
+      .from(passwordResetTokens)
+      .where(eq(passwordResetTokens.tokenHash, hashToken(rawToken)))
+      .limit(1);
     if (!stored || stored.usedAt || stored.expiresAt < new Date()) {
       throw new BadRequestException('Invalid or expired reset token');
     }
 
     const passwordHash = await hashPassword(newPassword);
-    await this.prisma.$transaction([
-      this.prisma.user.update({ where: { id: stored.userId }, data: { password: passwordHash } }),
-      this.prisma.passwordResetToken.update({
-        where: { id: stored.id },
-        data: { usedAt: new Date() },
-      }),
-      this.prisma.refreshToken.deleteMany({ where: { userId: stored.userId } }),
-    ]);
+    await this.db.transaction(async (tx) => {
+      await tx.update(users).set({ password: passwordHash }).where(eq(users.id, stored.userId));
+      await tx
+        .update(passwordResetTokens)
+        .set({ usedAt: new Date() })
+        .where(eq(passwordResetTokens.id, stored.id));
+      await tx.delete(refreshTokens).where(eq(refreshTokens.userId, stored.userId));
+    });
     this.logger.log(`Password reset completed for user ${stored.userId}`);
   }
 
@@ -240,6 +287,13 @@ export class AuthService {
     return this.issueTokens(user, generateTokenFamily());
   }
 
+  /** Full row (password included — verifyPassword needs it) + role names. */
+  private async findUserByEmail(email: string): Promise<UserRowWithRoles | null> {
+    const [user] = await this.db.select().from(users).where(eq(users.email, email)).limit(1);
+    if (!user) return null;
+    return { ...user, roles: await roleNamesFor(this.db, user.id) };
+  }
+
   private async issueTokens(user: UserWithRoles, familyId: string): Promise<AuthTokens> {
     const payload: JwtPayload = {
       sub: user.id,
@@ -250,9 +304,9 @@ export class AuthService {
 
     const refreshToken = generateRefreshToken();
     const expiresAt = new Date(Date.now() + this.refreshTtlDays * 24 * 60 * 60 * 1000);
-    await this.prisma.refreshToken.create({
-      data: { userId: user.id, familyId, tokenHash: hashToken(refreshToken), expiresAt },
-    });
+    await this.db
+      .insert(refreshTokens)
+      .values({ userId: user.id, familyId, tokenHash: hashToken(refreshToken), expiresAt });
 
     return { accessToken, refreshToken, user: toSessionUser(user) };
   }

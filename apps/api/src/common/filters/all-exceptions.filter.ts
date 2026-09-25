@@ -6,13 +6,14 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { Prisma } from '@generated/prisma/client';
+import { DatabaseError } from 'pg';
 import type { Request, Response } from 'express';
 import type { ApiErrorResponse } from '@nuxion/shared-types';
 
 /**
  * Global filter producing the `{ success:false, ... }` error envelope. Maps known
- * Prisma errors to sensible HTTP codes so the FE always sees a consistent shape.
+ * PostgreSQL errors (surfaced through Drizzle) to sensible HTTP codes so the FE
+ * always sees a consistent shape.
  */
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -37,11 +38,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
         message = body.message ?? exception.message;
         error = body.error ?? exception.name;
       }
-    } else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
-      ({ status, message, error } = this.mapPrismaError(exception));
-    } else if (exception instanceof Error) {
-      message = exception.message;
-      error = exception.name;
+    } else {
+      // Drizzle wraps driver errors in DrizzleQueryError — walk the cause chain
+      // to the underlying pg DatabaseError carrying the PostgreSQL SQLSTATE.
+      const pgError = extractPgError(exception);
+      if (pgError) {
+        ({ status, message, error } = this.mapDatabaseError(pgError));
+      } else if (exception instanceof Error) {
+        message = exception.message;
+        error = exception.name;
+      }
     }
 
     if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
@@ -63,27 +69,22 @@ export class AllExceptionsFilter implements ExceptionFilter {
     response.status(status).json(body);
   }
 
-  private mapPrismaError(e: Prisma.PrismaClientKnownRequestError): {
+  private mapDatabaseError(e: DatabaseError): {
     status: number;
     message: string;
     error: string;
   } {
     switch (e.code) {
-      case 'P2002': {
-        const target = (e.meta?.target as string[] | undefined)?.join(', ') ?? 'field';
+      case '23505': {
+        // Unique violation — the constraint name encodes table + column
+        // (e.g. `users_email_key` → email, `refresh_tokens_tokenHash_key` → tokenHash).
         return {
           status: HttpStatus.CONFLICT,
-          message: `Unique constraint failed on: ${target}`,
+          message: `Unique constraint failed on: ${columnFromConstraint(e.constraint)}`,
           error: 'Conflict',
         };
       }
-      case 'P2025':
-        return {
-          status: HttpStatus.NOT_FOUND,
-          message: 'Record not found',
-          error: 'NotFound',
-        };
-      case 'P2003':
+      case '23503':
         return {
           status: HttpStatus.BAD_REQUEST,
           message: 'Related record constraint failed',
@@ -97,4 +98,34 @@ export class AllExceptionsFilter implements ExceptionFilter {
         };
     }
   }
+}
+
+/** Unwrap a pg DatabaseError from a Drizzle error's cause chain, if any. */
+function extractPgError(exception: unknown): DatabaseError | undefined {
+  let current: unknown = exception;
+  while (current instanceof Error) {
+    if (current instanceof DatabaseError) return current;
+    current = current.cause;
+  }
+  return undefined;
+}
+
+/** Table-name prefixes found in this schema's constraint names (longest first). */
+const CONSTRAINT_TABLES = [
+  'password_reset_tokens',
+  'refresh_tokens',
+  'notifications',
+  'user_roles',
+  'passkeys',
+  'settings',
+  'users',
+  'roles',
+].sort((a, b) => b.length - a.length);
+
+/** `users_email_key` → `email`; falls back to a generic label. */
+function columnFromConstraint(constraint: string | undefined): string {
+  if (!constraint?.endsWith('_key')) return 'field';
+  const base = constraint.slice(0, -'_key'.length);
+  const table = CONSTRAINT_TABLES.find((t) => base.startsWith(`${t}_`));
+  return table ? base.slice(table.length + 1) : base;
 }

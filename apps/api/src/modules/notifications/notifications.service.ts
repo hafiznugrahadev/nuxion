@@ -1,41 +1,62 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@infrastructure/database/prisma.service';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { and, desc, eq, isNull, sql } from 'drizzle-orm';
+import type { Database } from '@db/relations';
+import { notifications } from '@db/schema';
 import type { CreateNotificationDto } from './dto/notification.dto';
 
 @Injectable()
 export class NotificationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @InjectDrizzle()
+    private readonly db: Database,
+  ) {}
 
   async findAll(userId: string) {
-    const [notifications, unread] = await Promise.all([
-      this.prisma.notification.findMany({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
-        take: 50,
-      }),
-      this.prisma.notification.count({ where: { userId, readAt: null } }),
+    const [rows, [unread]] = await Promise.all([
+      this.db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.userId, userId))
+        .orderBy(desc(notifications.createdAt))
+        .limit(50),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(notifications)
+        .where(and(eq(notifications.userId, userId), isNull(notifications.readAt))),
     ]);
-    return { data: notifications, unread, total: notifications.length };
+    return { data: rows, unread: unread?.count ?? 0, total: rows.length };
   }
 
   async create(userId: string, dto: CreateNotificationDto) {
-    return this.prisma.notification.create({
-      data: { userId, title: dto.title, body: dto.body, type: dto.type ?? 'info' },
-    });
+    const [created] = await this.db
+      .insert(notifications)
+      .values({ userId, title: dto.title, body: dto.body, type: dto.type ?? 'info' })
+      .returning();
+    return created;
   }
 
   async markRead(id: string, userId: string) {
-    const notification = await this.prisma.notification.findFirst({ where: { id, userId } });
+    const [notification] = await this.db
+      .select()
+      .from(notifications)
+      .where(and(eq(notifications.id, id), eq(notifications.userId, userId)))
+      .limit(1);
     if (!notification) throw new NotFoundException('Notification not found');
     if (notification.readAt) return notification;
-    return this.prisma.notification.update({ where: { id }, data: { readAt: new Date() } });
+    const [updated] = await this.db
+      .update(notifications)
+      .set({ readAt: new Date() })
+      .where(eq(notifications.id, id))
+      .returning();
+    return updated;
   }
 
   async markAllRead(userId: string) {
-    await this.prisma.notification.updateMany({
-      where: { userId, readAt: null },
-      data: { readAt: new Date() },
-    });
+    await this.db
+      .update(notifications)
+      .set({ readAt: new Date() })
+      .where(and(eq(notifications.userId, userId), isNull(notifications.readAt)));
     return { success: true };
   }
 }

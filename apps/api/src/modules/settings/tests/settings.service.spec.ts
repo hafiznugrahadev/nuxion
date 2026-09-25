@@ -1,20 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { PrismaService } from '@infrastructure/database/prisma.service';
 import type { RedisService } from '@infrastructure/redis/redis.service';
+import { mockDb } from '../../../../test/helpers/mock-db';
 import { DEFAULT_BRANDING, SettingsService } from '../settings.service';
 
-function makeService(storedRow: unknown = null) {
-  const prisma = {
-    setting: {
-      findUnique: vi.fn(async () => storedRow),
-      upsert: vi.fn(async ({ create }: { create: { key: string; value: unknown } }) => ({
-        key: create.key,
-        value: create.value,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })),
-    },
-  };
+function makeService(storedRow: unknown = null, insertValue: unknown = null) {
+  const { db, calls } = mockDb({
+    select: storedRow ? [storedRow] : [],
+    insert: insertValue !== null ? [{ value: insertValue }] : [],
+  });
   const store = new Map<string, unknown>();
   const redis = {
     get: vi.fn(async (key: string) => store.get(key) ?? null),
@@ -25,11 +18,8 @@ function makeService(storedRow: unknown = null) {
       store.delete(key);
     }),
   };
-  const service = new SettingsService(
-    prisma as unknown as PrismaService,
-    redis as unknown as RedisService,
-  );
-  return { service, prisma, redis, store };
+  const service = new SettingsService(db, redis as unknown as RedisService);
+  return { service, db, redis, store, calls };
 }
 
 describe('SettingsService', () => {
@@ -54,7 +44,7 @@ describe('SettingsService', () => {
     it('caches the first read and skips the DB afterwards', async () => {
       await ctx.service.getBranding();
       await ctx.service.getBranding();
-      expect(ctx.prisma.setting.findUnique).toHaveBeenCalledTimes(1);
+      expect(ctx.db.select).toHaveBeenCalledTimes(1);
       expect(ctx.store.get('settings:branding')).toBeTruthy();
     });
 
@@ -67,12 +57,15 @@ describe('SettingsService', () => {
 
   describe('updateBranding', () => {
     it('upserts the row and invalidates the cache', async () => {
-      const result = await ctx.service.updateBranding({
+      const dto = {
         appName: 'Acme',
         logoUrl: 'http://api.local/uploads/branding/logo.png',
         faviconUrl: null,
-      });
+      };
+      ctx = makeService(null, dto);
+      const result = await ctx.service.updateBranding(dto);
       expect(result.appName).toBe('Acme');
+      expect(ctx.calls.onConflictDoUpdate).toBeTruthy();
       expect(ctx.redis.del).toHaveBeenCalledWith('settings:branding');
     });
   });

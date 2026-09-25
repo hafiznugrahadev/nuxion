@@ -136,6 +136,9 @@ and wiring to the FormModal. Canonical state block:
 
 ```ts
 const search = ref('');
+// Debounced mirror feeds the query — one request per typing pause, not per
+// keystroke (auto-imported from @vueuse/nuxt). The raw ref keeps the input snappy.
+const searchDebounced = refDebounced(search, 400);
 const selectedRoles = ref<string[]>([]);
 const page = ref(1);
 // Mirrors the API defaults (newest first) so the first load's arrow is honest.
@@ -145,9 +148,15 @@ const params = computed<UserListParams>(() => ({
   limit: 10,
   sortBy: sort.value.key as UserListParams['sortBy'],
   order: sort.value.order,
-  search: search.value || undefined, // undefined drops the param
+  search: searchDebounced.value || undefined, // undefined drops the param
   roles: selectedRoles.value.length ? [...selectedRoles.value] : undefined,
 }));
+
+// A new search term shrinks the result set — restart from page 1 (same as
+// sorting and role filters).
+watch(searchDebounced, () => {
+  page.value = 1;
+});
 
 const { data, isLoading, isError, error, refetch } = useUsers(params);
 const rows = computed(() => data.value?.data ?? []);

@@ -30,6 +30,29 @@ async function bootstrap() {
     'app.swagger',
   );
 
+  // Security headers (Helmet 8 defaults) — registered before any app.use()
+  // middleware so responses those send directly (Swagger's basic-auth 401s,
+  // /uploads assets) carry the headers too. One deviation from the defaults:
+  // CORP is loosened to cross-origin because the web app is a DIFFERENT origin
+  // and embeds API-served assets (/uploads, /files/view redirects) in <img>.
+  app.useSecurityHeaders({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  });
+
+  // Fetch-Metadata CSRF protection: state-changing requests that a browser
+  // reports as cross-origin (Sec-Fetch-Site) are rejected before routing. The
+  // credentialed frontend is cross-origin by design (web + api domains), so
+  // exactly the origins CORS allows are trusted (app.csrf.trustedOrigins —
+  // derived from CORS_ORIGIN/APP_URL). Non-browser clients (SSR fetch, CLIs,
+  // webhooks) send neither header and pass untouched.
+  app.enableCsrfProtection({
+    trustedOrigins: config.get<string[]>('app.csrf.trustedOrigins') ?? [],
+  });
+
+  // One TLS proxy in front (OrbStack gateway / Traefik — TRUST_PROXY overrides):
+  // rate limiting tracks the real client IP and req.protocol sees the real scheme.
+  app.set('trust proxy', config.get<boolean | number>('app.trustProxy') ?? 1);
+
   app.setGlobalPrefix(apiPrefix);
 
   // Parse cookies so the auth controller can read the httpOnly refresh token.

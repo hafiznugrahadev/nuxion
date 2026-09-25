@@ -32,7 +32,7 @@
     "eslint-plugin-vue": "^10.10.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.4.1",
-    "prettier": "3.9.6",
+    "prettier": "3.9.8",
     "turbo": "^2.3.3",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.20.0",

@@ -14,8 +14,42 @@ const safeHostname = (url: string): string => {
   }
 };
 
+/**
+ * Serialize an origin the way browsers send the `Origin` header (lower-case,
+ * default port dropped) — the exact form Nest's CSRF trustedOrigins compares
+ * against. Throws on anything that is not http(s)://host[:port], so a broken
+ * CORS_ORIGIN/APP_URL fails at startup instead of silently not matching.
+ */
+const parseOrigin = (raw: string): string => {
+  const trimmed = raw.trim();
+  const url = new URL(trimmed);
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new Error(`Invalid origin "${trimmed}": expected http(s)://host[:port]`);
+  }
+  return url.origin;
+};
+
+/**
+ * Express `trust proxy` value for the TRUST_PROXY env var. The API sits behind
+ * exactly one TLS proxy in every supported environment (OrbStack's gateway in
+ * dev, Dokploy's Traefik in prod), so the default is 1 hop: req.ip becomes the
+ * real client address (rate limiting) and req.protocol honours
+ * X-Forwarded-Proto, while a client-forged X-Forwarded-For entry is the one
+ * entry the hop limit ignores. "false"/"0" for a bare direct run, "true" only
+ * for local debugging (trusts every proxy — spoofable).
+ */
+const parseTrustProxy = (raw: string | undefined): boolean | number => {
+  const value = raw?.trim();
+  if (!value || value === '1') return 1;
+  if (value === 'true') return true;
+  if (value === 'false' || value === '0') return false;
+  const hops = Number.parseInt(value, 10);
+  return Number.isNaN(hops) ? 1 : hops;
+};
+
 const appConfigFactory = () => {
   const appUrl = process.env.APP_URL || 'http://localhost:4300';
+  const corsOriginRaw = process.env.CORS_ORIGIN || process.env.APP_URL || '*';
   return {
     env: process.env.NODE_ENV ?? 'development',
     // Single root .env uses API_PORT; containers/compose set PORT, which wins.
@@ -24,7 +58,23 @@ const appConfigFactory = () => {
     // Frontend base URL — single source of truth (like Laravel's APP_URL).
     appUrl,
     // CORS origin defaults to APP_URL; explicit CORS_ORIGIN overrides (e.g. multiple origins).
-    corsOrigin: process.env.CORS_ORIGIN || process.env.APP_URL || '*',
+    corsOrigin: corsOriginRaw,
+    // CSRF trusted origins — the SAME origins CORS allows credentials from
+    // (see enableCsrfProtection in main.ts), so there is no second list to
+    // keep in sync. With the dev-convenience "*" reflect-all CORS there is no
+    // list to trust, so fall back to the canonical frontend APP_URL.
+    csrf: {
+      trustedOrigins:
+        corsOriginRaw === '*'
+          ? [parseOrigin(appUrl)]
+          : corsOriginRaw
+              .split(',')
+              .map((origin) => origin.trim())
+              .filter(Boolean)
+              .map(parseOrigin),
+    },
+    // Express `trust proxy` (see parseTrustProxy): 1 TLS hop by default.
+    trustProxy: parseTrustProxy(process.env.TRUST_PROXY),
     logLevel: process.env.LOG_LEVEL ?? 'info',
     jwt: {
       // Required & validated at startup (see env.validation.ts) — no insecure fallback.

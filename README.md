@@ -87,6 +87,10 @@ bun run serve
 
 > **CORS + cookies:** the refresh cookie requires an explicit `CORS_ORIGIN` (the web
 > origin) on the API — a wildcard `*` is rejected by browsers for credentialed requests.
+> The same origin list also feeds the API's built-in protections: Helmet-style
+> security headers, fetch-metadata CSRF checks (`useSecurityHeaders()` /
+> `enableCsrfProtection()`, Nest ≥ 12.1) and global rate limiting
+> (`@nestjs/throttler`, per-route overrides on the auth endpoints).
 
 ### Ports (configurable in the root `.env`)
 

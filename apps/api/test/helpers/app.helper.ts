@@ -1,4 +1,5 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 import { useContainer } from 'class-validator';
@@ -14,6 +15,16 @@ export async function createTestApp(): Promise<INestApplication> {
   }).compile();
 
   const app = moduleRef.createNestApplication({ logger: false });
+
+  // Mirror main.ts security wiring so e2e specs exercise (and assert) it.
+  // Supertest sends no Sec-Fetch-Site/Origin, so plain requests pass the CSRF
+  // check like any non-browser client; specs forge headers to test rejections.
+  app.useSecurityHeaders({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  });
+  app.enableCsrfProtection({
+    trustedOrigins: app.get(ConfigService).get<string[]>('app.csrf.trustedOrigins') ?? [],
+  });
 
   app.use(cookieParser());
   app.setGlobalPrefix('api');

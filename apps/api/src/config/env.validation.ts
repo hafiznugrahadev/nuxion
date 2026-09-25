@@ -45,6 +45,15 @@ export class EnvironmentVariables {
   @IsOptional()
   CORS_ORIGIN = '*';
 
+  // Express `trust proxy` hop count: "1" (default — one TLS proxy in front:
+  // OrbStack gateway in dev, Traefik in prod), "false"/"0" for a direct bare
+  // run, "true" trusts every proxy (local debugging only — spoofable).
+  // Parsed in app.config (parseTrustProxy); CSRF trusted origins are NOT a
+  // separate var — they derive from CORS_ORIGIN/APP_URL.
+  @IsString()
+  @IsOptional()
+  TRUST_PROXY?: string;
+
   @IsString()
   DATABASE_URL!: string;
 

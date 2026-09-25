@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { UserRole, type User } from '@nuxion/shared-types';
 import { useAuthStore } from '~/stores/auth';
 import { roleLabel } from '~/lib/roles';
@@ -14,6 +14,10 @@ const auth = useAuthStore();
 const canManage = computed(() => auth.isSuperAdmin);
 
 const search = ref('');
+// Debounced mirror of the input: typing updates the box instantly but only
+// fires one request per pause — not one per keystroke.
+const SEARCH_DEBOUNCE_MS = 400;
+const searchDebounced = refDebounced(search, SEARCH_DEBOUNCE_MS);
 const selectedRoles = ref<string[]>([]);
 const filterOpen = ref(false);
 const page = ref(1);
@@ -24,10 +28,16 @@ const params = computed<UserListParams>(() => ({
   limit: 10,
   sortBy: sort.value.key as UserListParams['sortBy'],
   order: sort.value.order,
-  search: search.value || undefined,
+  search: searchDebounced.value || undefined,
   // Server-side filter: the API is the source of truth (no client-side filtering).
   roles: selectedRoles.value.length ? [...selectedRoles.value] : undefined,
 }));
+
+// A new search term shrinks the result set — restart from page 1 (same as
+// sorting and role filters).
+watch(searchDebounced, () => {
+  page.value = 1;
+});
 
 // Role filter as multi-select tags — the API returns users holding ANY selected role.
 const roleOptions = computed(() => [

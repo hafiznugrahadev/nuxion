@@ -13,8 +13,7 @@
     "lint": "eslint . --fix",
     "typecheck": "nuxt typecheck",
     "test": "vitest run --passWithNoTests",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@nuxion/shared-types": "workspace:*",

@@ -24,6 +24,8 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   use: {
     baseURL: BASE_URL,
+    // Headless only — no headed or UI-mode runs (standing rule).
+    headless: true,
     trace: 'on-first-retry',
     actionTimeout: 15_000,
     navigationTimeout: 30_000,

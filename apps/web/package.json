@@ -12,7 +12,7 @@
     "postinstall": "nuxt prepare",
     "lint": "eslint . --fix",
     "typecheck": "nuxt typecheck",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "test:e2e": "playwright test"
   },
   "dependencies": {

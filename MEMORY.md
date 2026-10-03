@@ -475,3 +475,18 @@ Read this file at the start of every session. Never contradict a logged decision
 - Paraphrasing/guessing install steps or generic "Get started" copy — would drift from the README and silently break after doc changes.
 - Linking to docs instead of inlining commands — the user explicitly wanted the instructions on the front page itself.
 - `lg:min-w-0` on the code-block grid child — a `<pre>`'s min-content width expands the grid track at mobile widths (64px horizontal overflow at 375px); only unconditional `min-w-0` fixed it.
+
+---
+
+## 2026-10-04, Agent concurrency protocol — separate worktree + branch when another agent is active
+
+**id:** `01a10286-9be7-76cf-b5da-5ce2de85cb8d`
+
+**What was decided:** Every agent doing heavy work (multi-file changes, refactors, dependency changes) or implementing an approved plan-mode plan must first check whether another agent is working in the repo — `git worktree list`, `git status` for dirty state it didn't create, and recently committed branches. If another agent is active, the agent works in its own worktree on its own branch (`git worktree add ../nuxion-<slug> -b <type>/<slug> origin/main`), never in the shared checkout. If the checkout is clean and idle, a feature branch in the shared checkout is fine. Codified as the first rule in `AGENTS.md` at repo root.
+
+**Why:** Parallel agents sharing one working tree overwrite each other's uncommitted state and collide on branch checkouts — during the Drizzle refactor (PR #26) another agent held `refactor/api-prisma-to-drizzle` while other sessions kept working, which is safe only because the trees were separate. `main` is protected (feature branch + PR, squash-merge), so a per-task branch was already mandatory; the worktree adds the checkout isolation for free.
+
+**What was rejected:**
+
+- Serializing all agent work through the single shared checkout — forfeits the point of running agents in parallel and stalls behind long builds.
+- Coordinating via `git stash` — stash contents are invisible and easily forgotten or overwritten; standing practice is "no stash".

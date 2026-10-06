@@ -11,6 +11,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserRole } from '@nuxion/shared-types';
 import { Roles } from '@common/decorators/roles.decorator';
@@ -44,6 +45,8 @@ export class UsersController {
     return this.usersService.updateProfile(id, dto);
   }
 
+  // Re-verifies the current password — a brute-force surface like login.
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Patch('me/password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Change the current user’s own password' })

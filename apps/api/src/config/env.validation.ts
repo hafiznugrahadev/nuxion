@@ -281,5 +281,19 @@ export function validateEnv(config: Record<string, unknown>): EnvironmentVariabl
     throw new Error(`Invalid environment configuration:\n  - ${details}`);
   }
 
+  // A wildcard origin combined with credentialed CORS reflects EVERY origin
+  // while still sending cookies. Dev keeps the wildcard for convenience
+  // (reflected + warned in main.ts); production must fail fast with an
+  // explicit allow-list. Only an EXPLICIT "*" is rejected: when CORS_ORIGIN is
+  // absent the class default above fills "*", but app.config then falls back
+  // to APP_URL (never "*"), so that case must stay valid.
+  const explicitWildcard =
+    typeof config.CORS_ORIGIN === 'string' && config.CORS_ORIGIN.trim() === '*';
+  if (validated.NODE_ENV === NodeEnv.Production && explicitWildcard) {
+    throw new Error(
+      'Invalid environment configuration:\n  - CORS_ORIGIN cannot be "*" in production: credentialed CORS would reflect every origin. Set an explicit comma-separated origin allow-list (or rely on APP_URL).',
+    );
+  }
+
   return validated;
 }

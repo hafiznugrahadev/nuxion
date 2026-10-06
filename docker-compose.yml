@@ -107,8 +107,9 @@ services:
       # CORS_ORIGIN defaults to APP_URL in code; set only to explicitly override.
       CORS_ORIGIN: ${CORS_ORIGIN:-}
       LOG_LEVEL: debug
-      # Dev/E2E: skip rate limiting so rapid test runs aren't throttled.
-      THROTTLE_DISABLED: ${THROTTLE_DISABLED:-true}
+      # Rate limiting is ON by default (like prod) so dev exercises it; set
+      # THROTTLE_DISABLED=true in .env only for load tests / bulk scripts.
+      THROTTLE_DISABLED: ${THROTTLE_DISABLED:-false}
       SWAGGER_ENABLED: ${SWAGGER_ENABLED:-true}
       SWAGGER_USER: ${SWAGGER_USER:-admin}
       SWAGGER_PASSWORD: ${SWAGGER_PASSWORD:-admin}

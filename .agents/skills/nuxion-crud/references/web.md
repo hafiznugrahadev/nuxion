@@ -270,9 +270,34 @@ const onSubmit = handleSubmit(async (values) => {
   its label to `saving`).
 - Immutable fields (email in edit) render `disabled` showing the stored value —
   don't just hide them.
-- Standard inputs share one `inputClass` (h-10 rounded-sm border-outline,
-  `focus:ring-primary`); `PasswordField` self-registers into the same
-  `useForm` context with just `name` + `label`.
+- Every field caption/error is composed with `Fieldset`
+  (`app/components/common/fields/Fieldset.vue`) — never hand-roll the
+  `space-y-1.5` + `<label>` + error `<p>` skeleton. Inputs with a `*Field`
+  wrapper (TextField, PasswordField, …) already compose it internally; bespoke
+  controls (ToggleGroup, Editor, raw inputs) wrap it and bind the slot props so
+  `aria-describedby`/`aria-invalid` reach the control. Standard inputs keep one
+  shared `inputClass` (h-10 rounded-sm border-outline, `focus:ring-primary`):
+
+  ```vue
+  <Fieldset name="name" :label="t('<feature>.form.name')" :error="errors.name">
+    <template #default="{ id, describedBy, invalid }">
+      <input
+        :id="id"
+        v-model="name"
+        :aria-describedby="describedBy"
+        :aria-invalid="invalid"
+        :class="cn(inputClass, invalid && 'border-destructive focus:border-destructive focus:ring-destructive')"
+      />
+    </template>
+  </Fieldset>
+  ```
+
+  Group controls (checkbox sets, segmented buttons) pass `group` (caption
+  renders as a span, no `for`) and bind `labelId`/`describedBy` on a
+  `role="group"` container instead.
+
+- `PasswordField` self-registers into the same `useForm` context with just
+  `name` + `label`.
 - The parent listens once: `<UserFormModal v-model:open="formOpen" :user="editing"
 @saved="refetch()" />` with `openCreate()`/`openEdit(row)` setters.
 

@@ -30,7 +30,7 @@ const schema = toTypedSchema(
   }),
 );
 
-const { handleSubmit } = useForm({
+const { handleSubmit, errors } = useForm({
   validationSchema: schema,
   initialValues: {
     confidence: 50,
@@ -184,15 +184,23 @@ const { value: statusValue } = useField<string>('status');
             </div>
             <!-- M3 segmented button: untuk pilihan 3-5 opsi, ini pola yang
                  direkomendasikan menggantikan radio vertikal. -->
-            <div class="space-y-1.5">
-              <span class="text-sm font-medium leading-none">
-                Status<span class="ml-0.5 text-destructive">*</span>
-              </span>
-              <ToggleGroup v-model="statusValue" :options="statusOptions" />
-              <p class="text-xs text-on-surface-variant">
-                Segmented selection (MD3 segmented button pattern).
-              </p>
-            </div>
+            <Fieldset
+              group
+              name="status"
+              label="Status"
+              required
+              :error="errors.status"
+              hint="Segmented selection (MD3 segmented button pattern)."
+            >
+              <template #default="{ labelId, describedBy }">
+                <ToggleGroup
+                  v-model="statusValue"
+                  :options="statusOptions"
+                  :aria-labelledby="labelId"
+                  :aria-describedby="describedBy"
+                />
+              </template>
+            </Fieldset>
             <!-- Radio tetap didemokan untuk kasus daftar vertikal yang lebih
                  panjang / opsi dengan deskripsi. -->
             <RadioGroupField
@@ -207,18 +215,21 @@ const { value: statusValue } = useField<string>('status');
         <!-- Rich Text -->
         <div class="rounded-lg border border-outline-variant bg-card p-5 sm:p-6">
           <h2 class="mb-4 text-sm font-semibold text-muted-foreground">Rich Text</h2>
-          <div class="space-y-1.5">
-            <span class="text-sm font-medium leading-none">Bio (formatted)</span>
-            <Editor
-              v-model="editorHtml"
-              placeholder="Write something, and upload an image…"
-              min-height="7rem"
-            />
-            <p class="text-xs text-on-surface-variant">
-              Toolbar toggles take the tonal pill when active. Images upload to the shared storage
-              API and are inserted inline.
-            </p>
-          </div>
+          <Fieldset
+            group
+            label="Bio (formatted)"
+            hint="Toolbar toggles take the tonal pill when active. Images upload to the shared storage API and are inserted inline."
+          >
+            <template #default="{ labelId, describedBy }">
+              <Editor
+                v-model="editorHtml"
+                placeholder="Write something, and upload an image…"
+                min-height="7rem"
+                :aria-labelledby="labelId"
+                :aria-describedby="describedBy"
+              />
+            </template>
+          </Fieldset>
           <div v-if="editorHtml" class="mt-4">
             <p class="mb-1.5 text-xs font-medium text-on-surface-variant">HTML output (v-model)</p>
             <pre

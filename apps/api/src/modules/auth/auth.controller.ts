@@ -83,6 +83,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Revoke the refresh token and clear the cookie' })
@@ -123,6 +124,7 @@ export class AuthController {
 
   // ── Two-factor auth (TOTP) ──────────────────────────────────────────────────
 
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('2fa/setup')
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
@@ -131,6 +133,7 @@ export class AuthController {
     return this.twoFactor.beginSetup({ id: user.id, email: user.email });
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('2fa/activate')
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
@@ -139,6 +142,7 @@ export class AuthController {
     return this.twoFactor.activate({ id: user.id }, dto.code);
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('2fa/recovery/regenerate')
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
@@ -164,6 +168,7 @@ export class AuthController {
 
   // ── Passkeys (WebAuthn) ─────────────────────────────────────────────────────
 
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('webauthn/register/options')
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
@@ -172,6 +177,7 @@ export class AuthController {
     return this.webAuthn.registrationOptions(user.id);
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('webauthn/register/verify')
   @ApiBearerAuth()
   @HttpCode(HttpStatus.CREATED)
@@ -220,6 +226,7 @@ export class AuthController {
     return this.webAuthn.listPasskeys(user.id);
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Delete('passkeys/:id')
   @ApiBearerAuth()
   @ApiOperation({ summary: "Remove one of the current user's passkeys" })

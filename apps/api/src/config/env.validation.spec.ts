@@ -36,4 +36,27 @@ describe('validateEnv', () => {
       ).not.toThrow();
     });
   });
+
+  describe('REDIS_URL (single connection string)', () => {
+    it('accepts redis:// and rediss:// (TLS) URLs', () => {
+      expect(() => validateEnv({ ...baseEnv, REDIS_URL: 'redis://:pw@host:6379/0' })).not.toThrow();
+      expect(() =>
+        validateEnv({ ...baseEnv, REDIS_URL: 'rediss://default:pw@cache.example.com:6379' }),
+      ).not.toThrow();
+    });
+
+    it('rejects a non-redis scheme', () => {
+      expect(() => validateEnv({ ...baseEnv, REDIS_URL: 'postgres://host:5432' })).toThrow(
+        /REDIS_URL/,
+      );
+    });
+
+    it('rejects a malformed URL', () => {
+      expect(() => validateEnv({ ...baseEnv, REDIS_URL: 'redis://[::1' })).toThrow(/REDIS_URL/);
+    });
+
+    it('treats an empty string as unset (compose `${REDIS_URL:-}` pass-through)', () => {
+      expect(() => validateEnv({ ...baseEnv, REDIS_URL: '' })).not.toThrow();
+    });
+  });
 });

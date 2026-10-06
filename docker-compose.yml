@@ -98,6 +98,10 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-nuxion}:${POSTGRES_PASSWORD:-nuxion}@nuxion-postgres:5432/${POSTGRES_DB:-nuxion}?schema=public
       REDIS_HOST: nuxion-redis
       REDIS_PORT: 6379
+      # Pin REDIS_URL kosong: dev selalu pakai host internal di atas. Tanpa ini,
+      # REDIS_URL di root .env (untuk tooling host) akan menang dan memutus
+      # container dari nuxion-redis internal. String kosong dianggap unset oleh API.
+      REDIS_URL: ''
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-min-16-chars}
       JWT_EXPIRES_IN: 15m
       JWT_REFRESH_EXPIRES_DAYS: 7

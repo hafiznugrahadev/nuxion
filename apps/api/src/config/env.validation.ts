@@ -57,6 +57,14 @@ export class EnvironmentVariables {
   @IsString()
   DATABASE_URL!: string;
 
+  // Single connection string (redis:// or rediss://) — the shape Dokploy and
+  // managed Redis provision. Wins over the discrete vars below when set;
+  // scheme/parseability checked in validateEnv (URL-parser based, so passwords
+  // with special characters don't false-fail like @IsUrl would).
+  @IsString()
+  @IsOptional()
+  REDIS_URL?: string;
+
   @IsString()
   @IsOptional()
   REDIS_HOST = 'localhost';
@@ -279,6 +287,23 @@ export function validateEnv(config: Record<string, unknown>): EnvironmentVariabl
   if (errors.length > 0) {
     const details = errors.map((e) => Object.values(e.constraints ?? {}).join(', ')).join('\n  - ');
     throw new Error(`Invalid environment configuration:\n  - ${details}`);
+  }
+
+  // Empty string counts as unset: compose files pass `${REDIS_URL:-}` through,
+  // and the discrete host/port vars are the fallback for those environments.
+  const redisUrl = typeof config.REDIS_URL === 'string' ? config.REDIS_URL.trim() : '';
+  if (redisUrl) {
+    let protocol: string | undefined;
+    try {
+      protocol = new URL(redisUrl).protocol;
+    } catch {
+      // fall through to the scheme error below with a parse-friendly message
+    }
+    if (protocol !== 'redis:' && protocol !== 'rediss:') {
+      throw new Error(
+        'Invalid environment configuration:\n  - REDIS_URL must be a redis:// or rediss:// URL, e.g. redis://:password@host:6379/0',
+      );
+    }
   }
 
   // A wildcard origin combined with credentialed CORS reflects EVERY origin

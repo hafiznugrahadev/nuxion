@@ -2,7 +2,7 @@
 # │ PROD stack — APPLICATIONS ONLY (Dokploy-compatible)                         │
 # │   api + web, built from the multi-stage Dockerfiles.                        │
 # │   NO postgres / redis here — provision those in Dokploy and inject their │
-# │   their connection strings as environment variables.                        │
+# │   connection strings as environment variables.                              │
 # │                                                                            │
 # │   Routing/TLS is handled by Dokploy's Traefik on `dokploy-network`. Set the │
 # │   real domains in the Dokploy UI (or uncomment the Traefik labels below).   │
@@ -22,9 +22,7 @@ services:
       API_PREFIX: ${API_PREFIX:-api}
       # ── Provisioned in Dokploy ──
       DATABASE_URL: ${DATABASE_URL}
-      REDIS_HOST: ${REDIS_HOST}
-      REDIS_PORT: ${REDIS_PORT:-6379}
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_URL: ${REDIS_URL:-}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
       JWT_REFRESH_EXPIRES_DAYS: ${JWT_REFRESH_EXPIRES_DAYS:-7}

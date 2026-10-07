@@ -940,12 +940,10 @@ async function copy(textToCopy: string) {
                 </p>
                 <pre
                   class="overflow-x-auto rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4 font-mono text-[13px] leading-relaxed text-on-surface"
-                ><code>NODE_ENV=development
-DATABASE_URL=postgresql://user:pass@nuxion-postgres:5432/nuxion
-REDIS_HOST=nuxion-redis
-JWT_ACCESS_SECRET=change-me
-JWT_REFRESH_SECRET=change-me
-NUXT_PUBLIC_API_BASE=http://localhost:8000/api</code></pre>
+                ><code>APP_URL=https://app.example.com
+DATABASE_URL=postgresql://user:pass@nuxion-db:5432/nuxion
+REDIS_URL=redis://nuxion-redis:6379
+JWT_SECRET=change-me-min-16-chars</code></pre>
               </div>
             </template>
             <template #tab-turbo>

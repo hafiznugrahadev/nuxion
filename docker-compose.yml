@@ -107,9 +107,9 @@ services:
       JWT_REFRESH_EXPIRES_DAYS: 7
       # Base URL of the frontend — single source of truth (like Laravel APP_URL).
       # Set APP_URL in .env to override (e.g. https://web.nuxion-dev.orb.local).
+      # Also feeds CORS/CSRF trusted origins in code (app.config) — app traffic
+      # itself is same-origin via the web /api proxy, so CORS is dormant.
       APP_URL: ${APP_URL:-http://localhost:${WEB_PORT:-3000}}
-      # CORS_ORIGIN defaults to APP_URL in code; set only to explicitly override.
-      CORS_ORIGIN: ${CORS_ORIGIN:-}
       LOG_LEVEL: debug
       # Rate limiting is ON by default (like prod) so dev exercises it; set
       # THROTTLE_DISABLED=true in .env only for load tests / bulk scripts.
@@ -144,7 +144,9 @@ services:
       S3_REGION: ${S3_REGION:-us-east-1}
       S3_PUBLIC_BASE_URL: ${S3_PUBLIC_BASE_URL:-https://rustfs.nuxion-dev.orb.local/nuxion}
     expose:
-      - '${API_PORT:-8000}' # https://api.nuxion-dev.orb.local/api (proxy 443)
+      # Vestigial/debug-only door (swagger, curl): app traffic goes through the
+      # web origin's /api proxy. https://api.nuxion-dev.orb.local/api (proxy 443)
+      - '${API_PORT:-8000}'
     volumes:
       - ./:/app
       - api_node_modules:/app/node_modules # keep the container linux-native deps
@@ -174,13 +176,14 @@ services:
       # OrbStack HTTPS proxy (https://web.…orb.local) Vite must point the client at
       # wss://<host>:443 or hot-reload can't connect. See nuxt.config.ts.
       APP_URL: ${APP_URL:-http://localhost:${WEB_PORT:-3000}}
-      # Client-side calls hit the API's OrbStack domain.
-      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-http://localhost:${API_PORT:-8000}/api}
+      # Browser calls are same-origin: /api & /uploads are proxied by Nitro
+      # (server/routes) to the API below — no CORS, first-party cookies.
+      # (NUXT_PUBLIC_API_BASE default '/api' applies; override only if needed.)
       NUXT_PUBLIC_REGISTRATION_ENABLED: ${REGISTRATION_ENABLED:-true}
-      # Server-side (SSR) fetch base: plain http over the compose network —
-      # node/undici rejects the *.orb.local self-signed https CA the browser
-      # trusts, which would silently break SSR data (e.g. branding).
-      NUXT_API_INTERNAL_BASE: http://api:${API_PORT:-8000}/api
+      # API ROOT for the Nitro /api & /uploads proxies and SSR fetches: plain
+      # http over the compose network — node/undici rejects the *.orb.local
+      # self-signed https CA the browser trusts.
+      NUXT_API_INTERNAL_BASE: http://api:${API_PORT:-8000}
       # Mirrors the API's AUTH_2FA_ENABLED / AUTH_PASSKEY_ENABLED so the UI can
       # show the OTP step, setup funnel and passkey buttons.
       NUXT_PUBLIC_2FA_ENABLED: ${AUTH_2FA_ENABLED:-false}

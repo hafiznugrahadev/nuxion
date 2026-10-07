@@ -3,9 +3,12 @@
 # │   api + web, built from the multi-stage Dockerfiles.                        │
 # │   NO postgres / redis here — provision those in Dokploy and inject their │
 # │   connection strings as environment variables.                              │
-# │                                                                            │
+# │                                                                              │
+# │   The API is INTERNAL-ONLY (no Traefik router): the web app proxies        │
+# │   /api/** and /uploads/** to it over the compose network.                   │
+# │                                                                              │
 # │   Routing/TLS is handled by Dokploy's Traefik on `dokploy-network`. Set the │
-# │   real domains in the Dokploy UI (or uncomment the Traefik labels below).   │
+# │   real domain in the Dokploy UI (or uncomment the Traefik labels below).    │
 # ╰──────────────────────────────────────────────────────────────────────────╯
 name: nuxion
 
@@ -18,53 +21,42 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      PORT: ${API_PORT:-4400}
-      API_PREFIX: ${API_PREFIX:-api}
+      PORT: 4400
       # ── Provisioned in Dokploy ──
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-}
       JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
-      JWT_REFRESH_EXPIRES_DAYS: ${JWT_REFRESH_EXPIRES_DAYS:-7}
-      # Base URL of the frontend — drives CORS origin and password-reset link.
+      # Base URL of the frontend (the only public origin) — feeds CORS/CSRF
+      # trusted origins, password-reset links and WebAuthn RP defaults.
       APP_URL: ${APP_URL}
-      # CORS_ORIGIN defaults to APP_URL in code; set only to explicitly override.
-      CORS_ORIGIN: ${CORS_ORIGIN:-}
+      # Local-driver upload URLs point back at the web origin (/uploads proxy).
+      STORAGE_PUBLIC_BASE_URL: ${APP_URL}
       LOG_LEVEL: ${LOG_LEVEL:-info}
-      SWAGGER_ENABLED: ${SWAGGER_ENABLED:-true}
-      SWAGGER_USER: ${SWAGGER_USER}
-      SWAGGER_PASSWORD: ${SWAGGER_PASSWORD}
+      # Swagger docs ride the /api proxy (https://<web-domain>/api/docs), Basic
+      # Auth-protected; override the password or leave the default in dev.
+      SWAGGER_PASSWORD: ${SWAGGER_PASSWORD:-admin}
     expose:
-      - '${API_PORT:-4400}'
+      - '4400' # internal only — reached via the web app's /api proxy
     networks: [dokploy-network]
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=dokploy-network
-      # - traefik.http.routers.nuxion-api.rule=Host(`api.example.com`)
-      # - traefik.http.routers.nuxion-api.entrypoints=websecure
-      # - traefik.http.routers.nuxion-api.tls.certresolver=letsencrypt
-      # - traefik.http.services.nuxion-api.loadbalancer.server.port=4400
 
   web:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-      args:
-        # Baked into the client bundle at build time.
-        NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE}
     image: nuxion-web:latest
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      PORT: ${WEB_PORT:-4300}
+      PORT: 4300
       HOST: 0.0.0.0
-      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE}
+      # API root for the /api & /uploads Nitro proxies (compose service DNS).
+      NUXT_API_INTERNAL_BASE: http://api:4400
       # Canonical site URL for @nuxtjs/seo (sitemap/robots/canonical/OG). Read
       # at RUNTIME by nuxt-site-config, so the Dokploy domain can change
       # without a rebuild.
       NUXT_PUBLIC_SITE_URL: ${NUXT_PUBLIC_SITE_URL:-http://localhost:4300}
     expose:
-      - '${WEB_PORT:-4300}'
+      - '4300'
     depends_on:
       - api
     networks: [dokploy-network]

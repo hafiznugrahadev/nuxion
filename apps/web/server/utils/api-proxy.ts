@@ -47,12 +47,15 @@ export async function proxyToApi(event: H3Event, prefix: '/api' | '/uploads') {
   }
 
   const hasBody = !['GET', 'HEAD', 'OPTIONS'].includes(event.method);
+  // readRawBody yields a Node Buffer; re-wrap so the fetch body type-checks
+  // (Buffer<ArrayBufferLike> is not assignable to BodyInit).
+  const rawBody = hasBody ? await readRawBody(event, false) : undefined;
   let res: Response;
   try {
     res = await fetch(target, {
       method: event.method,
       headers,
-      body: hasBody ? await readRawBody(event, false) : undefined,
+      body: rawBody && rawBody.length > 0 ? new Uint8Array(rawBody) : undefined,
       redirect: 'manual',
     });
   } catch (error) {

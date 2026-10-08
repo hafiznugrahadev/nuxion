@@ -119,13 +119,16 @@ export class QueryUserDto extends BaseQueryDto {
   @IsIn(SORTABLE_USER_FIELDS)
   override sortBy: (typeof SORTABLE_USER_FIELDS)[number] = 'createdAt';
 
-  /** Repeatable query param: `?roles=ADMIN&roles=USER` — ANY semantics. */
-  @ApiPropertyOptional({ enum: UserRole, isArray: true })
+  /** Repeatable query param: `?roles=ADMIN&roles=USER` — ANY semantics. Plain
+   * strings, NOT `@IsEnum`: the filter follows the roles table (data, not an
+   * enum), so custom catalog rows must filter too. Enum-validate only when the
+   * values are a closed set the API itself owns. */
+  @ApiPropertyOptional({ type: [String], example: ['ADMIN', 'CONTENT_EDITOR'] })
   @IsOptional()
   @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
   @IsArray()
-  @IsEnum(UserRole, { each: true })
-  roles?: UserRole[];
+  @IsString({ each: true })
+  roles?: string[];
 }
 ```
 

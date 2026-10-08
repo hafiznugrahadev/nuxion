@@ -31,6 +31,7 @@ import { StorageModule } from '@infrastructure/storage/storage.module';
 import { MailModule } from '@infrastructure/mail/mail.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { UsersModule } from '@modules/users/users.module';
+import { RolesModule } from '@modules/roles/roles.module';
 import { FilesModule } from '@modules/files/files.module';
 import { HealthModule } from '@modules/health/health.module';
 import { NotificationsModule } from '@modules/notifications/notifications.module';
@@ -133,6 +134,7 @@ import { SettingsModule } from '@modules/settings/settings.module';
     MailModule,
     AuthModule,
     UsersModule,
+    RolesModule,
     FilesModule,
     HealthModule,
     NotificationsModule,

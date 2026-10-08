@@ -5,6 +5,7 @@
     "menu": "Menu",
     "dashboard": "Dasbor",
     "users": "Pengguna",
+    "roles": "Peran",
     "fieldsDemo": "Demo Field",
     "componentsDemo": "Demo Komponen",
     "profile": "Profil",
@@ -333,6 +334,52 @@
       "created": "Pengguna dibuat",
       "updated": "Pengguna diperbarui",
       "deleted": "Pengguna dihapus"
+    }
+  },
+  "roles": {
+    "title": "Peran",
+    "subtitle": "Peran yang bisa ditetapkan, bawaan maupun kustom (khusus admin).",
+    "addRole": "Tambah peran",
+    "noResults": "Belum ada peran",
+    "noResultsHint": "Tambahkan peran kustom untuk ditetapkan ke pengguna.",
+    "builtIn": "Bawaan",
+    "protected": "Peran bawaan: nama dan haknya sudah tetap di aplikasi.",
+    "usersCount": "{n} pengguna",
+    "usersCountOne": "1 pengguna",
+    "columns": {
+      "role": "Peran",
+      "users": "Pengguna",
+      "created": "Dibuat",
+      "action": "Aksi"
+    },
+    "deleteModal": {
+      "title": "Hapus peran",
+      "body": "Hapus {name}? Ini tidak dapat dibatalkan.",
+      "bodyHolders": "Hapus {name}? {n} pengguna memegang peran ini dan akan kehilangannya seketika.",
+      "confirm": "Hapus",
+      "cancel": "Batal"
+    },
+    "form": {
+      "newTitle": "Peran baru",
+      "editTitle": "Ubah nama peran",
+      "newDesc": "Tambahkan peran kustom untuk ditetapkan ke pengguna.",
+      "editDesc": "Perubahan nama berlaku untuk semua pengguna pemegang peran ini.",
+      "name": "Nama peran",
+      "nameHint": "UPPER_SNAKE_CASE, mis. CONTENT_EDITOR",
+      "cancel": "Batal",
+      "saving": "Menyimpan…",
+      "saveChanges": "Simpan perubahan",
+      "createRole": "Buat peran",
+      "errors": {
+        "tooShort": "Minimal 2 karakter",
+        "tooLong": "Maksimal 50 karakter",
+        "pattern": "Gunakan UPPER_SNAKE_CASE (A-Z, angka, garis bawah)"
+      }
+    },
+    "toasts": {
+      "created": "Peran dibuat",
+      "updated": "Nama peran diubah",
+      "deleted": "Peran dihapus"
     }
   },
   "profile": {

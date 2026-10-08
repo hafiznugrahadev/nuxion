@@ -19,6 +19,8 @@ interface NavItem {
 const items: NavItem[] = [
   { label: 'nav.dashboard', to: '/admin/dashboard', icon: 'grid_view' },
   { label: 'nav.users', to: '/admin/users', icon: 'group', adminOnly: true },
+  // Shield glyph: access control, the meaning roles carry in this app.
+  { label: 'nav.roles', to: '/admin/roles', icon: 'admin_panel_settings', adminOnly: true },
   { label: 'nav.settings', to: '/admin/settings', icon: 'settings', adminOnly: true },
   { label: 'nav.fieldsDemo', to: '/admin/demo/fields', icon: 'science' },
   { label: 'nav.componentsDemo', to: '/admin/demo/components', icon: 'widgets' },

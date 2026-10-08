@@ -3,6 +3,9 @@ import { computed, ref, watch } from 'vue';
 import { UserRole, type User } from '@nuxion/shared-types';
 import { useAuthStore } from '~/stores/auth';
 import { roleLabel } from '~/lib/roles';
+// Cross-feature import goes through the barrel — the sanctioned path between
+// feature slices (deep imports are the boundary violation, this is not).
+import { useRoles } from '~/features/role';
 import { useUsers, useDeleteUser } from '../composables/useUsers';
 import UserFormModal from './UserFormModal.vue';
 import type { UserListParams } from '../types';
@@ -39,12 +42,17 @@ watch(searchDebounced, () => {
   page.value = 1;
 });
 
-// Role filter as multi-select tags — the API returns users holding ANY selected role.
-const roleOptions = computed(() => [
-  { label: t('users.roles.superAdmin'), value: UserRole.SUPER_ADMIN },
-  { label: t('users.roles.admin'), value: UserRole.ADMIN },
-  { label: t('users.roles.user'), value: UserRole.USER },
-]);
+// Role filter as multi-select tags — the API returns users holding ANY selected
+// role. Options come from the catalog so custom roles filter too; until it
+// loads, the built-ins stand in.
+const WELL_KNOWN = [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.USER];
+const { data: roleCatalog } = useRoles();
+const roleOptions = computed(() =>
+  (roleCatalog.value ?? WELL_KNOWN.map((name) => ({ name }))).map((r) => ({
+    label: roleLabel(r.name, t),
+    value: r.name,
+  })),
+);
 function toggleRole(value: string) {
   const next = new Set(selectedRoles.value);
   if (next.has(value)) {

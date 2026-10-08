@@ -5,6 +5,9 @@ import { toTypedSchema } from '@vee-validate/zod';
 import { UserRole, type User } from '@nuxion/shared-types';
 import { roleLabel } from '~/lib/roles';
 import { cn } from '~/lib/utils';
+// Cross-feature import goes through the barrel — the sanctioned path between
+// feature slices (deep imports are the boundary violation, this is not).
+import { useRoles } from '~/features/role';
 import {
   createUserSchema,
   editUserSchema,
@@ -20,7 +23,19 @@ const props = defineProps<{ user?: User | null }>();
 const emit = defineEmits<{ saved: [] }>();
 
 const isEdit = computed(() => !!props.user);
-const ALL_ROLES = [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.USER];
+
+// Assignable roles come from the catalog (custom roles included). While it is
+// unavailable, fall back to the built-ins; a user's held roles are always
+// unioned in so editing can never silently drop a custom role.
+const WELL_KNOWN = [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.USER].map((name) => ({
+  name,
+}));
+const { data: catalog } = useRoles();
+const availableRoles = computed(() => {
+  const names = new Set<string>((catalog.value ?? WELL_KNOWN).map((r) => r.name));
+  for (const held of props.user?.roles ?? []) names.add(held);
+  return [...names];
+});
 
 const create = useCreateUser();
 const update = useUpdateUser();
@@ -140,7 +155,7 @@ const onSubmit = handleSubmit(async (values) => {
             :aria-describedby="describedBy"
           >
             <label
-              v-for="role in ALL_ROLES"
+              v-for="role in availableRoles"
               :key="role"
               :for="`role-${role}`"
               class="flex cursor-pointer items-center gap-2 text-sm text-foreground"

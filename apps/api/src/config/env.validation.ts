@@ -35,7 +35,7 @@ export class EnvironmentVariables {
   @Type(() => Number)
   @IsInt()
   @IsOptional()
-  PORT = 4400;
+  PORT = 8000;
 
   @IsString()
   @IsOptional()
@@ -56,6 +56,14 @@ export class EnvironmentVariables {
 
   @IsString()
   DATABASE_URL!: string;
+
+  // Single connection string (redis:// or rediss://) — the shape Dokploy and
+  // managed Redis provision. Wins over the discrete vars below when set;
+  // scheme/parseability checked in validateEnv (URL-parser based, so passwords
+  // with special characters don't false-fail like @IsUrl would).
+  @IsString()
+  @IsOptional()
+  REDIS_URL?: string;
 
   @IsString()
   @IsOptional()
@@ -181,7 +189,7 @@ export class EnvironmentVariables {
   // ── App URL (single source of truth for the frontend URL) ─────────────────
   @IsString()
   @IsOptional()
-  APP_URL = 'http://localhost:4300';
+  APP_URL = 'http://localhost:3000';
 
   // ── Password reset ─────────────────────────────────────────────────────────
   @Type(() => Number)
@@ -279,6 +287,37 @@ export function validateEnv(config: Record<string, unknown>): EnvironmentVariabl
   if (errors.length > 0) {
     const details = errors.map((e) => Object.values(e.constraints ?? {}).join(', ')).join('\n  - ');
     throw new Error(`Invalid environment configuration:\n  - ${details}`);
+  }
+
+  // Empty string counts as unset: compose files pass `${REDIS_URL:-}` through,
+  // and the discrete host/port vars are the fallback for those environments.
+  const redisUrl = typeof config.REDIS_URL === 'string' ? config.REDIS_URL.trim() : '';
+  if (redisUrl) {
+    let protocol: string | undefined;
+    try {
+      protocol = new URL(redisUrl).protocol;
+    } catch {
+      // fall through to the scheme error below with a parse-friendly message
+    }
+    if (protocol !== 'redis:' && protocol !== 'rediss:') {
+      throw new Error(
+        'Invalid environment configuration:\n  - REDIS_URL must be a redis:// or rediss:// URL, e.g. redis://:password@host:6379/0',
+      );
+    }
+  }
+
+  // A wildcard origin combined with credentialed CORS reflects EVERY origin
+  // while still sending cookies. Dev keeps the wildcard for convenience
+  // (reflected + warned in main.ts); production must fail fast with an
+  // explicit allow-list. Only an EXPLICIT "*" is rejected: when CORS_ORIGIN is
+  // absent the class default above fills "*", but app.config then falls back
+  // to APP_URL (never "*"), so that case must stay valid.
+  const explicitWildcard =
+    typeof config.CORS_ORIGIN === 'string' && config.CORS_ORIGIN.trim() === '*';
+  if (validated.NODE_ENV === NodeEnv.Production && explicitWildcard) {
+    throw new Error(
+      'Invalid environment configuration:\n  - CORS_ORIGIN cannot be "*" in production: credentialed CORS would reflect every origin. Set an explicit comma-separated origin allow-list (or rely on APP_URL).',
+    );
   }
 
   return validated;

@@ -1,12 +1,13 @@
 import { fileURLToPath } from 'node:url';
+import vue from '@vitejs/plugin-vue';
 import { defineConfig } from 'vitest/config';
 
-// Unit tests (app/**/*.test.ts) cover the framework-free logic layer: lib/,
-// utils/, and store state. Anything needing the Nuxt runtime (auto-imports,
-// plugins, SFC rendering) is exercised by the Playwright e2e suite instead.
+// Component tests need the SFC compiler and a DOM; logic-layer tests run fine
+// under happy-dom too (they never depend on Node-only APIs).
 export default defineConfig({
+  plugins: [vue()],
   test: {
-    environment: 'node',
+    environment: 'happy-dom',
     include: ['app/**/*.test.ts'],
   },
   resolve: {

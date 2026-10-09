@@ -10,6 +10,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { Public } from '@common/decorators/public.decorator';
@@ -37,6 +38,8 @@ const MAX_UPLOAD_CEILING = 15 * 1024 * 1024;
 export class FilesController {
   constructor(private readonly storage: StorageService) {}
 
+  // Uploads are the API's most expensive request — cap well under the global limit.
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post()
   @ApiBearerAuth()
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_UPLOAD_CEILING } }))

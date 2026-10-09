@@ -28,25 +28,26 @@ const { value, errorMessage } = useField<string>(toRef(props, 'name'));
 </script>
 
 <template>
-  <div class="space-y-1.5">
-    <label v-if="label || $slots.label" :for="name" class="text-sm font-medium leading-none">
-      <slot name="label">{{ label }}</slot>
-      <span v-if="required" class="ml-0.5 text-destructive">*</span>
-    </label>
-    <Input
-      :id="name"
-      v-model="value"
-      :type="type ?? 'text'"
-      :placeholder="placeholder"
-      :prefix-icon="prefixIcon"
-      :inputmode="inputmode"
-      :maxlength="maxlength"
-      :disabled="disabled"
-      :class="
-        cn(errorMessage && 'border-destructive focus:border-destructive focus:ring-destructive')
-      "
-    />
-    <p v-if="errorMessage" class="text-xs text-destructive">{{ errorMessage }}</p>
-    <p v-else-if="hint" class="text-xs text-on-surface-variant">{{ hint }}</p>
-  </div>
+  <Fieldset :name="name" :label="label" :required="required" :error="errorMessage" :hint="hint">
+    <template v-if="$slots.label" #label>
+      <slot name="label" />
+    </template>
+    <template #default="{ describedBy, invalid }">
+      <Input
+        :id="name"
+        v-model="value"
+        :type="type ?? 'text'"
+        :placeholder="placeholder"
+        :prefix-icon="prefixIcon"
+        :inputmode="inputmode"
+        :maxlength="maxlength"
+        :disabled="disabled"
+        :aria-describedby="describedBy"
+        :aria-invalid="invalid"
+        :class="
+          cn(errorMessage && 'border-destructive focus:border-destructive focus:ring-destructive')
+        "
+      />
+    </template>
+  </Fieldset>
 </template>

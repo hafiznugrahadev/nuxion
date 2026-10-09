@@ -45,5 +45,5 @@ COPY --from=build /app/apps/api/package.json ./package.json
 # Entrypoint script: migrate, then boot (see docker/prod-api.sh). For multiple
 # replicas, run the migration as a separate release step instead.
 COPY docker/prod-api.sh /app/docker/prod-api.sh
-EXPOSE 4400
+EXPOSE 8000
 ENTRYPOINT ["sh", "/app/docker/prod-api.sh"]

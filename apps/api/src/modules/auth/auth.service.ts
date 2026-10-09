@@ -227,7 +227,7 @@ export class AuthService {
       .values({ userId: user.id, tokenHash: hashToken(rawToken), expiresAt });
 
     const baseUrl =
-      this.config.get<string>('app.passwordReset.url') ?? 'http://localhost:4300/reset-password';
+      this.config.get<string>('app.passwordReset.url') ?? 'http://localhost:3000/reset-password';
     const resetUrl = `${baseUrl}?token=${rawToken}`;
 
     // Never let a mail failure change the response (would leak account existence).

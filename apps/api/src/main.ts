@@ -24,8 +24,7 @@ async function bootstrap() {
   const config = app.get(ConfigService);
   const apiPrefix = config.get<string>('app.apiPrefix') ?? 'api';
   const corsOrigin = config.get<string>('app.corsOrigin') ?? '*';
-  const isProd = config.get<string>('app.env') === 'production';
-  const port = config.get<number>('app.port') ?? 4400;
+  const port = config.get<number>('app.port') ?? 8000;
   const swagger = config.getOrThrow<{ enabled: boolean; user: string; password: string }>(
     'app.swagger',
   );
@@ -69,13 +68,13 @@ async function bootstrap() {
 
   // Credentialed CORS (cookies) cannot use a literal "*" origin — browsers reject
   // it. With "*" we reflect the request origin (dev convenience) and warn loudly;
-  // in production an explicit allow-list is required for the refresh cookie to work.
+  // production never reaches here: env validation rejects an explicit wildcard
+  // CORS_ORIGIN at startup (see env.validation.ts).
   const origin = corsOrigin === '*' ? true : corsOrigin.split(',').map((o) => o.trim());
   if (corsOrigin === '*') {
-    const msg =
-      'CORS_ORIGIN is "*": reflecting all origins. Set explicit origins — required for secure cookies.';
-    if (isProd) logger.error(msg);
-    else logger.warn(msg);
+    logger.warn(
+      'CORS_ORIGIN is "*": reflecting all origins. Set explicit origins — required for secure cookies.',
+    );
   }
   app.enableCors({ origin, credentials: true });
 

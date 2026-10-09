@@ -15,7 +15,6 @@
     "test:e2e": "vitest run --config ./test/vitest.e2e.config.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun run scripts/db-migrate.ts",
-    "db:studio": "drizzle-kit studio",
     "db:seed": "bun run src/db/seed.ts",
     "db:restore": "bun run scripts/db-restore.ts"
   },

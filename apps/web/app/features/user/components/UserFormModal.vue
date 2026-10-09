@@ -4,6 +4,7 @@ import { useForm, useField } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import { UserRole, type User } from '@nuxion/shared-types';
 import { roleLabel } from '~/lib/roles';
+import { cn } from '~/lib/utils';
 import {
   createUserSchema,
   editUserSchema,
@@ -55,6 +56,7 @@ function toggleRole(role: string, checked: boolean) {
 
 const inputClass =
   'h-10 w-full rounded-sm border border-outline bg-transparent px-4 text-sm text-foreground placeholder:text-on-surface-variant/85 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary';
+const ERROR_CLASS = 'border-destructive focus:border-destructive focus:ring-destructive';
 
 const onSubmit = handleSubmit(async (values) => {
   try {
@@ -81,25 +83,43 @@ const onSubmit = handleSubmit(async (values) => {
   >
     <form class="space-y-5" @submit="onSubmit">
       <!-- Email -->
-      <div class="space-y-1.5">
-        <label class="text-sm font-medium text-foreground">{{ $t('users.form.email') }}</label>
-        <input
-          v-if="!isEdit"
-          v-model="email"
-          type="email"
-          placeholder="name@example.com"
-          :class="inputClass"
-        />
-        <input v-else :value="props.user?.email" disabled :class="[inputClass, 'opacity-60']" />
-        <p v-if="errors.email" class="text-xs text-destructive">{{ errors.email }}</p>
-      </div>
+      <Fieldset name="email" :label="$t('users.form.email')" :error="errors.email">
+        <template #default="{ id, describedBy, invalid }">
+          <input
+            v-if="!isEdit"
+            :id="id"
+            v-model="email"
+            type="email"
+            placeholder="name@example.com"
+            :aria-describedby="describedBy"
+            :aria-invalid="invalid"
+            :class="cn(inputClass, invalid && ERROR_CLASS)"
+          />
+          <input
+            v-else
+            :id="id"
+            :value="props.user?.email"
+            disabled
+            :aria-describedby="describedBy"
+            :class="[inputClass, 'opacity-60']"
+          />
+        </template>
+      </Fieldset>
 
       <!-- Name -->
-      <div class="space-y-1.5">
-        <label class="text-sm font-medium text-foreground">{{ $t('users.form.name') }}</label>
-        <input v-model="name" type="text" placeholder="Full name" :class="inputClass" />
-        <p v-if="errors.name" class="text-xs text-destructive">{{ errors.name }}</p>
-      </div>
+      <Fieldset name="name" :label="$t('users.form.name')" :error="errors.name">
+        <template #default="{ id, describedBy, invalid }">
+          <input
+            :id="id"
+            v-model="name"
+            type="text"
+            placeholder="Full name"
+            :aria-describedby="describedBy"
+            :aria-invalid="invalid"
+            :class="cn(inputClass, invalid && ERROR_CLASS)"
+          />
+        </template>
+      </Fieldset>
 
       <!-- Password (PasswordField wires itself into the same vee-validate form) -->
       <PasswordField
@@ -111,25 +131,30 @@ const onSubmit = handleSubmit(async (values) => {
       />
 
       <!-- Roles -->
-      <div class="space-y-1.5">
-        <label class="text-sm font-medium text-foreground">{{ $t('users.form.roles') }}</label>
-        <div class="flex flex-wrap gap-4 pt-1">
-          <label
-            v-for="role in ALL_ROLES"
-            :key="role"
-            :for="`role-${role}`"
-            class="flex cursor-pointer items-center gap-2 text-sm text-foreground"
+      <Fieldset group name="roles" :label="$t('users.form.roles')" :error="errors.roles">
+        <template #default="{ labelId, describedBy }">
+          <div
+            class="flex flex-wrap gap-4 pt-1"
+            role="group"
+            :aria-labelledby="labelId"
+            :aria-describedby="describedBy"
           >
-            <Checkbox
-              :id="`role-${role}`"
-              :model-value="roles?.includes(role)"
-              @update:model-value="toggleRole(role, $event as boolean)"
-            />
-            {{ roleLabel(role, $t) }}
-          </label>
-        </div>
-        <p v-if="errors.roles" class="text-xs text-destructive">{{ errors.roles }}</p>
-      </div>
+            <label
+              v-for="role in ALL_ROLES"
+              :key="role"
+              :for="`role-${role}`"
+              class="flex cursor-pointer items-center gap-2 text-sm text-foreground"
+            >
+              <Checkbox
+                :id="`role-${role}`"
+                :model-value="roles?.includes(role)"
+                @update:model-value="toggleRole(role, $event as boolean)"
+              />
+              {{ roleLabel(role, $t) }}
+            </label>
+          </div>
+        </template>
+      </Fieldset>
 
       <div class="flex justify-end gap-3 pt-2">
         <Button type="button" variant="outline" @click="open = false">{{

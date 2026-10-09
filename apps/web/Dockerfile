@@ -18,9 +18,8 @@ FROM deps AS build
 WORKDIR /app
 COPY packages/shared-types ./packages/shared-types
 COPY apps/web ./apps/web
-# Bake the public API base into the client bundle at build time.
-ARG NUXT_PUBLIC_API_BASE
-ENV NUXT_PUBLIC_API_BASE=${NUXT_PUBLIC_API_BASE}
+# No API-base build args: the browser uses the same-origin /api proxy (Nitro
+# server route), origin-agnostic and runtime-overridable via NUXT_PUBLIC_API_BASE.
 # shared-types first (web imports it); call nuxt directly so the package script's
 # `--dotenv ../../.env` (absent in the image) is bypassed in favour of this ENV.
 RUN bun run --filter @nuxion/shared-types build \
@@ -30,10 +29,10 @@ RUN bun run --filter @nuxion/shared-types build \
 # Nitro's node-server output is self-contained — only .output is needed.
 FROM oven/bun:1.4.2-slim AS runtime
 ENV NODE_ENV=production
-ENV PORT=4300
+ENV PORT=3000
 ENV HOST=0.0.0.0
 WORKDIR /app
 COPY --from=build /app/apps/web/.output ./.output
 COPY docker/prod-web.sh /app/docker/prod-web.sh
-EXPOSE 4300
+EXPOSE 3000
 ENTRYPOINT ["sh", "/app/docker/prod-web.sh"]

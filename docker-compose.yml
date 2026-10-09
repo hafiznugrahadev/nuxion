@@ -98,17 +98,22 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-nuxion}:${POSTGRES_PASSWORD:-nuxion}@nuxion-postgres:5432/${POSTGRES_DB:-nuxion}?schema=public
       REDIS_HOST: nuxion-redis
       REDIS_PORT: 6379
+      # Pin REDIS_URL kosong: dev selalu pakai host internal di atas. Tanpa ini,
+      # REDIS_URL di root .env (untuk tooling host) akan menang dan memutus
+      # container dari nuxion-redis internal. String kosong dianggap unset oleh API.
+      REDIS_URL: ''
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-min-16-chars}
       JWT_EXPIRES_IN: 15m
       JWT_REFRESH_EXPIRES_DAYS: 7
       # Base URL of the frontend — single source of truth (like Laravel APP_URL).
       # Set APP_URL in .env to override (e.g. https://web.nuxion-dev.orb.local).
+      # Also feeds CORS/CSRF trusted origins in code (app.config) — app traffic
+      # itself is same-origin via the web /api proxy, so CORS is dormant.
       APP_URL: ${APP_URL:-http://localhost:${WEB_PORT:-3000}}
-      # CORS_ORIGIN defaults to APP_URL in code; set only to explicitly override.
-      CORS_ORIGIN: ${CORS_ORIGIN:-}
       LOG_LEVEL: debug
-      # Dev/E2E: skip rate limiting so rapid test runs aren't throttled.
-      THROTTLE_DISABLED: ${THROTTLE_DISABLED:-true}
+      # Rate limiting is ON by default (like prod) so dev exercises it; set
+      # THROTTLE_DISABLED=true in .env only for load tests / bulk scripts.
+      THROTTLE_DISABLED: ${THROTTLE_DISABLED:-false}
       SWAGGER_ENABLED: ${SWAGGER_ENABLED:-true}
       SWAGGER_USER: ${SWAGGER_USER:-admin}
       SWAGGER_PASSWORD: ${SWAGGER_PASSWORD:-admin}
@@ -139,7 +144,9 @@ services:
       S3_REGION: ${S3_REGION:-us-east-1}
       S3_PUBLIC_BASE_URL: ${S3_PUBLIC_BASE_URL:-https://rustfs.nuxion-dev.orb.local/nuxion}
     expose:
-      - '${API_PORT:-8000}' # https://api.nuxion-dev.orb.local/api (proxy 443)
+      # Vestigial/debug-only door (swagger, curl): app traffic goes through the
+      # web origin's /api proxy. https://api.nuxion-dev.orb.local/api (proxy 443)
+      - '${API_PORT:-8000}'
     volumes:
       - ./:/app
       - api_node_modules:/app/node_modules # keep the container linux-native deps
@@ -169,13 +176,14 @@ services:
       # OrbStack HTTPS proxy (https://web.…orb.local) Vite must point the client at
       # wss://<host>:443 or hot-reload can't connect. See nuxt.config.ts.
       APP_URL: ${APP_URL:-http://localhost:${WEB_PORT:-3000}}
-      # Client-side calls hit the API's OrbStack domain.
-      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-http://localhost:${API_PORT:-8000}/api}
+      # Browser calls are same-origin: /api & /uploads are proxied by Nitro
+      # (server/routes) to the API below — no CORS, first-party cookies.
+      # (NUXT_PUBLIC_API_BASE default '/api' applies; override only if needed.)
       NUXT_PUBLIC_REGISTRATION_ENABLED: ${REGISTRATION_ENABLED:-true}
-      # Server-side (SSR) fetch base: plain http over the compose network —
-      # node/undici rejects the *.orb.local self-signed https CA the browser
-      # trusts, which would silently break SSR data (e.g. branding).
-      NUXT_API_INTERNAL_BASE: http://api:${API_PORT:-8000}/api
+      # API ROOT for the Nitro /api & /uploads proxies and SSR fetches: plain
+      # http over the compose network — node/undici rejects the *.orb.local
+      # self-signed https CA the browser trusts.
+      NUXT_API_INTERNAL_BASE: http://api:${API_PORT:-8000}
       # Mirrors the API's AUTH_2FA_ENABLED / AUTH_PASSKEY_ENABLED so the UI can
       # show the OTP step, setup funnel and passkey buttons.
       NUXT_PUBLIC_2FA_ENABLED: ${AUTH_2FA_ENABLED:-false}
@@ -231,51 +239,28 @@ services:
         condition: service_healthy
     networks: [nuxion-network]
 
-  # Drizzle Studio — web UI untuk jelajah database. Service `tools`: start
-  # manual (node_modules dipinjam dari hasil `bun install` container api):
-  #   docker compose up -d db-studio
-  # Tanpa forward port host — akses lewat domain OrbStack (WAJIB https/443,
-  # bukan http:5555: UI Studio memakai crypto.randomUUID yang hanya tersedia
-  # di secure context; lewat plain-HTTP halamannya blank):
-  #   https://db-studio.nuxion-dev.orb.local
-  db-studio:
-    image: oven/bun:1.3.3
-    container_name: nuxion-db-studio
+  # pgweb — web UI untuk jelajah database (pengganti Drizzle Studio: binari
+  # Go tunggal, tanpa node_modules dan tanpa menunggu `bun install` container
+  # api). Service `tools`: start manual:
+  #   docker compose up -d pgweb
+  # Tanpa forward port host — akses lewat domain OrbStack:
+  #   https://pgweb.nuxion-dev.orb.local
+  pgweb:
+    image: sosedoff/pgweb:0.17.0
+    container_name: nuxion-pgweb
     restart: unless-stopped
     profiles: [tools]
-    working_dir: /app
-    # Tunggu sampai container api selesai `bun install` (bin drizzle-kit
-    # tersedia di volume bersama), lalu jalankan Studio dari workspace api —
-    # lokasi drizzle.config.ts. `--port 5555`: tanpa ini Studio memilih port
-    # acak, yang tidak cocok dengan `expose` di bawah. Shim `xdg-open`:
-    # Studio selalu mencoba membuka browser; di dalam container xdg-open
-    # tidak ada dan ENOENT-nya mematikan proses.
-    entrypoint:
-      - sh
-      - -c
-      - |
-        until [ -e /app/apps/api/node_modules/.bin/drizzle-kit ]; do
-          echo "menunggu bun install (container api)…"
-          sleep 2
-        done
-        printf '#!/bin/sh\nexit 0\n' > /usr/local/bin/xdg-open
-        chmod +x /usr/local/bin/xdg-open
-        cd /app/apps/api && bunx drizzle-kit studio --port 5555
     environment:
-      # Postgres di dalam compose adalah `postgres:5432` — BUKAN port host-mapped
-      # yang ditunjuk DATABASE_URL di .env. Set di sini agar menang atas nilai
-      # .env (dotenv tidak pernah override env var sungguhan).
-      DATABASE_URL: postgresql://${POSTGRES_USER:-nuxion}:${POSTGRES_PASSWORD:-nuxion}@nuxion-postgres:5432/${POSTGRES_DB:-nuxion}?schema=public
+      # Auto-connect saat UI dibuka (pgweb memakai prefiks PGWEB_, bukan
+      # DATABASE_URL yang ter-deprecate). Postgres di dalam compose adalah
+      # `nuxion-postgres:5432` — BUKAN port host yang ditunjuk DATABASE_URL
+      # di .env; sslmode=disable karena Postgres compose tanpa TLS.
+      PGWEB_DATABASE_URL: postgresql://${POSTGRES_USER:-nuxion}:${POSTGRES_PASSWORD:-nuxion}@nuxion-postgres:5432/${POSTGRES_DB:-nuxion}?sslmode=disable
     expose:
-      - '5555' # UI Studio — diakses via *.orb.local, bukan port host
-    volumes:
-      - ./:/app
-      - api_node_modules:/app/node_modules # shared with the api container
+      - '8081' # UI pgweb — diakses via *.orb.local, bukan port host
     depends_on:
       postgres:
         condition: service_healthy
-      api:
-        condition: service_started
     networks: [nuxion-network]
 
   # Dev mail catcher — SMTP sink + web UI. The API (MAIL_TRANSPORT=smtp) sends here;

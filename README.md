@@ -82,21 +82,24 @@ bun run serve
 > it via `ConfigModule` (`envFilePath: ../../.env`) and Nuxt via `--dotenv ../../.env`.
 
 - API → http://localhost:8000/api · Swagger → http://localhost:8000/api/docs
-- Web → http://localhost:3000
+- Web → http://localhost:3000 (the browser talks to the API same-origin at `/api` —
+  Nitro proxies `server/routes` to `NUXT_API_INTERNAL_BASE`; the API needs no public
+  domain and no CORS)
 
-> **CORS + cookies:** the refresh cookie requires an explicit `CORS_ORIGIN` (the web
-> origin) on the API — a wildcard `*` is rejected by browsers for credentialed requests.
-> The same origin list also feeds the API's built-in protections: Helmet-style
-> security headers, fetch-metadata CSRF checks (`useSecurityHeaders()` /
-> `enableCsrfProtection()`, Nest ≥ 12.1) and global rate limiting
-> (`@nestjs/throttler`, per-route overrides on the auth endpoints).
+> **Same-origin `/api`:** all app traffic (browser + SSR) goes through the web
+> origin, so cookies are first-party and CORS is dormant. The API's built-in
+> protections stay active regardless: Helmet-style security headers,
+> fetch-metadata CSRF checks (`useSecurityHeaders()` / `enableCsrfProtection()`,
+> Nest ≥ 12.1) and global rate limiting (`@nestjs/throttler`, per-route overrides
+> on the auth endpoints). Set `CORS_ORIGIN` only to trust OTHER origins (e.g. a
+> mobile app hitting the API directly).
 
 ### Ports (configurable in the root `.env`)
 
 | App | Default | Where to change                                                          |
 | --- | ------- | ------------------------------------------------------------------------ |
 | Web | `3000`  | `.env` → `WEB_PORT`                                                      |
-| API | `8000`  | `.env` → `API_PORT` (also update `CORS_ORIGIN` + `NUXT_PUBLIC_API_BASE`) |
+| API | `8000`  | `.env` → `API_PORT` (also update `NUXT_API_INTERNAL_BASE` for the proxy) |
 
 ### Serve commands
 

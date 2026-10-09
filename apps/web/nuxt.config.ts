@@ -47,7 +47,7 @@ export default defineNuxtConfig({
   // the process `PORT` (set by compose) wins.
   devServer: {
     host: process.env.HOST || 'localhost',
-    port: Number(process.env.PORT || process.env.WEB_PORT) || 4300,
+    port: Number(process.env.PORT || process.env.WEB_PORT) || 3000,
   },
 
   // Nuxt 4: srcDir defaults to app/ (alias ~ → app/), matching the spec structure.
@@ -181,14 +181,15 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    // Server-side base URL for SSR fetches (e.g. the branding plugin). Falls
-    // back to the public apiBase — but in dev the public one is https on an
-    // OrbStack domain whose CA node/undici does NOT trust, so the dev compose
-    // sets NUXT_API_INTERNAL_BASE to the plain-http in-network address.
-    apiInternalBase: process.env.NUXT_API_INTERNAL_BASE ?? '',
+    // API ROOT (no path) — server-only target for the /api & /uploads proxies
+    // and SSR fetches. Always plain http over the internal network: node/undici
+    // rejects the dev stack's self-signed https CA the browser trusts.
+    apiInternalBase: process.env.NUXT_API_INTERNAL_BASE ?? 'http://localhost:8000',
     // server-only secrets go here
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE ?? 'http://localhost:4400/api',
+      // Same-origin proxy path — the browser only ever talks to the web origin
+      // (server/routes/api proxy forwards to apiInternalBase).
+      apiBase: process.env.NUXT_PUBLIC_API_BASE ?? '/api',
       // Mirror the API's AUTH_REGISTRATION_ENABLED so the UI can show/hide sign-up.
       registrationEnabled: process.env.NUXT_PUBLIC_REGISTRATION_ENABLED === 'true',
       // Mirror AUTH_2FA_ENABLED — when true, the auth middleware funnels users
@@ -223,7 +224,7 @@ export default defineNuxtConfig({
   // setup uses), then plain localhost. i18n's no_prefix strategy keeps one URL
   // per route, so the sitemap stays single-locale.
   site: {
-    url: process.env.NUXT_PUBLIC_SITE_URL ?? process.env.APP_URL ?? 'http://localhost:4300',
+    url: process.env.NUXT_PUBLIC_SITE_URL ?? process.env.APP_URL ?? 'http://localhost:3000',
     name: 'Nuxion',
   },
   // /admin is a client-side island behind auth — keep crawlers out (also

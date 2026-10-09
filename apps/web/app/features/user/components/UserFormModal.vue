@@ -23,6 +23,10 @@ const open = defineModel<boolean>('open', { default: false });
 const props = defineProps<{ user?: User | null }>();
 const emit = defineEmits<{ saved: [] }>();
 
+const { t } = useI18n();
+const { confirm } = useConfirm();
+const confirming = ref(false);
+
 const isEdit = computed(() => !!props.user);
 
 // Assignable roles come from the catalog (custom roles included). While it is
@@ -40,7 +44,9 @@ const availableRoles = computed(() => {
 
 const create = useCreateUser();
 const update = useUpdateUser();
-const pending = computed(() => create.isPending.value || update.isPending.value);
+const pending = computed(
+  () => confirming.value || create.isPending.value || update.isPending.value,
+);
 
 const { handleSubmit, resetForm, errors, setErrors } = useForm({
   validationSchema: computed(() => toTypedSchema(isEdit.value ? editUserSchema : createUserSchema)),
@@ -75,18 +81,52 @@ const inputClass =
 const ERROR_CLASS = 'border-destructive focus:border-destructive focus:ring-destructive';
 
 const onSubmit = handleSubmit(async (values) => {
+  if (pending.value) return;
   try {
     if (isEdit.value && props.user) {
       const body: UpdateUserValues = { name: values.name, roles: values.roles };
       if (values.password) body.password = values.password;
+      const user = props.user;
+      const rolesChanged =
+        user.roles.length !== values.roles.length ||
+        user.roles.some((role) => !values.roles.includes(role));
+      if (rolesChanged || values.password) {
+        confirming.value = true;
+        const ok = await confirm({
+          title: t('users.form.securityConfirmTitle'),
+          description: [
+            rolesChanged ? t('users.form.rolesConfirmDescription', { name: user.name }) : '',
+            values.password ? t('users.form.passwordConfirmDescription', { name: user.name }) : '',
+          ]
+            .filter(Boolean)
+            .join(' '),
+          confirmText: t('users.form.saveChanges'),
+          destructive: true,
+        });
+        confirming.value = false;
+        if (!ok || !open.value || props.user?.id !== user.id) return;
+      }
       await update.mutateAsync({ id: props.user.id, body });
     } else {
+      if (values.roles.some((role) => role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN)) {
+        confirming.value = true;
+        const ok = await confirm({
+          title: t('users.form.privilegedCreateTitle'),
+          description: t('users.form.privilegedCreateDescription', { name: values.name }),
+          confirmText: t('users.form.createUser'),
+          destructive: true,
+        });
+        confirming.value = false;
+        if (!ok || !open.value || props.user) return;
+      }
       await create.mutateAsync(values as Parameters<typeof create.mutateAsync>[0]);
     }
     open.value = false;
     emit('saved');
   } catch (err) {
     applyApiFieldErrors(err, setErrors, ['email', 'name', 'password', 'roles']);
+  } finally {
+    confirming.value = false;
   }
 });
 </script>

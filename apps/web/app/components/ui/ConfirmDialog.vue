@@ -7,6 +7,8 @@ import type { ConfirmOptions } from '~/composables/useConfirm';
  * call `useConfirm().confirm({ … })` instead.
  */
 const { pending, settle } = useConfirm();
+const { t } = useI18n();
+let returnFocus: HTMLElement | null = null;
 
 // Keep the last options rendered while the dialog plays its close animation
 // (pending is nulled the moment the user confirms/cancels).
@@ -14,21 +16,31 @@ const view = ref<ConfirmOptions | null>(null);
 watch(
   () => pending.value,
   (p) => {
-    if (p) view.value = { ...p };
+    if (p) {
+      returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      view.value = { ...p };
+    }
   },
 );
 
 const open = computed({
   get: () => !!pending.value,
   set: (next: boolean) => {
-    // Defer the "dismissed" resolution by a microtask: reka's AlertDialogAction
-    // closes the dialog BEFORE the button's own click handler emits `confirm`,
-    // so settling synchronously here would win the race and resolve false.
-    // With the deferral, a settle(true) in the same tick lands first and the
-    // late settle(false) becomes a no-op (pending is already null).
-    if (!next) queueMicrotask(() => settle(false));
+    // Reka closes Action before its click handler confirms. Scope dismissal to
+    // this request so a subsequent confirmation cannot be cancelled by it.
+    const request = pending.value;
+    if (!next) queueMicrotask(() => settle(false, request));
   },
 });
+function restoreFocus(event: Event) {
+  event.preventDefault();
+  const target = returnFocus;
+  // Callers clear their submit state after the promise resolves; wait for Vue
+  // to re-enable the originating button before restoring focus.
+  nextTick(() => {
+    if (!pending.value && target?.isConnected) target.focus();
+  });
+}
 </script>
 
 <template>
@@ -36,9 +48,10 @@ const open = computed({
     v-model:open="open"
     :title="view?.title ?? ''"
     :description="view?.description"
-    :confirm-text="view?.confirmText ?? (view?.destructive ? 'Delete' : 'Confirm')"
-    :cancel-text="view?.cancelText ?? 'Cancel'"
+    :confirm-text="view?.confirmText ?? t('common.confirm')"
+    :cancel-text="view?.cancelText ?? t('common.cancel')"
     :destructive="view?.destructive ?? false"
     @confirm="settle(true)"
+    @close-auto-focus="restoreFocus"
   />
 </template>

@@ -58,7 +58,8 @@ export const products = pgTable(
   quoted camelCase; keep names stable so `pg_dump` restores stay compatible.
 - After editing: `bun run --filter @nuxion/api db:generate` (authors SQL under
   `apps/api/drizzle/` from the schema diff), then `db:migrate` (apply). Other
-  scripts: `db:migrate` (CI/prod entrypoints use it), `db:studio`, `db:seed`.
+  scripts: `db:migrate` (CI/prod entrypoints use it), `db:seed`. Browse the
+  database with pgweb (`docker compose up -d pgweb` → https://pgweb.nuxion-dev.orb.local).
 - Drizzle has NO generated client and NO `include/omit` — reads select columns
   explicitly, relations are joins or follow-up queries (see `src/db/user-roles.ts`).
 

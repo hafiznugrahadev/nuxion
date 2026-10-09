@@ -21,7 +21,7 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      PORT: 4400
+      PORT: 8000
       # ── Provisioned in Dokploy ──
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-}
@@ -36,7 +36,7 @@ services:
       # Auth-protected; override the password or leave the default in dev.
       SWAGGER_PASSWORD: ${SWAGGER_PASSWORD:-admin}
     expose:
-      - '4400' # internal only — reached via the web app's /api proxy
+      - '8000' # internal only — reached via the web app's /api proxy
     networks: [dokploy-network]
 
   web:
@@ -47,16 +47,16 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      PORT: 4300
+      PORT: 3000
       HOST: 0.0.0.0
       # API root for the /api & /uploads Nitro proxies (compose service DNS).
-      NUXT_API_INTERNAL_BASE: http://api:4400
+      NUXT_API_INTERNAL_BASE: http://api:8000
       # Canonical site URL for @nuxtjs/seo (sitemap/robots/canonical/OG). Read
       # at RUNTIME by nuxt-site-config, so the Dokploy domain can change
       # without a rebuild.
-      NUXT_PUBLIC_SITE_URL: ${NUXT_PUBLIC_SITE_URL:-http://localhost:4300}
+      NUXT_PUBLIC_SITE_URL: ${NUXT_PUBLIC_SITE_URL:-http://localhost:3000}
     expose:
-      - '4300'
+      - '3000'
     depends_on:
       - api
     networks: [dokploy-network]
@@ -66,7 +66,7 @@ services:
       # - traefik.http.routers.nuxion-web.rule=Host(`app.example.com`)
       # - traefik.http.routers.nuxion-web.entrypoints=websecure
       # - traefik.http.routers.nuxion-web.tls.certresolver=letsencrypt
-      # - traefik.http.services.nuxion-web.loadbalancer.server.port=4300
+      # - traefik.http.services.nuxion-web.loadbalancer.server.port=3000
 
 networks:
   dokploy-network:

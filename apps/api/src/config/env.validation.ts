@@ -35,7 +35,7 @@ export class EnvironmentVariables {
   @Type(() => Number)
   @IsInt()
   @IsOptional()
-  PORT = 4400;
+  PORT = 8000;
 
   @IsString()
   @IsOptional()
@@ -189,7 +189,7 @@ export class EnvironmentVariables {
   // ── App URL (single source of truth for the frontend URL) ─────────────────
   @IsString()
   @IsOptional()
-  APP_URL = 'http://localhost:4300';
+  APP_URL = 'http://localhost:3000';
 
   // ── Password reset ─────────────────────────────────────────────────────────
   @Type(() => Number)

@@ -29,10 +29,10 @@ RUN bun run --filter @nuxion/shared-types build \
 # Nitro's node-server output is self-contained — only .output is needed.
 FROM oven/bun:1.4.2-slim AS runtime
 ENV NODE_ENV=production
-ENV PORT=4300
+ENV PORT=3000
 ENV HOST=0.0.0.0
 WORKDIR /app
 COPY --from=build /app/apps/web/.output ./.output
 COPY docker/prod-web.sh /app/docker/prod-web.sh
-EXPOSE 4300
+EXPOSE 3000
 ENTRYPOINT ["sh", "/app/docker/prod-web.sh"]

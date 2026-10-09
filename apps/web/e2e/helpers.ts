@@ -2,7 +2,7 @@ import { expect, type APIRequestContext, type Page } from '@playwright/test';
 
 export const ADMIN = { email: 'admin@nuxion.test', password: 'admin123' } as const;
 export const SUPER_ADMIN = { email: 'superadmin@nuxion.test', password: 'super1234' } as const;
-export const API_BASE = process.env.E2E_API_BASE ?? 'http://localhost:4400/api';
+export const API_BASE = process.env.E2E_API_BASE ?? 'http://localhost:8000/api';
 export const MAILPIT = process.env.E2E_MAILPIT ?? 'http://localhost:8025';
 
 /** Log in via the API and return the access token (for direct API calls in tests). */

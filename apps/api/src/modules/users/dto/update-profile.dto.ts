@@ -13,7 +13,7 @@ export class UpdateProfileDto {
   @MinLength(2)
   name?: string;
 
-  @ApiPropertyOptional({ example: 'http://localhost:4400/uploads/avatars/abc.png' })
+  @ApiPropertyOptional({ example: 'http://localhost:8000/uploads/avatars/abc.png' })
   @IsOptional()
   @IsString()
   @MaxLength(2048)

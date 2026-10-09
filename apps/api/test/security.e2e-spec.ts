@@ -5,7 +5,7 @@ import { createTestApp } from './helpers/app.helper';
 
 // Same default as app.config.ts when APP_URL is absent — the trusted origin
 // the CSRF check must accept in these tests.
-const trustedOrigin = process.env.APP_URL || 'http://localhost:4300';
+const trustedOrigin = process.env.APP_URL || 'http://localhost:3000';
 
 describe('Security (e2e)', () => {
   let app: INestApplication;

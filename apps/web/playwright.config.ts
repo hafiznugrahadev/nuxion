@@ -2,11 +2,11 @@ import { defineConfig, devices } from '@playwright/test';
 
 /**
  * E2E config. Runs against the already-running dev stack (`docker compose up`):
- *   web → http://localhost:4300, api → :4400, Mailpit → :8025.
+ *   web → http://localhost:3000, api → :8000, Mailpit → :8025.
  * Override the target with E2E_BASE_URL. Tests are serialised (workers: 1) because
  * the password-reset spec mutates the shared seed admin account.
  */
-const BASE_URL = process.env.E2E_BASE_URL ?? 'http://localhost:4300';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'http://localhost:3000';
 
 export default defineConfig({
   testDir: './e2e',

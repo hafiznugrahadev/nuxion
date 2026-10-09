@@ -328,7 +328,10 @@
       "cancel": "Batal",
       "saving": "Menyimpan…",
       "saveChanges": "Simpan perubahan",
-      "createUser": "Buat pengguna"
+      "createUser": "Buat pengguna",
+      "securityConfirmTitle": "Ubah akses akun?",
+      "rolesConfirmDescription": "Perubahan peran akan mengubah akses {name}.",
+      "passwordConfirmDescription": "Kata sandi {name} yang sekarang tidak akan berlaku lagi."
     },
     "toasts": {
       "created": "Pengguna dibuat",
@@ -402,7 +405,9 @@
       "newPassword": "Kata sandi baru",
       "confirmPassword": "Konfirmasi kata sandi baru",
       "update": "Perbarui kata sandi",
-      "updating": "Memperbarui…"
+      "updating": "Memperbarui…",
+      "confirmTitle": "Ganti kata sandi Anda?",
+      "confirmDescription": "Kata sandi Anda yang sekarang tidak akan berlaku lagi. Gunakan kata sandi baru saat masuk berikutnya."
     },
     "avatar": {
       "change": "Ubah foto",
@@ -429,7 +434,8 @@
     "working": "Memproses…",
     "search": "Cari",
     "select": "Pilih opsi",
-    "noResults": "Tidak ada hasil."
+    "noResults": "Tidak ada hasil.",
+    "confirm": "Konfirmasi"
   },
   "security": {
     "twoFactor": {
@@ -450,7 +456,8 @@
       "showOnce": "Kode ini hanya ditampilkan sekali — simpan di tempat aman.",
       "copy": "Salin kode",
       "copied": "Tersalin ke clipboard.",
-      "password": "Password saat ini"
+      "password": "Password saat ini",
+      "confirmDescription": "Semua kode pemulihan lama tidak akan berlaku lagi. Simpan kode baru sebelum menutup jendela ini."
     },
     "passkeys": {
       "title": "Passkey",

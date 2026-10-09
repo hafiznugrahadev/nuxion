@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import { applyApiFieldErrors } from '~/lib/api-errors';
+import { ref, computed } from 'vue';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import { z } from 'zod';
 import { useChangePassword } from '../composables/useProfile';
 
 const change = useChangePassword();
+const { t } = useI18n();
+const { confirm } = useConfirm();
+const confirming = ref(false);
+const pending = computed(() => confirming.value || change.isPending.value);
 
 const schema = toTypedSchema(
   z
@@ -23,7 +28,16 @@ const schema = toTypedSchema(
 const { handleSubmit, resetForm, setErrors } = useForm({ validationSchema: schema });
 
 const onSubmit = handleSubmit(async (values) => {
+  if (pending.value) return;
+  confirming.value = true;
   try {
+    const ok = await confirm({
+      title: t('profile.changePassword.confirmTitle'),
+      description: t('profile.changePassword.confirmDescription'),
+      confirmText: t('profile.changePassword.update'),
+      destructive: true,
+    });
+    if (!ok) return;
     await change.mutateAsync({
       currentPassword: values.currentPassword,
       newPassword: values.newPassword,
@@ -31,6 +45,8 @@ const onSubmit = handleSubmit(async (values) => {
     resetForm();
   } catch (err) {
     applyApiFieldErrors(err, setErrors, ['currentPassword', 'newPassword', 'confirmPassword']);
+  } finally {
+    confirming.value = false;
   }
 });
 </script>
@@ -69,11 +85,9 @@ const onSubmit = handleSubmit(async (values) => {
       </div>
 
       <div class="flex justify-end">
-        <Button type="submit" :disabled="change.isPending.value">
+        <Button type="submit" :disabled="pending">
           {{
-            change.isPending.value
-              ? $t('profile.changePassword.updating')
-              : $t('profile.changePassword.update')
+            pending ? $t('profile.changePassword.updating') : $t('profile.changePassword.update')
           }}
         </Button>
       </div>

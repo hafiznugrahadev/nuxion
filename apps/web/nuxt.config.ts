@@ -168,7 +168,12 @@ export default defineNuxtConfig({
   // ON for shared layers; features/ is intentionally NOT registered so the
   // dependency rule is enforced via explicit barrel imports.
   components: [
-    { path: '~/components/ui', pathPrefix: false, pattern: '**/*.vue' },
+    {
+      path: '~/components/ui',
+      pathPrefix: false,
+      pattern: '**/*.vue',
+      ignore: ['alert-dialog/**'],
+    },
     { path: '~/components/common', pathPrefix: false },
     { path: '~/components/blocks', pathPrefix: false },
     { path: '~/components/shell', pathPrefix: false },

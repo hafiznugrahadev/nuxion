@@ -64,8 +64,16 @@ const {
 });
 
 const onRegenSubmit = handleRegenSubmit(async (values) => {
+  if (regenSubmitting.value) return;
   regenSubmitting.value = true;
   try {
+    const ok = await confirm({
+      title: t('security.recovery.title'),
+      description: t('security.recovery.confirmDescription'),
+      confirmText: t('security.recovery.regenerate'),
+      destructive: true,
+    });
+    if (!ok || !regenOpen.value) return;
     regenCodes.value = await securityApi.regenerateRecoveryCodes(values.password);
     resetRegenForm();
     toast.success(t('security.recovery.regenerated'));
@@ -126,6 +134,7 @@ async function removePasskey(passkey: Passkey) {
   const ok = await confirm({
     title: t('security.passkeys.removeTitle'),
     description: t('security.passkeys.removeDescription', { name: label }),
+    confirmText: t('security.passkeys.remove'),
     destructive: true,
   });
   if (!ok) return;

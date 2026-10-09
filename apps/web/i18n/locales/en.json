@@ -328,7 +328,10 @@
       "cancel": "Cancel",
       "saving": "Saving…",
       "saveChanges": "Save changes",
-      "createUser": "Create user"
+      "createUser": "Create user",
+      "securityConfirmTitle": "Change account access?",
+      "rolesConfirmDescription": "Changing roles will change what {name} can access.",
+      "passwordConfirmDescription": "The current password for {name} will stop working."
     },
     "toasts": {
       "created": "User created",
@@ -402,7 +405,9 @@
       "newPassword": "New password",
       "confirmPassword": "Confirm new password",
       "update": "Update password",
-      "updating": "Updating…"
+      "updating": "Updating…",
+      "confirmTitle": "Replace your password?",
+      "confirmDescription": "Your current password will stop working. Use the new password the next time you sign in."
     },
     "avatar": {
       "change": "Change photo",
@@ -429,7 +434,8 @@
     "working": "Working…",
     "search": "Search",
     "select": "Select an option",
-    "noResults": "No results found."
+    "noResults": "No results found.",
+    "confirm": "Confirm"
   },
   "security": {
     "twoFactor": {
@@ -450,7 +456,8 @@
       "showOnce": "These codes are shown only once — store them somewhere safe.",
       "copy": "Copy codes",
       "copied": "Copied to clipboard.",
-      "password": "Current password"
+      "password": "Current password",
+      "confirmDescription": "All existing recovery codes will stop working. Save the new codes before closing this window."
     },
     "passkeys": {
       "title": "Passkeys",

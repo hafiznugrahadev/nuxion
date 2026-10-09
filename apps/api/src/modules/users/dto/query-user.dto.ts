@@ -1,7 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsArray, IsEnum, IsIn, IsOptional } from 'class-validator';
-import { UserRole } from '@nuxion/shared-types';
+import { IsArray, IsIn, IsOptional, IsString } from 'class-validator';
 import { BaseQueryDto } from '@common/dto/base-query.dto';
 
 /** Columns the user list can be sorted by (repository order-by keys). */
@@ -20,12 +19,13 @@ export class QueryUserDto extends BaseQueryDto {
 
   /**
    * Filter by one or more roles — returns users holding ANY of them. Repeatable
-   * query param: `?roles=ADMIN&roles=USER`. A single value is coerced to an array.
+   * query param: `?roles=ADMIN&roles=USER`. A single value is coerced to an
+   * array. Plain strings, not an enum: custom catalog roles filter too.
    */
-  @ApiPropertyOptional({ enum: UserRole, isArray: true })
+  @ApiPropertyOptional({ type: [String], example: ['ADMIN', 'CONTENT_EDITOR'] })
   @IsOptional()
   @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
   @IsArray()
-  @IsEnum(UserRole, { each: true })
-  roles?: UserRole[];
+  @IsString({ each: true })
+  roles?: string[];
 }

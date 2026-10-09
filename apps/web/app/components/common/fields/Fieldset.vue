@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, useId } from 'vue';
 import { Field, FieldDescription, FieldError, FieldLabel } from '~/components/ui/field';
+import { cn } from '~/lib/utils';
 
 /**
  * Presentation-only field skeleton: label + control slot + error/hint.
@@ -19,6 +20,9 @@ const props = defineProps<{
   hint?: string;
   /** Group controls (radio group) have no labelable element: render the caption as a span wired via aria-labelledby instead of label[for]. */
   group?: boolean;
+  /** Place boolean controls before their caption. */
+  inline?: boolean;
+  labelClass?: string;
 }>();
 
 const uid = useId();
@@ -39,17 +43,32 @@ const invalid = computed(() => !!props.error);
     :aria-labelledby="label || $slots.label ? labelId : undefined"
     class="gap-1.5"
   >
-    <FieldLabel
-      v-if="label || $slots.label"
-      :id="labelId"
-      :as="group ? 'span' : 'label'"
-      :for="group ? undefined : inputId"
-      class="gap-0"
-    >
-      <slot name="label">{{ label }}</slot>
-      <span v-if="required" class="ml-0.5 text-destructive">*</span>
-    </FieldLabel>
-    <slot :id="inputId" :label-id="labelId" :described-by="describedBy" :invalid="invalid" />
+    <div :class="cn('flex', inline ? 'items-center gap-3' : 'flex-col gap-1.5')">
+      <slot
+        v-if="inline"
+        :id="inputId"
+        :label-id="labelId"
+        :described-by="describedBy"
+        :invalid="invalid"
+      />
+      <FieldLabel
+        v-if="label || $slots.label"
+        :id="labelId"
+        :as="group ? 'span' : 'label'"
+        :for="group ? undefined : inputId"
+        :class="cn('gap-0', labelClass)"
+      >
+        <slot name="label">{{ label }}</slot>
+        <span v-if="required" class="ml-0.5 text-destructive">*</span>
+      </FieldLabel>
+      <slot
+        v-if="!inline"
+        :id="inputId"
+        :label-id="labelId"
+        :described-by="describedBy"
+        :invalid="invalid"
+      />
+    </div>
     <div v-if="error || hint || $slots.trailing" class="flex items-start justify-between gap-4">
       <FieldError v-if="error" :id="errorId">{{ error }}</FieldError>
       <FieldDescription v-else-if="hint" :id="hintId" class="nth-last-2:mt-0">

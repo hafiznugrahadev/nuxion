@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { applyApiFieldErrors } from '~/lib/api-errors';
 import { computed, ref } from 'vue';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
@@ -37,7 +38,7 @@ const schema = toTypedSchema(
   }),
 );
 
-const { handleSubmit } = useForm({ validationSchema: schema });
+const { handleSubmit, setErrors } = useForm({ validationSchema: schema });
 
 const onSubmit = handleSubmit(async (values) => {
   submitting.value = true;
@@ -48,7 +49,8 @@ const onSubmit = handleSubmit(async (values) => {
       return;
     }
     await finishLogin();
-  } catch {
+  } catch (err) {
+    applyApiFieldErrors(err, setErrors, ['email', 'password']);
     toast.error(t('auth.invalidCredentials'));
   } finally {
     submitting.value = false;

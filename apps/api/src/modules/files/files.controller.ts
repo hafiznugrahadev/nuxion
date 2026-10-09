@@ -14,6 +14,7 @@ import { Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { Public } from '@common/decorators/public.decorator';
+import { FileUploadErrorsInterceptor } from '@common/interceptors/file-upload-errors.interceptor';
 import {
   StorageService,
   type UploadedFile as MulterFile,
@@ -42,7 +43,10 @@ export class FilesController {
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post()
   @ApiBearerAuth()
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_UPLOAD_CEILING } }))
+  @UseInterceptors(
+    FileUploadErrorsInterceptor,
+    FileInterceptor('file', { limits: { fileSize: MAX_UPLOAD_CEILING } }),
+  )
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Upload a file; returns its URL' })
   @ApiBody({

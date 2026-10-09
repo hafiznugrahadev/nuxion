@@ -120,13 +120,16 @@ export class QueryUserDto extends BaseQueryDto {
   @IsIn(SORTABLE_USER_FIELDS)
   override sortBy: (typeof SORTABLE_USER_FIELDS)[number] = 'createdAt';
 
-  /** Repeatable query param: `?roles=ADMIN&roles=USER` — ANY semantics. */
-  @ApiPropertyOptional({ enum: UserRole, isArray: true })
+  /** Repeatable query param: `?roles=ADMIN&roles=USER` — ANY semantics. Plain
+   * strings, NOT `@IsEnum`: the filter follows the roles table (data, not an
+   * enum), so custom catalog rows must filter too. Enum-validate only when the
+   * values are a closed set the API itself owns. */
+  @ApiPropertyOptional({ type: [String], example: ['ADMIN', 'CONTENT_EDITOR'] })
   @IsOptional()
   @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
   @IsArray()
-  @IsEnum(UserRole, { each: true })
-  roles?: UserRole[];
+  @IsString({ each: true })
+  roles?: string[];
 }
 ```
 
@@ -325,3 +328,21 @@ Cover: happy path per route, 400 (validation + unknown sortBy), 401 (no token),
 | `IsUnique` async validator                         | `common/validators/is-unique.validator.ts`        |
 | Pagination meta (`total, page, limit, totalPages`) | `common/interfaces/paginated-result.interface.ts` |
 | Rate limiting / logging                            | global `ThrottlerGuard` / pino                    |
+
+## Field-attributed API errors
+
+The error envelope must retain `message` and may add
+`fieldErrors: Record<string, string[]>`. DTO validation uses the shared
+validation pipe to flatten constraint messages by canonical DTO property name.
+Domain failures attributable to an input (duplicate email/name, incorrect
+current password, invalid OTP) use the shared field-exception helper rather than
+a plain string exception. General failures such as expired sessions, tokens,
+and infrastructure errors stay without field attribution. Never derive field
+names by parsing message text. Add filter/endpoint regression coverage that
+asserts both the existing message and the structured fieldErrors map.
+
+The frontend must preserve this envelope through ofetch and unwrap, then bind
+allowlisted fields with `applyApiFieldErrors(error, setErrors, fields)` to the
+existing Fieldset. Test an API rejection through a real rendered control and
+successful correction/retry, including domain 401 responses that must not
+trigger token refresh.

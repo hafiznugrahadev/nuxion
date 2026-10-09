@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ToggleGroupRoot, ToggleGroupItem } from 'reka-ui';
-import type { HTMLAttributes } from 'vue';
+import { useAttrs, type HTMLAttributes } from 'vue';
 import { cn } from '~/lib/utils';
 
 export interface ToggleOption {
@@ -23,6 +23,15 @@ const props = withDefaults(
   { type: 'single' },
 );
 
+const attrs = useAttrs();
+
+function controlAria() {
+  return {
+    'aria-describedby': attrs['aria-describedby'] as string | undefined,
+    'aria-invalid': attrs['aria-invalid'] as HTMLAttributes['aria-invalid'],
+  };
+}
+
 const model = defineModel<string | string[]>('modelValue');
 </script>
 
@@ -36,6 +45,7 @@ const model = defineModel<string | string[]>('modelValue');
       v-for="opt in options"
       :key="opt.value"
       :value="opt.value"
+      v-bind="controlAria()"
       class="touch-target relative inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-medium text-on-surface-variant outline-none transition-colors hover:bg-on-surface-variant/10 focus-visible:ring-2 focus-visible:ring-ring aria-pressed:bg-secondary-container aria-pressed:text-on-secondary-container"
     >
       <MaterialSymbol v-if="opt.icon" :name="opt.icon" :size="18" />

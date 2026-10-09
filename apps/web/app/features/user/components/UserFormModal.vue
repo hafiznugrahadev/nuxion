@@ -1,10 +1,14 @@
 <script setup lang="ts">
+import { applyApiFieldErrors } from '~/lib/api-errors';
 import { computed, watch } from 'vue';
 import { useForm, useField } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import { UserRole, type User } from '@nuxion/shared-types';
 import { roleLabel } from '~/lib/roles';
 import { cn } from '~/lib/utils';
+// Cross-feature import goes through the barrel — the sanctioned path between
+// feature slices (deep imports are the boundary violation, this is not).
+import { useRoles } from '~/features/role';
 import {
   createUserSchema,
   editUserSchema,
@@ -20,13 +24,25 @@ const props = defineProps<{ user?: User | null }>();
 const emit = defineEmits<{ saved: [] }>();
 
 const isEdit = computed(() => !!props.user);
-const ALL_ROLES = [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.USER];
+
+// Assignable roles come from the catalog (custom roles included). While it is
+// unavailable, fall back to the built-ins; a user's held roles are always
+// unioned in so editing can never silently drop a custom role.
+const WELL_KNOWN = [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.USER].map((name) => ({
+  name,
+}));
+const { data: catalog } = useRoles();
+const availableRoles = computed(() => {
+  const names = new Set<string>((catalog.value ?? WELL_KNOWN).map((r) => r.name));
+  for (const held of props.user?.roles ?? []) names.add(held);
+  return [...names];
+});
 
 const create = useCreateUser();
 const update = useUpdateUser();
 const pending = computed(() => create.isPending.value || update.isPending.value);
 
-const { handleSubmit, resetForm, errors } = useForm({
+const { handleSubmit, resetForm, errors, setErrors } = useForm({
   validationSchema: computed(() => toTypedSchema(isEdit.value ? editUserSchema : createUserSchema)),
 });
 const { value: email } = useField<string>('email');
@@ -69,8 +85,8 @@ const onSubmit = handleSubmit(async (values) => {
     }
     open.value = false;
     emit('saved');
-  } catch {
-    /* error toast handled centrally by useApiMutation */
+  } catch (err) {
+    applyApiFieldErrors(err, setErrors, ['email', 'name', 'password', 'roles']);
   }
 });
 </script>
@@ -101,6 +117,7 @@ const onSubmit = handleSubmit(async (values) => {
             :value="props.user?.email"
             disabled
             :aria-describedby="describedBy"
+            :aria-invalid="invalid"
             :class="[inputClass, 'opacity-60']"
           />
         </template>
@@ -132,21 +149,24 @@ const onSubmit = handleSubmit(async (values) => {
 
       <!-- Roles -->
       <Fieldset group name="roles" :label="$t('users.form.roles')" :error="errors.roles">
-        <template #default="{ labelId, describedBy }">
+        <template #default="{ labelId, describedBy, invalid }">
           <div
             class="flex flex-wrap gap-4 pt-1"
             role="group"
             :aria-labelledby="labelId"
             :aria-describedby="describedBy"
+            :aria-invalid="invalid"
           >
             <label
-              v-for="role in ALL_ROLES"
+              v-for="role in availableRoles"
               :key="role"
               :for="`role-${role}`"
               class="flex cursor-pointer items-center gap-2 text-sm text-foreground"
             >
               <Checkbox
                 :id="`role-${role}`"
+                :aria-describedby="describedBy"
+                :aria-invalid="invalid"
                 :model-value="roles?.includes(role)"
                 @update:model-value="toggleRole(role, $event as boolean)"
               />

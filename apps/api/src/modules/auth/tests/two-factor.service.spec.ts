@@ -116,6 +116,7 @@ describe('TwoFactorService', () => {
       ctx.store.set(`2fa:setup:${USER_ID}`, { secret: generateSecret() });
       await expect(ctx.service.activate({ id: USER_ID }, '000000')).rejects.toMatchObject({
         status: 401,
+        response: { fieldErrors: { code: ['Invalid verification code'] } },
       });
     });
 

@@ -331,7 +331,9 @@
       "createUser": "Create user",
       "securityConfirmTitle": "Change account access?",
       "rolesConfirmDescription": "Changing roles will change what {name} can access.",
-      "passwordConfirmDescription": "The current password for {name} will stop working."
+      "passwordConfirmDescription": "The current password for {name} will stop working.",
+      "privilegedCreateTitle": "Create an administrator account?",
+      "privilegedCreateDescription": "This gives {name} administrative access. Check the selected roles before creating this account."
     },
     "toasts": {
       "created": "User created",

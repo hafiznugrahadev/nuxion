@@ -108,6 +108,17 @@ const onSubmit = handleSubmit(async (values) => {
       }
       await update.mutateAsync({ id: props.user.id, body });
     } else {
+      if (values.roles.some((role) => role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN)) {
+        confirming.value = true;
+        const ok = await confirm({
+          title: t('users.form.privilegedCreateTitle'),
+          description: t('users.form.privilegedCreateDescription', { name: values.name }),
+          confirmText: t('users.form.createUser'),
+          destructive: true,
+        });
+        confirming.value = false;
+        if (!ok || !open.value || props.user) return;
+      }
       await create.mutateAsync(values as Parameters<typeof create.mutateAsync>[0]);
     }
     open.value = false;

@@ -22,6 +22,7 @@ vi.mock('vee-validate', async () => {
       },
       resetForm: vi.fn(),
       errors: {},
+      setErrors: vi.fn(),
     }),
     useField: () => ({ value: ref([]) }),
   };
@@ -48,6 +49,19 @@ vi.mock('./profile/composables/useProfile', async () => {
   const { ref } = await import('vue');
   return { useChangePassword: () => ({ isPending: ref(false), mutateAsync: mocks.update }) };
 });
+vi.mock('~/features/role', async () => {
+  const { ref } = await import('vue');
+  return {
+    useRoles: () => ({
+      data: ref([
+        { name: 'USER' },
+        { name: 'CONTENT_EDITOR' },
+        { name: 'ADMIN' },
+        { name: 'SUPER_ADMIN' },
+      ]),
+    }),
+  };
+});
 vi.mock('vue-sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 const Modal = defineComponent({
   props: ['open'],
@@ -68,7 +82,12 @@ const global = {
   stubs: {
     Modal,
     Button,
-    Fieldset: true,
+    Fieldset: defineComponent({
+      setup:
+        (_, { slots }) =>
+        () =>
+          h('div', slots.default?.({ id: 'field', invalid: false })),
+    }),
     Checkbox: true,
     PasswordField: true,
     MaterialSymbol: true,
@@ -117,15 +136,16 @@ describe('recovery codes', () => {
 });
 
 describe('user account access', () => {
-  async function submit(values: Record<string, unknown>) {
+  async function submit(values: Record<string, unknown>, heldRoles = ['USER']) {
     mocks.values = values;
     wrapper = mount(UserFormModal, {
       props: {
         open: true,
-        user: { id: 'user-1', name: 'User', email: 'user@example.com', roles: ['USER'] } as never,
+        user: { id: 'user-1', name: 'User', email: 'user@example.com', roles: heldRoles } as never,
       },
       global,
     });
+    expect(wrapper.text()).toContain('content editor');
     await wrapper.get('form').trigger('submit');
     await flushPromises();
   }
@@ -146,6 +166,12 @@ describe('user account access', () => {
       body: { name: 'User', roles: ['ADMIN'], password: 'new-password' },
     });
   });
+  it('preserves an unchanged custom role without confirming and lists catalog roles', async () => {
+    await submit({ name: 'User', roles: ['CONTENT_EDITOR'], password: '' }, ['CONTENT_EDITOR']);
+    expect(mocks.confirm).not.toHaveBeenCalled();
+    expect(mocks.update).toHaveBeenCalledOnce();
+  });
+
   it('saves name-only edits without a security confirmation', async () => {
     await submit({ name: 'New name', roles: ['USER'], password: '' });
     expect(mocks.confirm).not.toHaveBeenCalled();
@@ -168,5 +194,28 @@ describe('own password replacement', () => {
       expect.objectContaining({ destructive: true, confirmText: 'profile.changePassword.update' }),
     );
     expect(mocks.update).toHaveBeenCalledTimes(accepted ? 1 : 0);
+  });
+});
+
+describe('privileged account creation', () => {
+  it.each([
+    ['ADMIN', false],
+    ['ADMIN', true],
+    ['SUPER_ADMIN', false],
+    ['SUPER_ADMIN', true],
+    ['USER', true],
+  ])('gates role %s with accepted=%s', async (role, accepted) => {
+    mocks.confirm.mockResolvedValue(accepted);
+    mocks.values = {
+      name: 'New account',
+      email: 'new@example.com',
+      roles: [role],
+      password: 'new-password',
+    };
+    wrapper = mount(UserFormModal, { props: { open: true }, global });
+    await wrapper.get('form').trigger('submit');
+    await flushPromises();
+    expect(mocks.confirm).toHaveBeenCalledTimes(role === 'USER' ? 0 : 1);
+    expect(mocks.create).toHaveBeenCalledTimes(role === 'USER' || accepted ? 1 : 0);
   });
 });

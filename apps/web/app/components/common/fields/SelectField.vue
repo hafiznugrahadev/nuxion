@@ -82,8 +82,8 @@ const isEmpty = computed(() => (props.multiple ? !multiValues.value.length : !si
             :aria-describedby="describedBy"
             :class="
               cn(
-                'flex w-full items-center rounded-sm border border-outline bg-transparent px-4 text-sm transition-colors focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary',
-                multiple ? 'min-h-10 flex-wrap gap-1.5 py-1.5' : 'h-10 py-1',
+                'relative flex w-full items-center rounded-sm border border-outline bg-transparent pl-4 pr-14 text-sm transition-colors focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary',
+                multiple ? 'min-h-10 py-1.5' : 'h-10 py-1',
                 isEmpty && 'text-muted-foreground',
                 errorMessage &&
                   'border-destructive focus-visible:border-destructive focus-visible:ring-destructive',
@@ -91,28 +91,35 @@ const isEmpty = computed(() => (props.multiple ? !multiValues.value.length : !si
             "
           >
             <!-- Multi: tags -->
-            <template v-if="multiple">
+            <span v-if="multiple" class="flex min-w-0 flex-1 flex-wrap gap-1.5">
               <span
                 v-for="item in selectedItems"
                 :key="item.value"
-                class="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"
+                class="inline-flex min-w-0 max-w-full items-center gap-1 rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"
               >
-                {{ item.label }}
-                <span class="opacity-70 hover:opacity-100" @click.stop="removeTag(item.value)">
+                <span class="truncate">{{ item.label }}</span>
+                <span
+                  class="shrink-0 opacity-70 hover:opacity-100"
+                  @click.stop="removeTag(item.value)"
+                >
                   <MaterialSymbol name="close" :size="14" />
                 </span>
               </span>
-              <span v-if="isEmpty" class="flex-1 text-left text-muted-foreground">
+              <span v-if="isEmpty" class="min-w-0 flex-1 truncate text-left text-muted-foreground">
                 {{ placeholder ?? 'Select…' }}
               </span>
-            </template>
+            </span>
 
             <!-- Single: label -->
-            <span v-else class="flex-1 truncate text-left">
+            <span v-else class="min-w-0 flex-1 truncate text-left">
               {{ selectedLabel || (placeholder ?? 'Select…') }}
             </span>
 
-            <MaterialSymbol name="unfold_more" :size="18" class="ml-auto shrink-0 opacity-50" />
+            <MaterialSymbol
+              name="unfold_more"
+              :size="18"
+              class="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 opacity-50"
+            />
           </button>
         </PopoverTrigger>
         <!-- Portaled so the panel stacks above later positioned siblings

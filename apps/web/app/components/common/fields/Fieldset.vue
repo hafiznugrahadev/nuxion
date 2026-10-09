@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, useId } from 'vue';
+import { Field, FieldDescription, FieldError, FieldLabel } from '~/components/ui/field';
+import { cn } from '~/lib/utils';
 
 /**
  * Presentation-only field skeleton: label + control slot + error/hint.
@@ -35,8 +37,13 @@ const invalid = computed(() => !!props.error);
 </script>
 
 <template>
-  <div class="space-y-1.5">
-    <div :class="inline ? 'flex items-center gap-3' : 'space-y-1.5'">
+  <Field
+    orientation="vertical"
+    :data-invalid="invalid"
+    :aria-labelledby="label || $slots.label ? labelId : undefined"
+    class="gap-1.5"
+  >
+    <div :class="cn('flex', inline ? 'items-center gap-3' : 'flex-col gap-1.5')">
       <slot
         v-if="inline"
         :id="inputId"
@@ -44,17 +51,16 @@ const invalid = computed(() => !!props.error);
         :described-by="describedBy"
         :invalid="invalid"
       />
-      <component
-        :is="group ? 'span' : 'label'"
+      <FieldLabel
         v-if="label || $slots.label"
         :id="labelId"
+        :as="group ? 'span' : 'label'"
         :for="group ? undefined : inputId"
-        class="text-sm font-medium leading-none"
-        :class="labelClass"
+        :class="cn('gap-0', labelClass)"
       >
         <slot name="label">{{ label }}</slot>
         <span v-if="required" class="ml-0.5 text-destructive">*</span>
-      </component>
+      </FieldLabel>
       <slot
         v-if="!inline"
         :id="inputId"
@@ -64,9 +70,11 @@ const invalid = computed(() => !!props.error);
       />
     </div>
     <div v-if="error || hint || $slots.trailing" class="flex items-start justify-between gap-4">
-      <p v-if="error" :id="errorId" class="text-xs text-destructive">{{ error }}</p>
-      <p v-else-if="hint" :id="hintId" class="text-xs text-on-surface-variant">{{ hint }}</p>
+      <FieldError v-if="error" :id="errorId">{{ error }}</FieldError>
+      <FieldDescription v-else-if="hint" :id="hintId" class="nth-last-2:mt-0">
+        {{ hint }}
+      </FieldDescription>
       <slot name="trailing" />
     </div>
-  </div>
+  </Field>
 </template>

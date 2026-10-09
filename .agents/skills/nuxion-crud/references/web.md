@@ -272,6 +272,8 @@ const onSubmit = handleSubmit(async (values) => {
   its label to `saving`).
 - Immutable fields (email in edit) render `disabled` showing the stored value —
   don't just hide them.
+- `Fieldset` composes shadcn-vue `Field`, `FieldLabel`, `FieldDescription`, and
+  `FieldError`, while preserving the slot contract below.
 - **Every input is required to compose `Fieldset`**, including search/filter
   controls without validation and disabled, read-only, file, boolean, radio,
   slider, tags, and rich-text controls. Every field caption/error is composed with `Fieldset`

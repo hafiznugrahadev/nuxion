@@ -66,6 +66,9 @@ review round-trip.
 
 ### Web (apps/web)
 
+`Fieldset` is built on shadcn-vue `Field`, `FieldLabel`, `FieldDescription`,
+and `FieldError`, with the application's MD3 typography and supporting text.
+
 **Every input MUST compose `Fieldset`**, directly or through a `*Field` wrapper
 that composes it internally. This includes search, filters, disabled/read-only
 fields, file pickers, boolean controls, sliders, radio groups, tags, and editors,

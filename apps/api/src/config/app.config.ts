@@ -48,12 +48,12 @@ const parseTrustProxy = (raw: string | undefined): boolean | number => {
 };
 
 const appConfigFactory = () => {
-  const appUrl = process.env.APP_URL || 'http://localhost:4300';
+  const appUrl = process.env.APP_URL || 'http://localhost:3000';
   const corsOriginRaw = process.env.CORS_ORIGIN || process.env.APP_URL || '*';
   return {
     env: process.env.NODE_ENV ?? 'development',
     // Single root .env uses API_PORT; containers/compose set PORT, which wins.
-    port: parseInt(process.env.PORT ?? process.env.API_PORT ?? '4400', 10),
+    port: parseInt(process.env.PORT ?? process.env.API_PORT ?? '8000', 10),
     apiPrefix: process.env.API_PREFIX ?? 'api',
     // Frontend base URL — single source of truth (like Laravel's APP_URL).
     appUrl,
@@ -101,7 +101,7 @@ const appConfigFactory = () => {
     passwordReset: {
       ttlMinutes: parseInt(process.env.PASSWORD_RESET_TTL_MIN ?? '30', 10),
       // Derived from APP_URL — no separate env var needed.
-      url: `${process.env.APP_URL || 'http://localhost:4300'}/reset-password`,
+      url: `${process.env.APP_URL || 'http://localhost:3000'}/reset-password`,
     },
     registration: {
       // Off by default (kit is admin-provisioned); opt in for self-service sign-up.

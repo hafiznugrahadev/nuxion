@@ -4,7 +4,7 @@ import { registerAs } from '@nestjs/config';
  * Storage config namespace. Flow: .env → validateEnv → here → ConfigService.
  * Default driver is `local` (zero-infra); switch to `s3` for AWS S3 / MinIO.
  */
-const DEFAULT_PORT = process.env.PORT ?? process.env.API_PORT ?? '4400';
+const DEFAULT_PORT = process.env.PORT ?? process.env.API_PORT ?? '8000';
 
 export const storageConfig = registerAs('storage', () => ({
   // 'local' (default) | 's3' (AWS S3 / MinIO / RustFS).

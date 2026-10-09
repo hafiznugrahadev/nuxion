@@ -157,18 +157,26 @@ function onSort(next: SortState) {
         {{ $t('users.addUser') }}
       </Button>
       <div class="flex flex-row items-center gap-3">
-        <div class="relative min-w-0 flex-1 sm:max-w-xs">
-          <MaterialSymbol
-            name="search"
-            :size="18"
-            class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-          />
-          <input
-            v-model="search"
-            :placeholder="$t('users.search')"
-            class="h-10 w-full rounded-full border border-outline bg-transparent pl-10 pr-5 text-sm text-foreground transition-colors placeholder:text-on-surface-variant/85 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          />
-        </div>
+        <Fieldset name="users-search" class="min-w-0 flex-1 sm:max-w-xs">
+          <template #default="{ id, describedBy, invalid }">
+            <div class="relative">
+              <MaterialSymbol
+                name="search"
+                :size="18"
+                class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
+              <input
+                :id="id"
+                v-model="search"
+                :aria-label="$t('users.search')"
+                :aria-describedby="describedBy"
+                :aria-invalid="invalid"
+                :placeholder="$t('users.search')"
+                class="h-10 w-full rounded-full border border-outline bg-transparent pl-10 pr-5 text-sm text-foreground transition-colors placeholder:text-on-surface-variant/85 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+          </template>
+        </Fieldset>
         <!-- Filter trigger: opens the right-side filter sheet. Badge shows how
              many role filters are active (server-side; API is source of truth). -->
         <Button
@@ -302,22 +310,33 @@ function onSort(next: SortState) {
       side="right"
     >
       <div class="space-y-6">
-        <div class="space-y-2">
-          <p class="text-sm font-medium text-on-surface">{{ $t('users.filter.roles') }}</p>
-          <label
-            v-for="opt in roleOptions"
-            :key="opt.value"
-            :for="`filter-${opt.value}`"
-            class="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-sm text-on-surface transition-colors hover:bg-on-surface/8"
-          >
-            <Checkbox
-              :id="`filter-${opt.value}`"
-              :model-value="selectedRoles.includes(opt.value)"
-              @update:model-value="toggleRole(opt.value)"
-            />
-            {{ opt.label }}
-          </label>
-        </div>
+        <Fieldset group name="users-filter-roles" :label="$t('users.filter.roles')">
+          <template #default="{ labelId, describedBy, invalid }">
+            <div
+              role="group"
+              :aria-labelledby="labelId"
+              :aria-describedby="describedBy"
+              :aria-invalid="invalid"
+              class="space-y-2"
+            >
+              <label
+                v-for="opt in roleOptions"
+                :key="opt.value"
+                :for="`filter-${opt.value}`"
+                class="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-sm text-on-surface transition-colors hover:bg-on-surface/8"
+              >
+                <Checkbox
+                  :id="`filter-${opt.value}`"
+                  :aria-describedby="describedBy"
+                  :aria-invalid="invalid"
+                  :model-value="selectedRoles.includes(opt.value)"
+                  @update:model-value="toggleRole(opt.value)"
+                />
+                {{ opt.label }}
+              </label>
+            </div>
+          </template>
+        </Fieldset>
         <Button
           variant="outline"
           class="w-full"

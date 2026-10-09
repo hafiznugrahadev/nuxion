@@ -79,21 +79,28 @@ function onKeydown(e: KeyboardEvent) {
         @escape-key-down="closePalette"
       >
         <!-- Search input -->
-        <div class="flex items-center gap-3 border-b border-outline-variant px-4 py-3">
-          <MaterialSymbol name="search" :size="18" class="shrink-0 text-muted-foreground" />
-          <input
-            id="cp-input"
-            v-model="query"
-            type="text"
-            :placeholder="$t('commandPalette.placeholder')"
-            class="flex-1 bg-transparent text-sm text-foreground placeholder:text-on-surface-variant/85 focus:outline-none"
-            @keydown="onKeydown"
-          />
-          <kbd
-            class="hidden rounded-sm border border-outline-variant bg-surface px-1.5 py-0.5 text-xs text-muted-foreground sm:inline"
-            >Esc</kbd
-          >
-        </div>
+        <Fieldset name="cp-input">
+          <template #default="{ id, describedBy, invalid }">
+            <div class="flex items-center gap-3 border-b border-outline-variant px-4 py-3">
+              <MaterialSymbol name="search" :size="18" class="shrink-0 text-muted-foreground" />
+              <input
+                :id="id"
+                v-model="query"
+                :aria-label="$t('commandPalette.placeholder')"
+                :aria-describedby="describedBy"
+                :aria-invalid="invalid"
+                type="text"
+                :placeholder="$t('commandPalette.placeholder')"
+                class="flex-1 bg-transparent text-sm text-foreground placeholder:text-on-surface-variant/85 focus:outline-none"
+                @keydown="onKeydown"
+              />
+              <kbd
+                class="hidden rounded-sm border border-outline-variant bg-surface px-1.5 py-0.5 text-xs text-muted-foreground sm:inline"
+                >Esc</kbd
+              >
+            </div>
+          </template>
+        </Fieldset>
 
         <!-- Results -->
         <div class="pt-2">

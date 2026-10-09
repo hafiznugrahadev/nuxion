@@ -1,3 +1,4 @@
+import { unwrap } from '~/lib/api-client';
 import { defineStore } from 'pinia';
 import type { PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser';
 import { UserRole, type ApiResponse, type User } from '@nuxion/shared-types';
@@ -93,10 +94,10 @@ export const useAuthStore = defineStore('auth', {
         method: 'POST',
         body: { email, password },
       });
-      if (!res.success) throw new Error('Login failed');
-      if ('twoFactorRequired' in res.data) return res.data;
-      this.setSession(res.data);
-      return res.data;
+      const data = unwrap(res);
+      if ('twoFactorRequired' in data) return data;
+      this.setSession(data);
+      return data;
     },
 
     /** Second step of login: consume the challenge with a TOTP/recovery code. */
@@ -109,8 +110,8 @@ export const useAuthStore = defineStore('auth', {
           body: { challengeId, code },
         },
       );
-      if (!res.success) throw new Error('Two-factor verification failed');
-      this.setSession(res.data);
+      const data = unwrap(res);
+      this.setSession(data);
     },
 
     /** Fetch a discoverable-credential login challenge (passkey sign-in). */
@@ -120,8 +121,8 @@ export const useAuthStore = defineStore('auth', {
         '/auth/webauthn/login/options',
         { method: 'POST' },
       );
-      if (!res.success) throw new Error('Could not start passkey login');
-      return res.data;
+      const data = unwrap(res);
+      return data;
     },
 
     /** Verify the browser's assertion; returns a session or a 2FA challenge. */
@@ -131,10 +132,10 @@ export const useAuthStore = defineStore('auth', {
         '/auth/webauthn/login/verify',
         { method: 'POST', body: { challengeId, response } },
       );
-      if (!res.success) throw new Error('Passkey verification failed');
-      if ('twoFactorRequired' in res.data) return res.data;
-      this.setSession(res.data);
-      return res.data;
+      const data = unwrap(res);
+      if ('twoFactorRequired' in data) return data;
+      this.setSession(data);
+      return data;
     },
 
     /** Self-service registration (when enabled on the API). Logs the user in. */
@@ -147,8 +148,8 @@ export const useAuthStore = defineStore('auth', {
           body: { name, email, password },
         },
       );
-      if (!res.success) throw new Error('Registration failed');
-      this.setSession(res.data);
+      const data = unwrap(res);
+      this.setSession(data);
     },
 
     /** Exchange the refresh cookie for a new access token. Returns success. */
@@ -181,19 +182,25 @@ export const useAuthStore = defineStore('auth', {
 
     /** Request a password-reset email. Resolves regardless of account existence. */
     async forgotPassword(email: string): Promise<void> {
-      await trackedFetch<ApiResponse<{ message: string }>>(
+      const res = await trackedFetch<ApiResponse<{ message: string }>>(
         this.apiBase(),
         '/auth/forgot-password',
         { method: 'POST', body: { email } },
       );
+      unwrap(res);
     },
 
     /** Complete a password reset with the emailed token. Throws on invalid/expired. */
     async resetPassword(token: string, newPassword: string): Promise<void> {
-      await trackedFetch<ApiResponse<{ message: string }>>(this.apiBase(), '/auth/reset-password', {
-        method: 'POST',
-        body: { token, newPassword },
-      });
+      const res = await trackedFetch<ApiResponse<{ message: string }>>(
+        this.apiBase(),
+        '/auth/reset-password',
+        {
+          method: 'POST',
+          body: { token, newPassword },
+        },
+      );
+      unwrap(res);
     },
   },
 });

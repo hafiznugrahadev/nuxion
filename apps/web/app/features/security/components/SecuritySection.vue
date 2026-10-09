@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { applyApiFieldErrors, apiFieldErrors } from '~/lib/api-errors';
 import { computed, ref, watch } from 'vue';
 import { useQuery, useQueryClient } from '@tanstack/vue-query';
 import { useForm } from 'vee-validate';
@@ -53,7 +54,11 @@ watch(regenOpen, (open) => {
 const regenSchema = toTypedSchema(
   z.object({ password: z.string().min(6, 'Password must be at least 6 characters') }),
 );
-const { handleSubmit: handleRegenSubmit, resetForm: resetRegenForm } = useForm({
+const {
+  handleSubmit: handleRegenSubmit,
+  resetForm: resetRegenForm,
+  setErrors: setRegenErrors,
+} = useForm({
   validationSchema: regenSchema,
   initialValues: { password: '' },
 });
@@ -65,6 +70,7 @@ const onRegenSubmit = handleRegenSubmit(async (values) => {
     resetRegenForm();
     toast.success(t('security.recovery.regenerated'));
   } catch (err) {
+    applyApiFieldErrors(err, setRegenErrors, ['password']);
     toast.error((err as Error)?.message || t('security.recovery.failed'));
   } finally {
     regenSubmitting.value = false;
@@ -80,9 +86,21 @@ const copyCodes = async () => {
 // ── Passkey management ───────────────────────────────────────────────────────
 const addOpen = ref(false);
 const passkeyName = ref('');
+const passkeyApiError = ref<string>();
+watch(passkeyName, () => {
+  passkeyApiError.value = undefined;
+});
+watch(addOpen, () => {
+  passkeyApiError.value = undefined;
+});
+const passkeyNameError = computed(() =>
+  passkeyName.value.length > 64 ? t('security.passkeys.nameTooLong') : passkeyApiError.value,
+);
 const addBusy = ref(false);
 
 async function addPasskey() {
+  passkeyApiError.value = undefined;
+  if (passkeyNameError.value) return;
   addBusy.value = true;
   try {
     const optionsJSON = await securityApi.passkeyRegisterOptions();
@@ -95,6 +113,7 @@ async function addPasskey() {
   } catch (err) {
     // A dismissed browser prompt is a user choice, not a failure.
     if ((err as Error)?.name === 'NotAllowedError') return;
+    passkeyApiError.value = apiFieldErrors(err).name;
     toast.error((err as Error)?.message || t('security.passkeys.addFailed'));
   } finally {
     addBusy.value = false;
@@ -255,18 +274,23 @@ async function removePasskey(passkey: Passkey) {
       :description="$t('security.passkeys.addDescription')"
     >
       <form class="space-y-5" @submit.prevent="addPasskey">
-        <div class="space-y-1.5">
-          <label for="passkey-name" class="text-sm font-medium leading-none">
-            {{ $t('security.passkeys.nameLabel') }}
-          </label>
-          <Input
-            id="passkey-name"
-            v-model="passkeyName"
-            :placeholder="$t('security.passkeys.namePlaceholder')"
-            maxlength="64"
-          />
-          <p class="text-xs text-on-surface-variant">{{ $t('security.passkeys.nameHint') }}</p>
-        </div>
+        <Fieldset
+          name="passkey-name"
+          :error="passkeyNameError"
+          :label="$t('security.passkeys.nameLabel')"
+          :hint="$t('security.passkeys.nameHint')"
+        >
+          <template #default="{ id, describedBy, invalid }">
+            <Input
+              :id="id"
+              v-model="passkeyName"
+              :placeholder="$t('security.passkeys.namePlaceholder')"
+              maxlength="64"
+              :aria-describedby="describedBy"
+              :aria-invalid="invalid"
+            />
+          </template>
+        </Fieldset>
         <div class="flex justify-end gap-2">
           <Button type="button" variant="ghost" :disabled="addBusy" @click="addOpen = false">
             {{ $t('common.cancel') }}

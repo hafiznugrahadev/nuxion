@@ -74,6 +74,9 @@ describe('RolesService', () => {
     await expect(service.update(customRole.id, { name: 'TAKEN' })).rejects.toThrow(
       ConflictException,
     );
+    await expect(service.update(customRole.id, { name: 'TAKEN' })).rejects.toMatchObject({
+      response: { fieldErrors: { name: ['name already exists'] } },
+    });
     expect(repository.rename).not.toHaveBeenCalled();
   });
 

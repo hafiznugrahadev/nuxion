@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { applyApiFieldErrors } from '~/lib/api-errors';
 import { computed, watch } from 'vue';
 import { useForm, useField } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
@@ -41,7 +42,7 @@ const create = useCreateUser();
 const update = useUpdateUser();
 const pending = computed(() => create.isPending.value || update.isPending.value);
 
-const { handleSubmit, resetForm, errors } = useForm({
+const { handleSubmit, resetForm, errors, setErrors } = useForm({
   validationSchema: computed(() => toTypedSchema(isEdit.value ? editUserSchema : createUserSchema)),
 });
 const { value: email } = useField<string>('email');
@@ -84,8 +85,8 @@ const onSubmit = handleSubmit(async (values) => {
     }
     open.value = false;
     emit('saved');
-  } catch {
-    /* error toast handled centrally by useApiMutation */
+  } catch (err) {
+    applyApiFieldErrors(err, setErrors, ['email', 'name', 'password', 'roles']);
   }
 });
 </script>
@@ -116,6 +117,7 @@ const onSubmit = handleSubmit(async (values) => {
             :value="props.user?.email"
             disabled
             :aria-describedby="describedBy"
+            :aria-invalid="invalid"
             :class="[inputClass, 'opacity-60']"
           />
         </template>
@@ -147,12 +149,13 @@ const onSubmit = handleSubmit(async (values) => {
 
       <!-- Roles -->
       <Fieldset group name="roles" :label="$t('users.form.roles')" :error="errors.roles">
-        <template #default="{ labelId, describedBy }">
+        <template #default="{ labelId, describedBy, invalid }">
           <div
             class="flex flex-wrap gap-4 pt-1"
             role="group"
             :aria-labelledby="labelId"
             :aria-describedby="describedBy"
+            :aria-invalid="invalid"
           >
             <label
               v-for="role in availableRoles"
@@ -162,6 +165,8 @@ const onSubmit = handleSubmit(async (values) => {
             >
               <Checkbox
                 :id="`role-${role}`"
+                :aria-describedby="describedBy"
+                :aria-invalid="invalid"
                 :model-value="roles?.includes(role)"
                 @update:model-value="toggleRole(role, $event as boolean)"
               />

@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { apiFieldErrors } from '~/lib/api-errors';
 import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 import type { User } from '@nuxion/shared-types';
 import { roleLabel } from '~/lib/roles';
 import { useUpload } from '~/composables/useUpload';
 import { useUpdateProfile } from '../composables/useProfile';
+
+const { t } = useI18n();
 
 const props = defineProps<{ user: User }>();
 
@@ -25,29 +28,37 @@ const { uploadFile } = useUpload();
 const update = useUpdateProfile();
 const fileInput = ref<HTMLInputElement | null>(null);
 const uploading = ref(false);
+const avatarError = ref<string>();
 
 const MAX_MB = 5;
 
 async function onPick(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0];
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = '';
   if (!file) return;
+  avatarError.value = undefined;
   if (!file.type.startsWith('image/')) {
-    toast.error('Please choose an image file');
+    avatarError.value = t('profile.avatar.notImage');
+    toast.error(avatarError.value);
     return;
   }
   if (file.size > MAX_MB * 1024 * 1024) {
-    toast.error(`Image must be under ${MAX_MB}MB`);
+    avatarError.value = t('profile.avatar.tooLarge', { mb: MAX_MB });
+    toast.error(avatarError.value);
     return;
   }
 
   uploading.value = true;
   try {
     const { url } = await uploadFile(file, 'avatars');
-    // The mutation surfaces its own success/error toast; swallow the rejection so
-    // we don't double-toast on a save failure.
-    await update.mutateAsync({ avatarUrl: url }).catch(() => {});
+    await update.mutateAsync({ avatarUrl: url }).catch((err) => {
+      avatarError.value = apiFieldErrors(err).avatarUrl;
+    });
   } catch (err) {
-    toast.error((err as Error)?.message || 'Upload failed');
+    avatarError.value =
+      apiFieldErrors(err).file || (err as Error)?.message || t('profile.avatar.uploadFailed');
+    toast.error(avatarError.value);
   } finally {
     uploading.value = false;
     if (fileInput.value) fileInput.value.value = '';
@@ -59,38 +70,55 @@ async function onPick(e: Event) {
   <div class="rounded-lg border border-outline-variant bg-card p-5 sm:p-6">
     <div class="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-6">
       <!-- Avatar with upload affordance -->
-      <div class="relative h-20 w-20 shrink-0">
-        <img
-          v-if="user.avatarUrl"
-          :src="user.avatarUrl"
-          :alt="user.name"
-          class="h-20 w-20 rounded-full object-cover"
-        />
-        <span
-          v-else
-          class="flex h-20 w-20 items-center justify-center rounded-full bg-primary-container text-2xl font-semibold text-on-primary-container"
-        >
-          {{ initials }}
-        </span>
+      <Fieldset name="profile-avatar" :error="avatarError" class="shrink-0 sm:max-w-44">
+        <template #default="{ id, describedBy, invalid }">
+          <div class="relative h-20 w-20">
+            <img
+              v-if="user.avatarUrl"
+              :src="user.avatarUrl"
+              :alt="user.name"
+              class="h-20 w-20 rounded-full object-cover"
+            />
+            <span
+              v-else
+              class="flex h-20 w-20 items-center justify-center rounded-full bg-primary-container text-2xl font-semibold text-on-primary-container"
+            >
+              {{ initials }}
+            </span>
 
-        <!-- MD3 small FAB (primary-container) -->
-        <button
-          type="button"
-          class="state-layer touch-target absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-lg border-2 border-card bg-primary-container text-on-primary-container shadow disabled:opacity-60 [--touch-slop:-6px]"
-          :disabled="uploading"
-          :aria-label="uploading ? 'Uploading…' : 'Change photo'"
-          @click="fileInput?.click()"
-        >
-          <MaterialSymbol
-            v-if="uploading"
-            name="progress_activity"
-            :size="14"
-            class="animate-spin"
-          />
-          <MaterialSymbol v-else name="photo_camera" :size="14" />
-        </button>
-        <input ref="fileInput" type="file" accept="image/*" class="sr-only" @change="onPick" />
-      </div>
+            <!-- MD3 small FAB (primary-container) -->
+            <button
+              type="button"
+              class="state-layer touch-target absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-lg border-2 border-card bg-primary-container text-on-primary-container shadow disabled:opacity-60 [--touch-slop:-6px]"
+              :disabled="uploading"
+              :aria-label="uploading ? $t('common.working') : $t('profile.avatar.change')"
+              :aria-describedby="describedBy"
+              :aria-invalid="invalid"
+              @click="fileInput?.click()"
+            >
+              <MaterialSymbol
+                v-if="uploading"
+                name="progress_activity"
+                :size="14"
+                class="animate-spin"
+              />
+              <MaterialSymbol v-else name="photo_camera" :size="14" />
+            </button>
+            <input
+              :id="id"
+              ref="fileInput"
+              type="file"
+              accept="image/*"
+              class="hidden"
+              :disabled="uploading"
+              :aria-label="$t('profile.avatar.change')"
+              :aria-describedby="describedBy"
+              :aria-invalid="invalid"
+              @change="onPick"
+            />
+          </div>
+        </template>
+      </Fieldset>
 
       <div class="flex-1 text-center sm:text-left">
         <h2 class="text-lg font-semibold text-foreground">{{ user.name }}</h2>

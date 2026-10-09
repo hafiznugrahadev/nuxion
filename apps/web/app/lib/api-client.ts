@@ -1,3 +1,4 @@
+import { ApiError } from './api-errors';
 import type { ApiResponse, Paginated, PaginationMeta } from '@nuxion/shared-types';
 
 export interface ApiClientOptions {
@@ -44,8 +45,7 @@ export function createApiClient({ baseURL, getToken, onStart, onEnd }: ApiClient
 /** Unwrap the `{ success, data }` envelope, throwing on the error shape. */
 export function unwrap<T>(res: ApiResponse<T>): T {
   if (res.success) return res.data;
-  const msg = Array.isArray(res.message) ? res.message.join(', ') : res.message;
-  throw new Error(msg);
+  throw new ApiError(res);
 }
 
 /** Unwrap a paginated envelope into `{ data, meta }`. */
@@ -53,6 +53,5 @@ export function unwrapPaginated<T>(res: ApiResponse<T[]>): Paginated<T> {
   if (res.success) {
     return { data: res.data, meta: res.meta as PaginationMeta };
   }
-  const msg = Array.isArray(res.message) ? res.message.join(', ') : res.message;
-  throw new Error(msg);
+  throw new ApiError(res);
 }

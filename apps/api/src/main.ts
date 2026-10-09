@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { ValidationPipe } from '@nestjs/common';
+import { createValidationPipe } from '@common/validation/create-validation-pipe';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -79,14 +79,7 @@ async function bootstrap() {
   app.enableCors({ origin, credentials: true });
 
   // SPEC DRY #7 — one global ValidationPipe governs every DTO.
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: { enableImplicitConversion: true },
-    }),
-  );
+  app.useGlobalPipes(createValidationPipe());
 
   // SPEC DRY #6 — uniform response envelope + uniform error envelope, set once.
   app.useGlobalInterceptors(new ResponseInterceptor());

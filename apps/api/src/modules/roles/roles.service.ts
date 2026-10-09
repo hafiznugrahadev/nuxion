@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { UserRole } from '@nuxion/shared-types';
+import { withFieldErrors } from '@common/validation/field-exception';
 import { UsersService } from '@modules/users/users.service';
 import { RoleEntity } from './entities/role.entity';
 import { RolesRepository, type RoleWithCount } from './roles.repository';
@@ -44,12 +45,16 @@ export class RolesService {
   async update(id: string, dto: UpdateRoleDto): Promise<RoleEntity> {
     const existing = await this.findOrThrow(id);
     if (WELL_KNOWN_ROLES.includes(existing.name)) {
-      throw new BadRequestException(`${existing.name} is a built-in role and cannot be renamed`);
+      throw withFieldErrors(
+        new BadRequestException(`${existing.name} is a built-in role and cannot be renamed`),
+        ['name'],
+      );
     }
     if (!dto.name || dto.name === existing.name) return this.toEntity(existing);
 
     const clash = await this.rolesRepository.findByName(dto.name);
-    if (clash && clash.id !== id) throw new ConflictException('name already exists');
+    if (clash && clash.id !== id)
+      throw withFieldErrors(new ConflictException('name already exists'), ['name']);
 
     const renamed = await this.rolesRepository.rename(id, dto.name);
     // Role names appear in cached user list responses — keep that cache fresh.

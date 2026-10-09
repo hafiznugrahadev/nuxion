@@ -1,4 +1,5 @@
 import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { withFieldErrors } from '@common/validation/field-exception';
 import { PaginatedResult } from '@common/interfaces/paginated-result.interface';
 import { hashPassword, verifyPassword } from '@common/utils/password';
 import { RedisService } from '@infrastructure/redis/redis.service';
@@ -103,7 +104,10 @@ export class UsersService {
     if (!user) throw new NotFoundException(`${this.entityName} with id "${id}" not found`);
 
     const matches = await verifyPassword(dto.currentPassword, user.password);
-    if (!matches) throw new UnauthorizedException('Current password is incorrect');
+    if (!matches)
+      throw withFieldErrors(new UnauthorizedException('Current password is incorrect'), [
+        'currentPassword',
+      ]);
 
     await this.usersRepository.updateWithRoles(id, {
       password: await hashPassword(dto.newPassword),

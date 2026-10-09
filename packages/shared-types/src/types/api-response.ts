@@ -21,6 +21,8 @@ export interface ApiErrorResponse {
   success: false;
   statusCode: number;
   message: string | string[];
+  /** DTO property paths mapped to validation messages for form controls. */
+  fieldErrors?: Record<string, string[]>;
   error: string;
   path: string;
   timestamp: string;

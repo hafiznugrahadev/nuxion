@@ -1,3 +1,4 @@
+import { apiFieldErrors } from '~/lib/api-errors';
 import { createApiClient } from '~/lib/api-client';
 import { xhrProgressEnd, xhrProgressStart } from '~/lib/xhr-progress';
 import { useAuthStore } from '~/stores/auth';
@@ -43,7 +44,7 @@ export function useApi() {
     } catch (err) {
       const status = (err as { response?: { status?: number } })?.response?.status;
       const noRetry = NO_RETRY_AUTH_ROUTES.some((route) => url.startsWith(route));
-      if (status === 401 && !noRetry) {
+      if (status === 401 && !noRetry && !Object.keys(apiFieldErrors(err)).length) {
         const refreshed = await auth.refresh();
         if (refreshed) return await client<T>(url, options as never);
       }

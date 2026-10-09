@@ -30,9 +30,8 @@ const tags = computed({
 
 <template>
   <Fieldset :name="name" :label="label" :required="required" :error="errorMessage" :hint="hint">
-    <template #default="{ describedBy, invalid }">
+    <template #default="{ id, describedBy, invalid }">
       <TagsInputRoot
-        :id="name"
         v-model="tags"
         :aria-invalid="invalid"
         :aria-describedby="describedBy"
@@ -58,6 +57,9 @@ const tags = computed({
           </TagsInputItemDelete>
         </TagsInputItem>
         <TagsInputInput
+          :id="id"
+          :aria-describedby="describedBy"
+          :aria-invalid="invalid"
           :placeholder="tags.length ? '' : (placeholder ?? 'Add tag…')"
           class="flex-1 bg-transparent text-sm outline-none placeholder:text-on-surface-variant/85"
         />

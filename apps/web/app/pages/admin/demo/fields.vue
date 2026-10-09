@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { apiFieldErrors } from '~/lib/api-errors';
 import { computed, ref } from 'vue';
 import { useField, useForm, useFormValues } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
@@ -18,6 +19,7 @@ const schema = toTypedSchema(
     password: z.string().min(6, 'Min 6 characters'),
     birthday: z.string().optional(),
     bio: z.string().optional(),
+    formattedBio: z.string().optional(),
     role: z.string().min(1, 'Select a role'),
     status: z.string().min(1, 'Select a status'),
     digest: z.string().optional(),
@@ -30,7 +32,7 @@ const schema = toTypedSchema(
   }),
 );
 
-const { handleSubmit, errors } = useForm({
+const { handleSubmit, errors, setFieldError } = useForm({
   validationSchema: schema,
   initialValues: {
     confidence: 50,
@@ -53,8 +55,7 @@ const { uploadFile } = useUpload();
 const uploading = ref(false);
 const uploadedUrl = ref<string | null>(null);
 
-// Rich text demo state (standalone v-model, outside the zod form).
-const editorHtml = ref('');
+const { value: editorHtml } = useField<string>('formattedBio', undefined, { initialValue: '' });
 
 // Demonstrates FileField → useUpload end-to-end: if an avatar file was picked,
 // upload it on submit and surface the stored public URL. Other fields are just
@@ -68,7 +69,9 @@ const onSubmit = handleSubmit(async (values) => {
       const { url } = await uploadFile(avatar, 'demo');
       uploadedUrl.value = url;
     } catch (err) {
-      toast.error((err as Error)?.message || 'Upload failed');
+      const message = apiFieldErrors(err).file || (err as Error)?.message || 'Upload failed';
+      setFieldError('avatar', message);
+      toast.error(message);
       return;
     } finally {
       uploading.value = false;
@@ -192,12 +195,13 @@ const { value: statusValue } = useField<string>('status');
               :error="errors.status"
               hint="Segmented selection (MD3 segmented button pattern)."
             >
-              <template #default="{ labelId, describedBy }">
+              <template #default="{ labelId, describedBy, invalid }">
                 <ToggleGroup
                   v-model="statusValue"
                   :options="statusOptions"
                   :aria-labelledby="labelId"
                   :aria-describedby="describedBy"
+                  :aria-invalid="invalid"
                 />
               </template>
             </Fieldset>
@@ -217,16 +221,19 @@ const { value: statusValue } = useField<string>('status');
           <h2 class="mb-4 text-sm font-semibold text-muted-foreground">Rich Text</h2>
           <Fieldset
             group
+            name="formattedBio"
+            :error="errors.formattedBio"
             label="Bio (formatted)"
             hint="Toolbar toggles take the tonal pill when active. Images upload to the shared storage API and are inserted inline."
           >
-            <template #default="{ labelId, describedBy }">
+            <template #default="{ labelId, describedBy, invalid }">
               <Editor
                 v-model="editorHtml"
                 placeholder="Write something, and upload an image…"
                 min-height="7rem"
                 :aria-labelledby="labelId"
                 :aria-describedby="describedBy"
+                :aria-invalid="invalid"
               />
             </template>
           </Fieldset>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { applyApiFieldErrors } from '~/lib/api-errors';
 import { computed, watch } from 'vue';
 import { useForm, useField } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
@@ -23,7 +24,7 @@ const create = useCreateRole();
 const update = useUpdateRole();
 const pending = computed(() => create.isPending.value || update.isPending.value);
 
-const { handleSubmit, resetForm, errors } = useForm({
+const { handleSubmit, resetForm, errors, setErrors } = useForm({
   validationSchema: computed(() => toTypedSchema(createRoleSchema(t))),
 });
 const { value: name } = useField<string>('name');
@@ -51,8 +52,8 @@ const onSubmit = handleSubmit(async (values) => {
     }
     open.value = false;
     emit('saved');
-  } catch {
-    /* error toast handled centrally by useApiMutation */
+  } catch (err) {
+    applyApiFieldErrors(err, setErrors, ['name']);
   }
 });
 </script>

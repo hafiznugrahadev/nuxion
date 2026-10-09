@@ -271,8 +271,9 @@ const onSubmit = handleSubmit(async (values) => {
 - Immutable fields (email in edit) render `disabled` showing the stored value —
   don't just hide them.
 - Every field caption/error is composed with `Fieldset`
-  (`app/components/common/fields/Fieldset.vue`) — never hand-roll the
-  `space-y-1.5` + `<label>` + error `<p>` skeleton. Inputs with a `*Field`
+  (`app/components/common/fields/Fieldset.vue`), which composes shadcn-vue
+  `Field`, `FieldLabel`, `FieldDescription`, and `FieldError`. Never hand-roll
+  the field skeleton. Inputs with a `*Field`
   wrapper (TextField, PasswordField, …) already compose it internally; bespoke
   controls (ToggleGroup, Editor, raw inputs) wrap it and bind the slot props so
   `aria-describedby`/`aria-invalid` reach the control. Standard inputs keep one

@@ -2,6 +2,7 @@ import { h } from 'vue';
 import { mount } from '@vue/test-utils';
 import { describe, expect, it } from 'vitest';
 import Fieldset from './Fieldset.vue';
+import { Field, FieldDescription, FieldError, FieldLabel } from '~/components/ui/field';
 
 type SlotProps = { id: string; labelId: string; describedBy?: string; invalid: boolean };
 
@@ -22,6 +23,17 @@ function mountFieldset(props: InstanceType<typeof Fieldset>['$props'], slots = {
 }
 
 describe('Fieldset', () => {
+  it('composes shadcn Field primitives with a named group', () => {
+    const wrapper = mountFieldset({ name: 'email', label: 'Email', hint: 'Use your work email.' });
+    expect(wrapper.findComponent(Field).exists()).toBe(true);
+    expect(wrapper.findComponent(FieldLabel).exists()).toBe(true);
+    expect(wrapper.findComponent(FieldDescription).exists()).toBe(true);
+    expect(wrapper.attributes('data-slot')).toBe('field');
+    expect(wrapper.attributes('role')).toBe('group');
+    expect(wrapper.attributes('aria-labelledby')).toBe('email-label');
+    expect(wrapper.attributes('data-invalid')).toBe('false');
+  });
+
   it('wires label[for] to the control id derived from name', () => {
     const wrapper = mountFieldset({ name: 'email', label: 'Email' });
     const label = wrapper.find('label');
@@ -39,6 +51,7 @@ describe('Fieldset', () => {
     const wrapper = mountFieldset({ name: 'email' });
     expect(wrapper.find('label').exists()).toBe(false);
     expect(wrapper.find('span.text-sm').exists()).toBe(false);
+    expect(wrapper.attributes('aria-labelledby')).toBeUndefined();
   });
 
   it('shows the error instead of the hint and exposes it to the control', () => {
@@ -51,6 +64,9 @@ describe('Fieldset', () => {
     const message = wrapper.find('#email-error');
     expect(message.exists()).toBe(true);
     expect(message.text()).toBe('Invalid email');
+    expect(wrapper.findComponent(FieldError).exists()).toBe(true);
+    expect(message.attributes('role')).toBe('alert');
+    expect(wrapper.attributes('data-invalid')).toBe('true');
     expect(wrapper.find('#email-hint').exists()).toBe(false);
     const input = wrapper.find('input');
     expect(input.attributes('aria-describedby')).toBe('email-error');
@@ -76,6 +92,8 @@ describe('Fieldset', () => {
     const caption = wrapper.find('#roles-label');
     expect(caption.element.tagName).toBe('SPAN');
     expect(caption.attributes('for')).toBeUndefined();
+    expect(caption.attributes('data-slot')).toBe('field-label');
+    expect(wrapper.attributes('aria-labelledby')).toBe('roles-label');
     expect(wrapper.find('#roles-error').exists()).toBe(true);
   });
 
@@ -95,5 +113,45 @@ describe('Fieldset', () => {
     expect(row.exists()).toBe(true);
     expect(row.find('#bio-hint').exists()).toBe(true);
     expect(row.find('span.tabular-nums').text()).toBe('0/200');
+  });
+
+  it('updates message ids and invalid state as validation changes', async () => {
+    const wrapper = mountFieldset({ name: 'email', label: 'Email', hint: 'Use your work email.' });
+    await wrapper.setProps({ error: 'Invalid email' });
+    expect(wrapper.find('#email-hint').exists()).toBe(false);
+    expect(wrapper.find('#email-error').text()).toBe('Invalid email');
+    expect(wrapper.find('input').attributes('aria-describedby')).toBe('email-error');
+    expect(wrapper.find('input').attributes('aria-invalid')).toBe('true');
+    expect(wrapper.attributes('data-invalid')).toBe('true');
+
+    await wrapper.setProps({ error: '' });
+    expect(wrapper.find('#email-error').exists()).toBe(false);
+    expect(wrapper.find('#email-hint').text()).toBe('Use your work email.');
+    expect(wrapper.find('input').attributes('aria-describedby')).toBe('email-hint');
+    expect(wrapper.find('input').attributes('aria-invalid')).toBe('false');
+    expect(wrapper.attributes('data-invalid')).toBe('false');
+
+    await wrapper.setProps({ hint: undefined });
+    expect(wrapper.find('input').attributes('aria-describedby')).toBeUndefined();
+    expect(wrapper.find('[data-slot="field-description"]').exists()).toBe(false);
+  });
+
+  it('uses a custom label slot for the caption and group accessible name', () => {
+    const wrapper = mountFieldset(
+      { name: 'email', label: 'Fallback', required: true },
+      { label: () => h('strong', 'Work email') },
+    );
+    expect(wrapper.find('label strong').text()).toBe('Work email');
+    expect(wrapper.find('label').text()).not.toContain('Fallback');
+    expect(wrapper.find('label').text()).toContain('*');
+    expect(wrapper.attributes('aria-labelledby')).toBe('email-label');
+  });
+
+  it('keeps a trailing-only message row without dangling descriptions', () => {
+    const wrapper = mountFieldset({ name: 'bio' }, { trailing: () => h('span', '0/200') });
+    expect(wrapper.find('.flex.justify-between').text()).toBe('0/200');
+    expect(wrapper.find('input').attributes('aria-describedby')).toBeUndefined();
+    expect(wrapper.find('[data-slot="field-error"]').exists()).toBe(false);
+    expect(wrapper.find('[data-slot="field-description"]').exists()).toBe(false);
   });
 });

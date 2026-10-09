@@ -22,6 +22,30 @@ function mountFieldset(props: InstanceType<typeof Fieldset>['$props'], slots = {
 }
 
 describe('Fieldset', () => {
+  it('restores the hint and control description after a field error clears', async () => {
+    const wrapper = mountFieldset({ name: 'email', label: 'Email', hint: 'Use your work email.' });
+    await wrapper.setProps({ error: 'Email is required' });
+    expect(wrapper.find('input').attributes('aria-describedby')).toBe('email-error');
+    expect(wrapper.find('#email-hint').exists()).toBe(false);
+    await wrapper.setProps({ error: undefined });
+    expect(wrapper.find('#email-error').exists()).toBe(false);
+    expect(wrapper.find('#email-hint').text()).toBe('Use your work email.');
+    expect(wrapper.find('input').attributes('aria-describedby')).toBe('email-hint');
+    expect(wrapper.find('input').attributes('aria-invalid')).toBe('false');
+  });
+
+  it('keeps inline boolean captions linked to the control before them', () => {
+    const wrapper = mountFieldset({
+      name: 'enabled',
+      label: 'Enabled',
+      inline: true,
+      error: 'Required',
+    });
+    const row = wrapper.find('.items-center');
+    expect(row.element.children[0]?.tagName).toBe('INPUT');
+    expect(row.find('label').attributes('for')).toBe('enabled');
+    expect(row.find('input').attributes('aria-describedby')).toBe('enabled-error');
+  });
   it('wires label[for] to the control id derived from name', () => {
     const wrapper = mountFieldset({ name: 'email', label: 'Email' });
     const label = wrapper.find('label');

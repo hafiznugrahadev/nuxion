@@ -23,12 +23,13 @@ const { value, errorMessage } = useField<string>(toRef(props, 'name'));
     :error="errorMessage"
     :hint="hint"
   >
-    <template #default="{ labelId, describedBy }">
+    <template #default="{ labelId, describedBy, invalid }">
       <RadioGroupRoot
         v-model="value"
         class="flex flex-col gap-1"
-        :aria-labelledby="labelId"
+        :aria-labelledby="label ? labelId : undefined"
         :aria-describedby="describedBy"
+        :aria-invalid="invalid"
       >
         <!-- Full-row labels give each option a 48dp hit area (M3 target size). -->
         <label
@@ -40,6 +41,8 @@ const { value, errorMessage } = useField<string>(toRef(props, 'name'));
           <RadioGroupItem
             :id="`${name}-${opt.value}`"
             :value="opt.value"
+            :aria-describedby="describedBy"
+            :aria-invalid="invalid"
             class="aspect-square h-5 w-5 shrink-0 rounded-full border-2 border-outline text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-primary"
           >
             <RadioGroupIndicator class="flex items-center justify-center">

@@ -126,8 +126,9 @@ export function useCreateUser() {
 
 The query key in `usePaginatedQuery` is `[key, params]`, so invalidating
 `['users']` refreshes every filtered/sorted page at once. Mutation errors toast
-in `useApiMutation.onError` — call sites `try { await mutateAsync(...) } catch {}`
-with an **empty catch**.
+in `useApiMutation.onError`. Form call sites must also bind explicit API
+`fieldErrors` to the form with `applyApiFieldErrors(error, setErrors, fields)`.
+Only non-form actions such as deletes use an empty catch.
 
 ## 4. <Feature>Table.vue — the page body
 
@@ -231,7 +232,7 @@ const props = defineProps<{ user?: User | null }>();
 const emit = defineEmits<{ saved: [] }>();
 const isEdit = computed(() => !!props.user);
 
-const { handleSubmit, resetForm, errors } = useForm({
+const { handleSubmit, resetForm, errors, setErrors } = useForm({
   validationSchema: computed(() => toTypedSchema(isEdit.value ? editUserSchema : createUserSchema)),
 });
 
@@ -249,6 +250,7 @@ watch(
   { immediate: true },
 );
 
+// Import applyApiFieldErrors from '~/lib/api-errors'; obtain setErrors from useForm.
 const onSubmit = handleSubmit(async (values) => {
   try {
     if (isEdit.value && props.user) {
@@ -260,8 +262,8 @@ const onSubmit = handleSubmit(async (values) => {
     }
     open.value = false;
     emit('saved');
-  } catch {
-    /* error toast handled centrally by useApiMutation */
+  } catch (error) {
+    applyApiFieldErrors(error, setErrors, ['email', 'name', 'password', 'roles']);
   }
 });
 ```
@@ -270,12 +272,19 @@ const onSubmit = handleSubmit(async (values) => {
   its label to `saving`).
 - Immutable fields (email in edit) render `disabled` showing the stored value —
   don't just hide them.
-- Every field caption/error is composed with `Fieldset`
+- **Every input is required to compose `Fieldset`**, including search/filter
+  controls without validation and disabled, read-only, file, boolean, radio,
+  slider, tags, and rich-text controls. Every field caption/error is composed with `Fieldset`
   (`app/components/common/fields/Fieldset.vue`) — never hand-roll the
   `space-y-1.5` + `<label>` + error `<p>` skeleton. Inputs with a `*Field`
   wrapper (TextField, PasswordField, …) already compose it internally; bespoke
   controls (ToggleGroup, Editor, raw inputs) wrap it and bind the slot props so
-  `aria-describedby`/`aria-invalid` reach the control. Standard inputs keep one
+  `aria-describedby`/`aria-invalid` reach the actual focusable control (the
+  contenteditable element for Editor, the thumb for a slider, the input for
+  tags), not just its container. Bind `errors.<name>` to that Fieldset's
+  `error`; wrappers bind their own vee-validate `errorMessage` internally.
+  Search controls can use `label-class="sr-only"` for a hidden accessible
+  label. Do not duplicate a wrapper's Fieldset or its ids. Standard inputs keep one
   shared `inputClass` (h-10 rounded-sm border-outline, `focus:ring-primary`):
 
   ```vue
@@ -294,7 +303,14 @@ const onSubmit = handleSubmit(async (values) => {
 
   Group controls (checkbox sets, segmented buttons) pass `group` (caption
   renders as a span, no `for`) and bind `labelId`/`describedBy` on a
-  `role="group"` container instead.
+  `role="group"` container. Bind `describedBy` and `invalid` to each
+  focusable group item too. Field-attributed API errors use
+  `applyApiFieldErrors(error, setErrors, allowedFields)` (from `~/lib/api-errors`)
+  in every submit catch. The optional response metadata is
+  `fieldErrors: Record<string, string[]>`, preserved by `ApiError`/ofetch.
+  Never parse localized message strings to guess a field. General
+  server/transport errors use the existing form-level/toast flow. Verify that
+  clearing an error restores the hint and its description id.
 
 - `PasswordField` self-registers into the same `useForm` context with just
   `name` + `label`.

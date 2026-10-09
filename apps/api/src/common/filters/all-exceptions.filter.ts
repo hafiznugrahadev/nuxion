@@ -27,6 +27,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message: string | string[] = 'Internal server error';
     let error = 'InternalServerError';
+    let fieldErrors: ApiErrorResponse['fieldErrors'];
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
@@ -34,16 +35,17 @@ export class AllExceptionsFilter implements ExceptionFilter {
       if (typeof res === 'string') {
         message = res;
       } else if (typeof res === 'object' && res !== null) {
-        const body = res as { message?: string | string[]; error?: string };
+        const body = res as { message?: string | string[]; error?: string; fieldErrors?: unknown };
         message = body.message ?? exception.message;
         error = body.error ?? exception.name;
+        fieldErrors = sanitizeFieldErrors(body.fieldErrors);
       }
     } else {
       // Drizzle wraps driver errors in DrizzleQueryError — walk the cause chain
       // to the underlying pg DatabaseError carrying the PostgreSQL SQLSTATE.
       const pgError = extractPgError(exception);
       if (pgError) {
-        ({ status, message, error } = this.mapDatabaseError(pgError));
+        ({ status, message, error, fieldErrors } = this.mapDatabaseError(pgError));
       } else if (exception instanceof Error) {
         message = exception.message;
         error = exception.name;
@@ -64,6 +66,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       error,
       path: request.url,
       timestamp: new Date().toISOString(),
+      ...(fieldErrors && { fieldErrors }),
     };
 
     response.status(status).json(body);
@@ -73,15 +76,19 @@ export class AllExceptionsFilter implements ExceptionFilter {
     status: number;
     message: string;
     error: string;
+    fieldErrors?: Record<string, string[]>;
   } {
     switch (e.code) {
       case '23505': {
-        // Unique violation — the constraint name encodes table + column
-        // (e.g. `users_email_key` → email, `refresh_tokens_tokenHash_key` → tokenHash).
+        const field = PUBLIC_UNIQUE_FIELDS[e.constraint ?? ''];
+        const message = field
+          ? `Unique constraint failed on: ${field}`
+          : 'Unique constraint failed';
         return {
           status: HttpStatus.CONFLICT,
-          message: `Unique constraint failed on: ${columnFromConstraint(e.constraint)}`,
+          message,
           error: 'Conflict',
+          ...(field && { fieldErrors: { [field]: [message] } }),
         };
       }
       case '23503':
@@ -110,22 +117,20 @@ function extractPgError(exception: unknown): DatabaseError | undefined {
   return undefined;
 }
 
-/** Table-name prefixes found in this schema's constraint names (longest first). */
-const CONSTRAINT_TABLES = [
-  'password_reset_tokens',
-  'refresh_tokens',
-  'notifications',
-  'user_roles',
-  'passkeys',
-  'settings',
-  'users',
-  'roles',
-].sort((a, b) => b.length - a.length);
+const PUBLIC_UNIQUE_FIELDS: Record<string, string> = Object.assign(Object.create(null), {
+  users_email_key: 'email',
+  roles_name_key: 'name',
+});
 
-/** `users_email_key` → `email`; falls back to a generic label. */
-function columnFromConstraint(constraint: string | undefined): string {
-  if (!constraint?.endsWith('_key')) return 'field';
-  const base = constraint.slice(0, -'_key'.length);
-  const table = CONSTRAINT_TABLES.find((t) => base.startsWith(`${t}_`));
-  return table ? base.slice(table.length + 1) : base;
+function sanitizeFieldErrors(value: unknown): Record<string, string[]> | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const entries = Object.entries(value).filter(
+    ([field, messages]) =>
+      /^[a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)*$/.test(field) &&
+      !field.split('.').some((part) => ['__proto__', 'constructor', 'prototype'].includes(part)) &&
+      Array.isArray(messages) &&
+      messages.length > 0 &&
+      messages.every((message) => typeof message === 'string'),
+  );
+  return entries.length ? Object.fromEntries(entries) : undefined;
 }

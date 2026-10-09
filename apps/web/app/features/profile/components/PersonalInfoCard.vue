@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { applyApiFieldErrors } from '~/lib/api-errors';
 import { ref } from 'vue';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
@@ -18,7 +19,7 @@ const schema = toTypedSchema(
   }),
 );
 
-const { handleSubmit, resetForm } = useForm({
+const { handleSubmit, resetForm, setErrors } = useForm({
   validationSchema: schema,
   initialValues: { name: props.user.name },
 });
@@ -29,8 +30,12 @@ function startEdit() {
 }
 
 const onSubmit = handleSubmit(async (values) => {
-  await update.mutateAsync({ name: values.name });
-  editing.value = false;
+  try {
+    await update.mutateAsync({ name: values.name });
+    editing.value = false;
+  } catch (err) {
+    applyApiFieldErrors(err, setErrors, ['name']);
+  }
 });
 </script>
 
@@ -80,13 +85,22 @@ const onSubmit = handleSubmit(async (values) => {
           :label="$t('profile.personalInfo.fullName')"
           placeholder="Your name"
         />
-        <div class="space-y-1.5">
-          <label class="text-sm font-medium leading-none text-foreground">{{
-            $t('profile.personalInfo.emailAddress')
-          }}</label>
-          <Input :model-value="user.email" disabled class="cursor-not-allowed opacity-70" />
-          <p class="text-xs text-muted-foreground">{{ $t('profile.personalInfo.emailHint') }}</p>
-        </div>
+        <Fieldset
+          name="profile-email"
+          :label="$t('profile.personalInfo.emailAddress')"
+          :hint="$t('profile.personalInfo.emailHint')"
+        >
+          <template #default="{ id, describedBy, invalid }">
+            <Input
+              :id="id"
+              :model-value="user.email"
+              disabled
+              class="cursor-not-allowed opacity-70"
+              :aria-describedby="describedBy"
+              :aria-invalid="invalid"
+            />
+          </template>
+        </Fieldset>
       </div>
 
       <div class="flex justify-end gap-2">

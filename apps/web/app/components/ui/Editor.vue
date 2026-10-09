@@ -1,11 +1,19 @@
 <script setup lang="ts">
+import { apiFieldErrors } from '~/lib/api-errors';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import { Placeholder } from '@tiptap/extensions';
-import { toast } from 'vue-sonner';
 import { useUpload } from '~/composables/useUpload';
-import type { HTMLAttributes } from 'vue';
+import {
+  computed,
+  ref,
+  watch,
+  onUpdated,
+  onBeforeUnmount,
+  useAttrs,
+  type HTMLAttributes,
+} from 'vue';
 import { cn } from '~/lib/utils';
 
 /**
@@ -28,12 +36,37 @@ const props = withDefaults(
   { modelValue: '', placeholder: '', disabled: false, minHeight: '8rem' },
 );
 const emit = defineEmits<{ 'update:modelValue': [html: string] }>();
+defineOptions({ inheritAttrs: false });
+const attrs = useAttrs();
+const { t } = useI18n();
+const imageError = ref('');
+
+function editorAttributes() {
+  const attributes: Record<string, string> = {
+    class: 'prose-mirror',
+    role: 'textbox',
+    'aria-multiline': 'true',
+  };
+  for (const key of ['id', 'aria-labelledby', 'aria-describedby', 'aria-invalid', 'aria-label']) {
+    if (attrs[key] !== undefined) attributes[key] = String(attrs[key]);
+  }
+  if (!attributes['aria-labelledby'] && !attributes['aria-label'])
+    attributes['aria-label'] = t('editor.label');
+  return attributes;
+}
+
+const containerAttrs = computed(() =>
+  Object.fromEntries(
+    Object.entries(attrs).filter(([key]) => key !== 'id' && !key.startsWith('aria-')),
+  ),
+);
 
 const { uploadFile } = useUpload();
 const uploading = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
 
 const editor = useEditor({
+  editable: !props.disabled,
   content: props.modelValue,
   extensions: [
     StarterKit,
@@ -46,13 +79,17 @@ const editor = useEditor({
     }),
   ],
   editorProps: {
-    attributes: {
-      class: 'prose-mirror',
-      'aria-label': 'Rich text editor',
-    },
+    attributes: editorAttributes(),
   },
   onUpdate: ({ editor: e }) => emit('update:modelValue', e.getHTML()),
 });
+
+onUpdated(() => editor.value?.setOptions({ editorProps: { attributes: editorAttributes() } }));
+watch(
+  () => props.disabled,
+  (disabled) => editor.value?.setEditable(!disabled),
+  { immediate: true },
+);
 
 // Sink eksternal → editor (hanya saat berbeda, hindari loop onUpdate).
 watch(
@@ -148,12 +185,15 @@ const MAX_MB = 5;
 async function onImageChange(ev: Event) {
   const file = (ev.target as HTMLInputElement).files?.[0];
   if (!file) return;
+  imageError.value = '';
   if (!file.type.startsWith('image/')) {
-    toast.error('Please choose an image file');
+    imageError.value = t('editor.chooseImage');
+    if (fileInput.value) fileInput.value.value = '';
     return;
   }
   if (file.size > MAX_MB * 1024 * 1024) {
-    toast.error(`Image must be under ${MAX_MB}MB`);
+    imageError.value = t('editor.imageTooLarge', { max: MAX_MB });
+    if (fileInput.value) fileInput.value.value = '';
     return;
   }
   uploading.value = true;
@@ -162,7 +202,8 @@ async function onImageChange(ev: Event) {
     editor.value?.chain().focus().setImage({ src: url }).run();
     emit('update:modelValue', editor.value?.getHTML() ?? '');
   } catch (err) {
-    toast.error((err as Error)?.message || 'Upload failed');
+    imageError.value =
+      apiFieldErrors(err).file || (err as Error)?.message || t('editor.uploadFailed');
   } finally {
     uploading.value = false;
     if (fileInput.value) fileInput.value.value = '';
@@ -173,6 +214,7 @@ async function onImageChange(ev: Event) {
 <template>
   <!-- Outlined-field chrome: sama seperti Input (4dp, outline, focus 2dp primary). -->
   <div
+    v-bind="containerAttrs"
     :class="
       cn(
         'w-full overflow-hidden rounded-sm border border-outline bg-transparent focus-within:border-primary focus-within:ring-1 focus-within:ring-primary',
@@ -203,26 +245,36 @@ async function onImageChange(ev: Event) {
           <MaterialSymbol :name="tool.icon" :size="18" />
         </button>
         <span class="mx-1 h-5 w-px bg-outline-variant" aria-hidden="true" />
-        <button
-          type="button"
-          class="touch-target relative flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-on-surface-variant/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          aria-label="Upload image"
-          :disabled="disabled || uploading"
-          @click="fileInput?.click()"
-        >
-          <MaterialSymbol
-            :name="uploading ? 'progress_activity' : 'image'"
-            :size="18"
-            :class="uploading && 'animate-spin'"
-          />
-        </button>
-        <input
-          ref="fileInput"
-          type="file"
-          accept="image/*"
-          class="sr-only"
-          @change="onImageChange"
-        />
+        <Fieldset :label="t('editor.imageLabel')" :error="imageError" label-class="sr-only">
+          <template #default="{ id, describedBy, invalid }">
+            <button
+              type="button"
+              class="touch-target relative flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-on-surface-variant/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              :aria-label="t('editor.imageLabel')"
+              :aria-describedby="describedBy"
+              :aria-invalid="invalid"
+              :disabled="disabled || uploading"
+              @click="fileInput?.click()"
+            >
+              <MaterialSymbol
+                :name="uploading ? 'progress_activity' : 'image'"
+                :size="18"
+                :class="uploading && 'animate-spin'"
+              />
+            </button>
+            <input
+              :id="id"
+              ref="fileInput"
+              type="file"
+              accept="image/*"
+              class="sr-only"
+              :disabled="disabled || uploading"
+              :aria-describedby="describedBy"
+              :aria-invalid="invalid"
+              @change="onImageChange"
+            />
+          </template>
+        </Fieldset>
       </div>
       <EditorContent :editor="editor" class="px-4 py-3" :style="{ minHeight: props.minHeight }" />
       <template #fallback>

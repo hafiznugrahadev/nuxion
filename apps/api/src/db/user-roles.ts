@@ -1,4 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
+import { withFieldErrors } from '@common/validation/field-exception';
 import { eq, inArray } from 'drizzle-orm';
 import { roles, userRoles } from './schema';
 import type { Executor } from './relations';
@@ -56,7 +57,7 @@ export async function syncUserRoles(
   const rows = await db.select({ id: roles.id }).from(roles).where(inArray(roles.name, roleNames));
   if (rows.length !== new Set(roleNames).size) {
     // Mirrors the old Prisma `connect` failure on a missing record (P2025 → 404).
-    throw new NotFoundException('Record not found');
+    throw withFieldErrors(new NotFoundException('Record not found'), ['roles']);
   }
   await db.insert(userRoles).values(rows.map((r) => ({ userId, roleId: r.id })));
 }

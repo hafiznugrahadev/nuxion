@@ -9,6 +9,10 @@ export interface BaseModel {
 export interface Role {
   id: string;
   name: string;
+  /** How many users hold this role — present in the admin role catalog. */
+  userCount?: number;
+  /** When the role row was created — present in the admin role catalog. */
+  createdAt?: string;
 }
 
 export interface User extends BaseModel {

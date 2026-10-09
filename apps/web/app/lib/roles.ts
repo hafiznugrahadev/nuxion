@@ -10,6 +10,13 @@ const KNOWN: Record<string, string> = {
   USER: 'user',
 };
 
+/** The roles the code itself depends on (`@Roles` guards, registration flow).
+ *  The API refuses to rename or delete them; the UI mirrors that by disabling
+ *  the controls so the attempt never happens client-side. */
+export function isWellKnownRole(role: string): boolean {
+  return role in KNOWN;
+}
+
 export function roleLabel(role: string, t: (key: string) => string): string {
   const known = KNOWN[role];
   return known ? t(`users.roles.${known}`) : role.replaceAll('_', ' ').toLowerCase();

@@ -50,24 +50,44 @@ review round-trip.
 
 ### API (apps/api)
 
-| Contract                                                                                                                                                  | Why                                                                                      |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Envelope `{ success: true, data, meta? }`; errors `{ success: false, statusCode, message, error, path, timestamp }`                                       | `ResponseInterceptor` + `AllExceptionsFilter` are global — never shape responses by hand |
-| Query params are `page`, `limit` (max 100), `search`, `order` (`asc`\|`desc`), `sortBy`                                                                   | NOT `perPage`/`sortDir`/`q` — mirrors `BaseQueryDto`                                     |
-| Every feature QueryDto **overrides `sortBy` with an `@IsIn(SORTABLE_FIELDS)` whitelist**                                                                  | An unknown column (e.g. a relation) must be a 400, not a database 500 from `orderBy`     |
-| The repository is the **only** layer that touches the database; it injects Drizzle via `@InjectDrizzle()` and writes explicit queries                     | Query syntax stays in one auditable place                                                |
-| Secrets are excluded at the repository level (explicit column `select`, never a bare `select()` on the whole table)                                       | The hash must never reach a service, entity, or response                                 |
-| Roles: reads `@Roles(ADMIN, SUPER_ADMIN)`, writes `@Roles(SUPER_ADMIN)`; guards are global (`APP_GUARD`), `@Public()` opts out; `@Roles` is ANY-semantics | Secure by default; controllers declare policy, not mechanics                             |
-| Literal routes (`me`) declared **before** `:id`; `ParseUUIDPipe` on `:id`; `@HttpCode(HttpStatus.OK)` on DELETE                                           | Otherwise "me" is captured as a UUID and malformed ids 500                               |
-| Entities extend `BaseEntity` and define the response shape — never return raw database rows                                                               | Swagger stays honest; API contract is deliberate                                         |
-| Unique columns use `@IsUnique({ model, column })` (model → table registry in the validator)                                                               | 409 with a readable message instead of a raw pg 23505 leaking                            |
-| Tests are **vitest**: unit spec per service (`vi.fn()` mocks), e2e via `createTestApp()` + `SEED_USERS` + `E2E_PREFIX`                                    | Supertest against the real pipeline catches guard/validation regressions                 |
+| Contract                                                                                                                                                    | Why                                                                                      |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Envelope `{ success: true, data, meta? }`; errors `{ success: false, statusCode, message, error, path, timestamp }`                                         | `ResponseInterceptor` + `AllExceptionsFilter` are global — never shape responses by hand |
+| Query params are `page`, `limit` (max 100), `search`, `order` (`asc`\|`desc`), `sortBy`                                                                     | NOT `perPage`/`sortDir`/`q` — mirrors `BaseQueryDto`                                     |
+| Every feature QueryDto **overrides `sortBy` with an `@IsIn(SORTABLE_FIELDS)` whitelist**                                                                    | An unknown column (e.g. a relation) must be a 400, not a database 500 from `orderBy`     |
+| Filter values that come from a DB catalog (e.g. role names) validate as `@IsString({ each: true })`, not `@IsEnum` — enum only for closed sets the API owns | The roles table is data; custom rows must pass filters and DTOs like the seeded ones     |
+| The repository is the **only** layer that touches the database; it injects Drizzle via `@InjectDrizzle()` and writes explicit queries                       | Query syntax stays in one auditable place                                                |
+| Secrets are excluded at the repository level (explicit column `select`, never a bare `select()` on the whole table)                                         | The hash must never reach a service, entity, or response                                 |
+| Roles: reads `@Roles(ADMIN, SUPER_ADMIN)`, writes `@Roles(SUPER_ADMIN)`; guards are global (`APP_GUARD`), `@Public()` opts out; `@Roles` is ANY-semantics   | Secure by default; controllers declare policy, not mechanics                             |
+| Literal routes (`me`) declared **before** `:id`; `ParseUUIDPipe` on `:id`; `@HttpCode(HttpStatus.OK)` on DELETE                                             | Otherwise "me" is captured as a UUID and malformed ids 500                               |
+| Entities extend `BaseEntity` and define the response shape — never return raw database rows                                                                 | Swagger stays honest; API contract is deliberate                                         |
+| Unique columns use `@IsUnique({ model, column })` (model → table registry in the validator)                                                                 | Validation returns 400 with field errors; database race conflicts return 409             |
+| Tests are **vitest**: unit spec per service (`vi.fn()` mocks), e2e via `createTestApp()` + `SEED_USERS` + `E2E_PREFIX`                                      | Supertest against the real pipeline catches guard/validation regressions                 |
 
 ### Web (apps/web)
+
+**Every input MUST compose `Fieldset`**, directly or through a `*Field` wrapper
+that composes it internally. This includes search, filters, disabled/read-only
+fields, file pickers, boolean controls, sliders, radio groups, tags, and editors,
+even when the control has no validation. Give every control an accessible label;
+use `label-class="sr-only"` when the existing design calls for a hidden caption.
+Never add a second outer Fieldset around a wrapper that already owns one.
+
+Bind each field's vee-validate `errorMessage` or `errors.<name>` to **that
+Fieldset's `error` prop**. Direct consumers must forward slot `id`,
+`describedBy`, and `invalid` to the actual input or focusable control, rather
+than only a decorative container. Group captions use `group` and `labelId`;
+the group and each focusable item receive the description/error state. Rich
+text editors forward these attributes to the contenteditable element. Keep
+ids unique, including nested search and file inputs. Field-attributed API
+validation errors use `setFieldError`/`setErrors` when the API provides the
+field attribution; general transport/server errors stay at form level or in
+the existing toast flow. Clearing an error restores the supporting hint.
 
 | Contract                                                                                                                                                                                                                                                                                                                                                                                                                                    | Why                                                                                                         |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | Feature code lives in `app/features/<feature>/` and is imported **explicitly via its `index.ts` barrel** — `features/` is NOT auto-imported                                                                                                                                                                                                                                                                                                 | The dependency rule that keeps features from reaching into each other                                       |
+| One feature may consume another through its barrel (`import { useRoles } from '~/features/role'`) — never via deep imports. Shared catalogs consumed by several features are exported as a query composable from the owning feature                                                                                                                                                                                                         | The barrel is the sanctioned boundary; deep imports are the violation                                       |
 | Entity data goes through TanStack Query only: `usePaginatedQuery` (list) + `useApiMutation` (write). **No per-entity Pinia store, no Nitro/server API routes**                                                                                                                                                                                                                                                                              | Pinia is for session/shell only; the API stays in NestJS                                                    |
 | `ui/Table.vue` is a pure view: props `columns/rows/rowKey/sort`, emits `update:sort`, never reorders rows itself. Bind `:sort` back so the arrow mirrors the API defaults (`createdAt`/`desc`)                                                                                                                                                                                                                                              | The API is the source of truth; the table only reports clicks (`aria-sort` included)                        |
 | Only columns the API whitelist allows get `sortable: true`; `onSort` resets `page = 1`                                                                                                                                                                                                                                                                                                                                                      | Relations cannot be `orderBy`'d; page 1 of a new sort must not 404                                          |
@@ -114,6 +134,20 @@ review round-trip.
 4. **Run the verification gates** (below). Fix what fails before committing.
 5. **Deliver**: branch, commitlint-clean commits, PR with a short rationale.
 
+## API form errors are field errors
+
+All submitting forms must bind explicit API validation/domain errors to the same
+`Fieldset` as client validation. The response envelope uses optional
+`fieldErrors: Record<string, string[]>`; DTO validators and attributable domain
+failures (duplicate email/name, incorrect current password, invalid OTP) must
+provide canonical field names. Preserve this metadata through ofetch errors,
+`unwrap`, and auth calls. In form catches call `applyApiFieldErrors` from
+`~/lib/api-errors` with `setErrors` and an explicit allowlist of this form's
+fields. `*Field` wrappers then receive the message through vee-validate; manual
+controls bind `errors.<field>` to `Fieldset.error`. A central toast is additional
+feedback, never a substitute for inline field errors. Never infer a field from
+localized message text. Unattributed transport/system errors remain general.
+
 ## Verification Gates
 
 Run through these before opening the PR — they are cheap and each catches a
@@ -132,9 +166,15 @@ class of bug this project has actually hit:
       references/web.md); no hardcoded user-facing strings.
 - [ ] Web: no new Nitro route, no new per-entity Pinia store, feature imported
       only via its barrel.
-- [ ] Web: form fields render through `Fieldset` (directly or via a `*Field`
+- [ ] Web: **all inputs**, including search/filter/disabled/file controls,
+      render through `Fieldset` (directly or via a `*Field`
       wrapper); the error/hint id is wired to the control through
-      `aria-describedby`, `aria-invalid` follows the error state.
+      `aria-describedby` on the actual focus target, `aria-invalid` follows
+      the bound field error, and clearing the error restores the hint.
+- [ ] Web: attributed API failures (DTO validation, duplicate email/name,
+      wrong password/code) appear in the matching Fieldset with invalid and
+      description attributes; correcting/retrying clears the stale error.
+      A structured domain 401 must not trigger token refresh/replay.
 - [ ] Any color/token change: contrast probed in both themes (≥ 4.5:1).
 - [ ] Skill itself still matches the code — if the pattern changed, update this
       skill in the same PR.

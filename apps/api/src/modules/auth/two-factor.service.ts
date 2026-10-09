@@ -6,6 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { withFieldErrors } from '@common/validation/field-exception';
 import { InjectDrizzle } from '@nestjs/drizzle';
 import { createCipheriv, createDecipheriv, randomInt, randomBytes, scryptSync } from 'node:crypto';
 import { eq } from 'drizzle-orm';
@@ -95,7 +96,7 @@ export class TwoFactorService {
     if (!pending) throw new BadRequestException('Setup expired — restart the setup process');
 
     if (!(await this.isValidTotp(pending.secret, code))) {
-      throw new UnauthorizedException('Invalid verification code');
+      throw withFieldErrors(new UnauthorizedException('Invalid verification code'), ['code']);
     }
 
     const recoveryCodes = this.generateRecoveryCodes();
@@ -152,7 +153,7 @@ export class TwoFactorService {
         const ttl = Math.ceil((challenge.expiresAt - Date.now()) / 1000);
         if (ttl > 0) await this.redis.set(CHALLENGE_KEY(challengeId), challenge, ttl);
       }
-      throw new UnauthorizedException('Invalid verification code');
+      throw withFieldErrors(new UnauthorizedException('Invalid verification code'), ['code']);
     };
 
     // Internal read: the secret + recovery hashes are needed for verification.
@@ -208,7 +209,9 @@ export class TwoFactorService {
       throw new BadRequestException('Two-factor is not enabled for this account');
     }
     if (!(await verifyPassword(password, user.password))) {
-      throw new UnauthorizedException('Current password is incorrect');
+      throw withFieldErrors(new UnauthorizedException('Current password is incorrect'), [
+        'password',
+      ]);
     }
 
     const recoveryCodes = this.generateRecoveryCodes();

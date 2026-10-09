@@ -29,6 +29,17 @@ export async function deleteUserByEmail(request: APIRequestContext, email: strin
   if (match) await request.delete(`${API_BASE}/users/${match.id}`, auth);
 }
 
+/** Delete a role by name via the API (super-admin) — for idempotent cleanup.
+ *  Built-ins 400; this is only pointed at e2e-created custom roles. */
+export async function deleteRoleByName(request: APIRequestContext, name: string) {
+  const token = await apiToken(request, SUPER_ADMIN.email, SUPER_ADMIN.password);
+  const auth = { headers: { Authorization: `Bearer ${token}` } };
+  const list = await request.get(`${API_BASE}/roles`, auth);
+  const { data } = await list.json();
+  const match = (data ?? []).find((r: { name: string; id: string }) => r.name === name);
+  if (match) await request.delete(`${API_BASE}/roles/${match.id}`, auth);
+}
+
 /** Wait until Nuxt has hydrated (Vue mounted on #__nuxt) so form @submit handlers
  *  are attached — clicking before hydration triggers a native GET form submit. */
 export async function waitForHydration(page: Page) {

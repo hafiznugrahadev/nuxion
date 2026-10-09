@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { applyApiFieldErrors } from '~/lib/api-errors';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import { z } from 'zod';
@@ -19,14 +20,18 @@ const schema = toTypedSchema(
     }),
 );
 
-const { handleSubmit, resetForm } = useForm({ validationSchema: schema });
+const { handleSubmit, resetForm, setErrors } = useForm({ validationSchema: schema });
 
 const onSubmit = handleSubmit(async (values) => {
-  await change.mutateAsync({
-    currentPassword: values.currentPassword,
-    newPassword: values.newPassword,
-  });
-  resetForm();
+  try {
+    await change.mutateAsync({
+      currentPassword: values.currentPassword,
+      newPassword: values.newPassword,
+    });
+    resetForm();
+  } catch (err) {
+    applyApiFieldErrors(err, setErrors, ['currentPassword', 'newPassword', 'confirmPassword']);
+  }
 });
 </script>
 

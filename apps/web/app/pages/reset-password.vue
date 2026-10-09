@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { applyApiFieldErrors } from '~/lib/api-errors';
 import { computed, ref } from 'vue';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
@@ -28,7 +29,7 @@ const schema = toTypedSchema(
       path: ['confirmPassword'],
     }),
 );
-const { handleSubmit } = useForm({ validationSchema: schema });
+const { handleSubmit, setErrors } = useForm({ validationSchema: schema });
 
 const onSubmit = handleSubmit(async (values) => {
   if (!token.value) {
@@ -40,7 +41,8 @@ const onSubmit = handleSubmit(async (values) => {
     await auth.resetPassword(token.value, values.newPassword);
     toast.success(t('auth.resetSuccess'));
     await navigateTo('/login');
-  } catch {
+  } catch (err) {
+    applyApiFieldErrors(err, setErrors, ['newPassword', 'confirmPassword']);
     toast.error(t('auth.resetInvalidExpired'));
   } finally {
     submitting.value = false;

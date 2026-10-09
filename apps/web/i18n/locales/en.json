@@ -5,6 +5,7 @@
     "menu": "Menu",
     "dashboard": "Dashboard",
     "users": "Users",
+    "roles": "Roles",
     "fieldsDemo": "Fields Demo",
     "componentsDemo": "Components Demo",
     "profile": "Profile",
@@ -335,6 +336,52 @@
       "deleted": "User deleted"
     }
   },
+  "roles": {
+    "title": "Roles",
+    "subtitle": "Roles available to assign, built-in and custom (admin only).",
+    "addRole": "Add role",
+    "noResults": "No roles",
+    "noResultsHint": "Add a custom role to assign it to users.",
+    "builtIn": "Built-in",
+    "protected": "Built-in role: its name and permissions are fixed by the app.",
+    "usersCount": "{n} users",
+    "usersCountOne": "1 user",
+    "columns": {
+      "role": "Role",
+      "users": "Users",
+      "created": "Created",
+      "action": "Action"
+    },
+    "deleteModal": {
+      "title": "Delete role",
+      "body": "Delete {name}? This cannot be undone.",
+      "bodyHolders": "Delete {name}? {n} users hold this role and will lose it immediately.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    },
+    "form": {
+      "newTitle": "New role",
+      "editTitle": "Rename role",
+      "newDesc": "Add a custom role you can assign to users.",
+      "editDesc": "Renaming applies to every user who holds this role.",
+      "name": "Role name",
+      "nameHint": "UPPER_SNAKE_CASE, e.g. CONTENT_EDITOR",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "saveChanges": "Save changes",
+      "createRole": "Create role",
+      "errors": {
+        "tooShort": "At least 2 characters",
+        "tooLong": "At most 50 characters",
+        "pattern": "Use UPPER_SNAKE_CASE (A-Z, digits, underscore)"
+      }
+    },
+    "toasts": {
+      "created": "Role created",
+      "updated": "Role renamed",
+      "deleted": "Role deleted"
+    }
+  },
   "profile": {
     "title": "Profile",
     "personalInfo": {
@@ -356,6 +403,13 @@
       "confirmPassword": "Confirm new password",
       "update": "Update password",
       "updating": "Updating…"
+    },
+    "avatar": {
+      "change": "Change photo",
+      "notImage": "Please choose an image file.",
+      "tooLarge": "Image must be under {mb} MB.",
+      "uploadFailed": "Upload failed.",
+      "saveFailed": "Could not save your photo."
     }
   },
   "notifications": {
@@ -372,7 +426,10 @@
   "common": {
     "cancel": "Cancel",
     "done": "Done",
-    "working": "Working…"
+    "working": "Working…",
+    "search": "Search",
+    "select": "Select an option",
+    "noResults": "No results found."
   },
   "security": {
     "twoFactor": {
@@ -416,7 +473,8 @@
       "removeTitle": "Remove passkey?",
       "removeDescription": "Remove \"{name}\"? You can't sign in with it afterwards.",
       "removed": "Passkey removed.",
-      "removeFailed": "Could not remove the passkey."
+      "removeFailed": "Could not remove the passkey.",
+      "nameTooLong": "Name must be at most 64 characters."
     }
   },
   "settings": {
@@ -444,5 +502,16 @@
       "tooLarge": "File is larger than {mb} MB.",
       "superAdminOnly": "Only a Super Admin can change branding."
     }
+  },
+  "demo": {
+    "view": "View",
+    "formats": "Formatting"
+  },
+  "editor": {
+    "imageLabel": "Insert image",
+    "chooseImage": "Please choose an image file.",
+    "imageTooLarge": "Image must be under {max} MB.",
+    "uploadFailed": "Image upload failed.",
+    "label": "Rich text editor"
   }
 }

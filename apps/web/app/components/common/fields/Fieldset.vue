@@ -18,6 +18,9 @@ const props = defineProps<{
   hint?: string;
   /** Group controls (radio group) have no labelable element: render the caption as a span wired via aria-labelledby instead of label[for]. */
   group?: boolean;
+  /** Place boolean controls before their caption. */
+  inline?: boolean;
+  labelClass?: string;
 }>();
 
 const uid = useId();
@@ -33,17 +36,33 @@ const invalid = computed(() => !!props.error);
 
 <template>
   <div class="space-y-1.5">
-    <component
-      :is="group ? 'span' : 'label'"
-      v-if="label || $slots.label"
-      :id="labelId"
-      :for="group ? undefined : inputId"
-      class="text-sm font-medium leading-none"
-    >
-      <slot name="label">{{ label }}</slot>
-      <span v-if="required" class="ml-0.5 text-destructive">*</span>
-    </component>
-    <slot :id="inputId" :label-id="labelId" :described-by="describedBy" :invalid="invalid" />
+    <div :class="inline ? 'flex items-center gap-3' : 'space-y-1.5'">
+      <slot
+        v-if="inline"
+        :id="inputId"
+        :label-id="labelId"
+        :described-by="describedBy"
+        :invalid="invalid"
+      />
+      <component
+        :is="group ? 'span' : 'label'"
+        v-if="label || $slots.label"
+        :id="labelId"
+        :for="group ? undefined : inputId"
+        class="text-sm font-medium leading-none"
+        :class="labelClass"
+      >
+        <slot name="label">{{ label }}</slot>
+        <span v-if="required" class="ml-0.5 text-destructive">*</span>
+      </component>
+      <slot
+        v-if="!inline"
+        :id="inputId"
+        :label-id="labelId"
+        :described-by="describedBy"
+        :invalid="invalid"
+      />
+    </div>
     <div v-if="error || hint || $slots.trailing" class="flex items-start justify-between gap-4">
       <p v-if="error" :id="errorId" class="text-xs text-destructive">{{ error }}</p>
       <p v-else-if="hint" :id="hintId" class="text-xs text-on-surface-variant">{{ hint }}</p>

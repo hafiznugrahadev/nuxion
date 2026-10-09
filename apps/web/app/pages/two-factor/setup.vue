@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { applyApiFieldErrors } from '~/lib/api-errors';
 import { onMounted, ref } from 'vue';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
@@ -47,7 +48,10 @@ onMounted(async () => {
 const schema = toTypedSchema(
   z.object({ code: z.string().regex(/^\d{6}$/, 'Enter the 6-digit code from your app') }),
 );
-const { handleSubmit } = useForm({ validationSchema: schema, initialValues: { code: '' } });
+const { handleSubmit, setErrors } = useForm({
+  validationSchema: schema,
+  initialValues: { code: '' },
+});
 
 const onSubmit = handleSubmit(async (values) => {
   if (!setupData.value) return;
@@ -58,6 +62,7 @@ const onSubmit = handleSubmit(async (values) => {
     if (auth.user) auth.user = { ...auth.user, twoFactorEnabled: true };
     toast.success(t('auth.twoFactor.activated'));
   } catch (err) {
+    applyApiFieldErrors(err, setErrors, ['code']);
     toast.error((err as Error)?.message || t('auth.twoFactor.invalidCode'));
   } finally {
     activating.value = false;

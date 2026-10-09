@@ -225,17 +225,21 @@ function showToast() {
       <div class="grid gap-6 lg:grid-cols-2">
         <div class="space-y-3">
           <Progress v-model="progress" />
-          <input
-            v-model.number="progress"
-            type="range"
-            min="0"
-            max="100"
-            class="w-full accent-[var(--primary)]"
-            aria-label="Progress value"
-          />
-          <p class="text-xs text-on-surface-variant">
-            4dp track, primary indicator, bound with v-model.
-          </p>
+          <Fieldset name="demo-progress" hint="4dp track, primary indicator, bound with v-model.">
+            <template #default="{ id, describedBy, invalid }">
+              <input
+                :id="id"
+                v-model.number="progress"
+                :aria-describedby="describedBy"
+                :aria-invalid="invalid"
+                type="range"
+                min="0"
+                max="100"
+                class="w-full accent-[var(--primary)]"
+                aria-label="Progress value"
+              />
+            </template>
+          </Fieldset>
         </div>
         <div class="space-y-3">
           <div class="flex items-center gap-3">
@@ -256,22 +260,36 @@ function showToast() {
       <h2 class="mb-4 text-sm font-semibold text-on-surface">Toggle group & Table</h2>
       <div class="space-y-6">
         <div class="flex flex-wrap items-center gap-6">
-          <ToggleGroup
-            v-model="view"
-            :options="[
-              { value: 'grid', label: 'Grid', icon: 'grid_view' },
-              { value: 'list', label: 'List', icon: 'view_list' },
-            ]"
-          />
-          <ToggleGroup
-            v-model="formats"
-            type="multiple"
-            :options="[
-              { value: 'bold', label: 'Bold', icon: 'format_bold' },
-              { value: 'italic', label: 'Italic', icon: 'format_italic' },
-              { value: 'underlined', label: 'Underline', icon: 'format_underlined' },
-            ]"
-          />
+          <Fieldset group name="demo-view">
+            <template #default="{ describedBy, invalid }">
+              <ToggleGroup
+                v-model="view"
+                :aria-label="$t('demo.view')"
+                :aria-describedby="describedBy"
+                :aria-invalid="invalid"
+                :options="[
+                  { value: 'grid', label: 'Grid', icon: 'grid_view' },
+                  { value: 'list', label: 'List', icon: 'view_list' },
+                ]"
+              />
+            </template>
+          </Fieldset>
+          <Fieldset group name="demo-formats">
+            <template #default="{ describedBy, invalid }">
+              <ToggleGroup
+                v-model="formats"
+                :aria-label="$t('demo.formats')"
+                :aria-describedby="describedBy"
+                :aria-invalid="invalid"
+                type="multiple"
+                :options="[
+                  { value: 'bold', label: 'Bold', icon: 'format_bold' },
+                  { value: 'italic', label: 'Italic', icon: 'format_italic' },
+                  { value: 'underlined', label: 'Underline', icon: 'format_underlined' },
+                ]"
+              />
+            </template>
+          </Fieldset>
         </div>
         <Table
           :columns="[

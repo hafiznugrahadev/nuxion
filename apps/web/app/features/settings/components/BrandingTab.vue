@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { apiFieldErrors, applyApiFieldErrors } from '~/lib/api-errors';
 import { ref } from 'vue';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
@@ -28,7 +29,7 @@ const schema = toTypedSchema(
     faviconUrl: z.string().url().nullable().optional(),
   }),
 );
-const { handleSubmit, setFieldValue, values } = useForm({
+const { handleSubmit, setFieldValue, errors, values, setErrors } = useForm({
   validationSchema: schema,
   initialValues: {
     appName: data.value?.appName ?? '',
@@ -54,6 +55,8 @@ const onSubmit = handleSubmit(async (form) => {
       logoUrl: form.logoUrl ?? null,
       faviconUrl: form.faviconUrl ?? null,
     });
+  } catch (err) {
+    applyApiFieldErrors(err, setErrors, ['appName', 'logoUrl', 'faviconUrl']);
   } finally {
     submitting.value = false;
   }
@@ -64,18 +67,25 @@ const MAX_MB = 5;
 const logoInput = ref<HTMLInputElement | null>(null);
 const faviconInput = ref<HTMLInputElement | null>(null);
 const uploading = ref<'logo' | 'favicon' | null>(null);
+const uploadErrors = ref<Partial<Record<'logoUrl' | 'faviconUrl', string>>>({});
 
 async function pick(kind: 'logo' | 'favicon', event: Event) {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
   input.value = ''; // allow re-picking the same file
   if (!file) return;
+  const field = kind === 'logo' ? 'logoUrl' : 'faviconUrl';
+  uploadErrors.value[field] = undefined;
   if (!file.type.startsWith('image/')) {
-    toast.error(t('settings.branding.notImage'));
+    const message = t('settings.branding.notImage');
+    uploadErrors.value[field] = message;
+    toast.error(message);
     return;
   }
   if (file.size > MAX_MB * 1024 * 1024) {
-    toast.error(t('settings.branding.tooLarge', { mb: MAX_MB }));
+    const message = t('settings.branding.tooLarge', { mb: MAX_MB });
+    uploadErrors.value[field] = message;
+    toast.error(message);
     return;
   }
 
@@ -85,13 +95,19 @@ async function pick(kind: 'logo' | 'favicon', event: Event) {
     setFieldValue(kind === 'logo' ? 'logoUrl' : 'faviconUrl', uploaded.url);
     toast.success(t('settings.branding.uploaded'));
   } catch (err) {
-    toast.error((err as Error)?.message || t('settings.branding.uploadFailed'));
+    const message =
+      apiFieldErrors(err).file || (err as Error)?.message || t('settings.branding.uploadFailed');
+    uploadErrors.value[field] = message;
+    toast.error(message);
   } finally {
     uploading.value = null;
   }
 }
 
-const clearAsset = (field: 'logoUrl' | 'faviconUrl') => setFieldValue(field, null);
+const clearAsset = (field: 'logoUrl' | 'faviconUrl') => {
+  uploadErrors.value[field] = undefined;
+  setFieldValue(field, null);
+};
 </script>
 
 <template>
@@ -118,100 +134,128 @@ const clearAsset = (field: 'logoUrl' | 'faviconUrl') => setFieldValue(field, nul
       </div>
 
       <!-- Logo -->
-      <div class="flex flex-wrap items-center gap-4">
-        <div
-          class="flex h-16 w-32 items-center justify-center rounded-lg border border-outline-variant bg-surface-container"
-        >
-          <img
-            v-if="values.logoUrl"
-            :src="values.logoUrl"
-            :alt="$t('settings.branding.logoAlt')"
-            class="max-h-12 max-w-28 object-contain"
-            data-testid="branding-logo-preview"
-          />
-          <BrandLogo v-else class="h-12" />
-        </div>
-        <div class="space-y-1">
-          <div class="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
+      <Fieldset
+        name="logoUrl"
+        :error="uploadErrors.logoUrl || errors.logoUrl"
+        :hint="$t('settings.branding.logoHint')"
+      >
+        <template #default="{ id, describedBy, invalid }">
+          <div class="flex flex-wrap items-center gap-4">
+            <div
+              class="flex h-16 w-32 items-center justify-center rounded-lg border border-outline-variant bg-surface-container"
+            >
+              <img
+                v-if="values.logoUrl"
+                :src="values.logoUrl"
+                :alt="$t('settings.branding.logoAlt')"
+                class="max-h-12 max-w-28 object-contain"
+                data-testid="branding-logo-preview"
+              />
+              <BrandLogo v-else class="h-12" />
+            </div>
+            <div class="space-y-1">
+              <div class="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  :disabled="!canEdit || uploading === 'logo'"
+                  :aria-describedby="describedBy"
+                  :aria-invalid="invalid"
+                  @click="logoInput?.click()"
+                >
+                  {{
+                    uploading === 'logo' ? $t('common.working') : $t('settings.branding.uploadLogo')
+                  }}
+                </Button>
+                <Button
+                  v-if="values.logoUrl"
+                  type="button"
+                  variant="ghost"
+                  :disabled="!canEdit"
+                  @click="clearAsset('logoUrl')"
+                >
+                  {{ $t('settings.branding.useDefault') }}
+                </Button>
+              </div>
+            </div>
+            <input
+              :id="id"
+              ref="logoInput"
+              :aria-describedby="describedBy"
+              :aria-invalid="invalid"
               :disabled="!canEdit || uploading === 'logo'"
-              @click="logoInput?.click()"
-            >
-              {{ uploading === 'logo' ? $t('common.working') : $t('settings.branding.uploadLogo') }}
-            </Button>
-            <Button
-              v-if="values.logoUrl"
-              type="button"
-              variant="ghost"
-              :disabled="!canEdit"
-              @click="clearAsset('logoUrl')"
-            >
-              {{ $t('settings.branding.useDefault') }}
-            </Button>
+              type="file"
+              accept="image/*"
+              class="hidden"
+              :aria-label="$t('settings.branding.uploadLogo')"
+              @change="pick('logo', $event)"
+            />
           </div>
-          <p class="text-xs text-muted-foreground">{{ $t('settings.branding.logoHint') }}</p>
-        </div>
-        <input
-          ref="logoInput"
-          type="file"
-          accept="image/*"
-          class="hidden"
-          :aria-label="$t('settings.branding.uploadLogo')"
-          @change="pick('logo', $event)"
-        />
-      </div>
+        </template>
+      </Fieldset>
 
       <!-- Favicon -->
-      <div class="flex flex-wrap items-center gap-4">
-        <div
-          class="flex h-16 w-32 items-center justify-center rounded-lg border border-outline-variant bg-surface-container"
-        >
-          <img
-            v-if="values.faviconUrl"
-            :src="values.faviconUrl"
-            :alt="$t('settings.branding.faviconAlt')"
-            class="h-8 w-8 rounded-sm object-contain"
-            data-testid="branding-favicon-preview"
-          />
-          <img v-else src="/favicon.png" alt="" class="h-8 w-8 rounded-sm" />
-        </div>
-        <div class="space-y-1">
-          <div class="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
+      <Fieldset
+        name="faviconUrl"
+        :error="uploadErrors.faviconUrl || errors.faviconUrl"
+        :hint="$t('settings.branding.faviconHint')"
+      >
+        <template #default="{ id, describedBy, invalid }">
+          <div class="flex flex-wrap items-center gap-4">
+            <div
+              class="flex h-16 w-32 items-center justify-center rounded-lg border border-outline-variant bg-surface-container"
+            >
+              <img
+                v-if="values.faviconUrl"
+                :src="values.faviconUrl"
+                :alt="$t('settings.branding.faviconAlt')"
+                class="h-8 w-8 rounded-sm object-contain"
+                data-testid="branding-favicon-preview"
+              />
+              <img v-else src="/favicon.png" alt="" class="h-8 w-8 rounded-sm" />
+            </div>
+            <div class="space-y-1">
+              <div class="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  :disabled="!canEdit || uploading === 'favicon'"
+                  :aria-describedby="describedBy"
+                  :aria-invalid="invalid"
+                  @click="faviconInput?.click()"
+                >
+                  {{
+                    uploading === 'favicon'
+                      ? $t('common.working')
+                      : $t('settings.branding.uploadFavicon')
+                  }}
+                </Button>
+                <Button
+                  v-if="values.faviconUrl"
+                  type="button"
+                  variant="ghost"
+                  :disabled="!canEdit"
+                  @click="clearAsset('faviconUrl')"
+                >
+                  {{ $t('settings.branding.useDefault') }}
+                </Button>
+              </div>
+            </div>
+            <input
+              :id="id"
+              ref="faviconInput"
+              :aria-describedby="describedBy"
+              :aria-invalid="invalid"
               :disabled="!canEdit || uploading === 'favicon'"
-              @click="faviconInput?.click()"
-            >
-              {{
-                uploading === 'favicon'
-                  ? $t('common.working')
-                  : $t('settings.branding.uploadFavicon')
-              }}
-            </Button>
-            <Button
-              v-if="values.faviconUrl"
-              type="button"
-              variant="ghost"
-              :disabled="!canEdit"
-              @click="clearAsset('faviconUrl')"
-            >
-              {{ $t('settings.branding.useDefault') }}
-            </Button>
+              type="file"
+              accept="image/*"
+              class="hidden"
+              :aria-label="$t('settings.branding.uploadFavicon')"
+              @change="pick('favicon', $event)"
+            />
           </div>
-          <p class="text-xs text-muted-foreground">{{ $t('settings.branding.faviconHint') }}</p>
-        </div>
-        <input
-          ref="faviconInput"
-          type="file"
-          accept="image/*"
-          class="hidden"
-          :aria-label="$t('settings.branding.uploadFavicon')"
-          @change="pick('favicon', $event)"
-        />
-      </div>
+        </template>
+      </Fieldset>
 
       <div class="flex items-center justify-between gap-4">
         <p v-if="!canEdit" class="text-xs text-muted-foreground">

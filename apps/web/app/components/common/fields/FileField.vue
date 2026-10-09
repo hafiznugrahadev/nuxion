@@ -41,6 +41,8 @@ function clear() {
       >
         <button
           type="button"
+          :aria-describedby="describedBy"
+          :aria-invalid="invalid"
           class="state-layer relative m-1 flex h-8 shrink-0 items-center gap-1.5 rounded-sm bg-secondary px-3 text-xs font-medium text-secondary-foreground"
           @click="inputRef?.click()"
         >

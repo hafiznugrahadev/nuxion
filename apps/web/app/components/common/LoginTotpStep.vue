@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { applyApiFieldErrors } from '~/lib/api-errors';
 import { ref } from 'vue';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
@@ -24,14 +25,18 @@ const schema = toTypedSchema(
     code: z.string().min(6, 'Code must be at least 6 characters').max(11),
   }),
 );
-const { handleSubmit } = useForm({ validationSchema: schema, initialValues: { code: '' } });
+const { handleSubmit, setErrors } = useForm({
+  validationSchema: schema,
+  initialValues: { code: '' },
+});
 
 const onSubmit = handleSubmit(async (values) => {
   submitting.value = true;
   try {
     await auth.verifyTwoFactor(props.challengeId, values.code.trim());
     emit('verified');
-  } catch {
+  } catch (err) {
+    applyApiFieldErrors(err, setErrors, ['code']);
     toast.error(t('auth.twoFactor.invalidCode'));
   } finally {
     submitting.value = false;

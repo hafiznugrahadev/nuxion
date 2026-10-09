@@ -403,6 +403,13 @@
       "confirmPassword": "Confirm new password",
       "update": "Update password",
       "updating": "Updating…"
+    },
+    "avatar": {
+      "change": "Change photo",
+      "notImage": "Please choose an image file.",
+      "tooLarge": "Image must be under {mb} MB.",
+      "uploadFailed": "Upload failed.",
+      "saveFailed": "Could not save your photo."
     }
   },
   "notifications": {
@@ -419,7 +426,10 @@
   "common": {
     "cancel": "Cancel",
     "done": "Done",
-    "working": "Working…"
+    "working": "Working…",
+    "search": "Search",
+    "select": "Select an option",
+    "noResults": "No results found."
   },
   "security": {
     "twoFactor": {
@@ -463,7 +473,8 @@
       "removeTitle": "Remove passkey?",
       "removeDescription": "Remove \"{name}\"? You can't sign in with it afterwards.",
       "removed": "Passkey removed.",
-      "removeFailed": "Could not remove the passkey."
+      "removeFailed": "Could not remove the passkey.",
+      "nameTooLong": "Name must be at most 64 characters."
     }
   },
   "settings": {
@@ -491,5 +502,16 @@
       "tooLarge": "File is larger than {mb} MB.",
       "superAdminOnly": "Only a Super Admin can change branding."
     }
+  },
+  "demo": {
+    "view": "View",
+    "formats": "Formatting"
+  },
+  "editor": {
+    "imageLabel": "Insert image",
+    "chooseImage": "Please choose an image file.",
+    "imageTooLarge": "Image must be under {max} MB.",
+    "uploadFailed": "Image upload failed.",
+    "label": "Rich text editor"
   }
 }

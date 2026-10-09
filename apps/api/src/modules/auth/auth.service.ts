@@ -8,6 +8,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { withFieldErrors } from '@common/validation/field-exception';
 import { InjectDrizzle } from '@nestjs/drizzle';
 import { JwtService } from '@nestjs/jwt';
 import { and, eq, isNull } from 'drizzle-orm';
@@ -78,7 +79,10 @@ export class AuthService {
   async login(dto: LoginDto): Promise<LoginResult> {
     const user = await this.findUserByEmail(dto.email);
     if (!user || !(await verifyPassword(dto.password, user.password))) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw withFieldErrors(new UnauthorizedException('Invalid credentials'), [
+        'email',
+        'password',
+      ]);
     }
     // Accounts with TOTP enabled (and the feature flag on) stop here — the
     // session is only issued after the challenge is verified. Users who have
@@ -105,7 +109,8 @@ export class AuthService {
       .from(users)
       .where(eq(users.email, dto.email))
       .limit(1);
-    if (existing) throw new ConflictException('Email is already registered');
+    if (existing)
+      throw withFieldErrors(new ConflictException('Email is already registered'), ['email']);
 
     const user = await this.db.transaction(async (tx) => {
       const [row] = await tx

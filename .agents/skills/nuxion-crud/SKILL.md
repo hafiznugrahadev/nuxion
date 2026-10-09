@@ -61,10 +61,28 @@ review round-trip.
 | Roles: reads `@Roles(ADMIN, SUPER_ADMIN)`, writes `@Roles(SUPER_ADMIN)`; guards are global (`APP_GUARD`), `@Public()` opts out; `@Roles` is ANY-semantics   | Secure by default; controllers declare policy, not mechanics                             |
 | Literal routes (`me`) declared **before** `:id`; `ParseUUIDPipe` on `:id`; `@HttpCode(HttpStatus.OK)` on DELETE                                             | Otherwise "me" is captured as a UUID and malformed ids 500                               |
 | Entities extend `BaseEntity` and define the response shape — never return raw database rows                                                                 | Swagger stays honest; API contract is deliberate                                         |
-| Unique columns use `@IsUnique({ model, column })` (model → table registry in the validator)                                                                 | 409 with a readable message instead of a raw pg 23505 leaking                            |
+| Unique columns use `@IsUnique({ model, column })` (model → table registry in the validator)                                                                 | Validation returns 400 with field errors; database race conflicts return 409             |
 | Tests are **vitest**: unit spec per service (`vi.fn()` mocks), e2e via `createTestApp()` + `SEED_USERS` + `E2E_PREFIX`                                      | Supertest against the real pipeline catches guard/validation regressions                 |
 
 ### Web (apps/web)
+
+**Every input MUST compose `Fieldset`**, directly or through a `*Field` wrapper
+that composes it internally. This includes search, filters, disabled/read-only
+fields, file pickers, boolean controls, sliders, radio groups, tags, and editors,
+even when the control has no validation. Give every control an accessible label;
+use `label-class="sr-only"` when the existing design calls for a hidden caption.
+Never add a second outer Fieldset around a wrapper that already owns one.
+
+Bind each field's vee-validate `errorMessage` or `errors.<name>` to **that
+Fieldset's `error` prop**. Direct consumers must forward slot `id`,
+`describedBy`, and `invalid` to the actual input or focusable control, rather
+than only a decorative container. Group captions use `group` and `labelId`;
+the group and each focusable item receive the description/error state. Rich
+text editors forward these attributes to the contenteditable element. Keep
+ids unique, including nested search and file inputs. Field-attributed API
+validation errors use `setFieldError`/`setErrors` when the API provides the
+field attribution; general transport/server errors stay at form level or in
+the existing toast flow. Clearing an error restores the supporting hint.
 
 | Contract                                                                                                                                                                                                                                                                                                                                                                                                                                    | Why                                                                                                         |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
@@ -116,6 +134,20 @@ review round-trip.
 4. **Run the verification gates** (below). Fix what fails before committing.
 5. **Deliver**: branch, commitlint-clean commits, PR with a short rationale.
 
+## API form errors are field errors
+
+All submitting forms must bind explicit API validation/domain errors to the same
+`Fieldset` as client validation. The response envelope uses optional
+`fieldErrors: Record<string, string[]>`; DTO validators and attributable domain
+failures (duplicate email/name, incorrect current password, invalid OTP) must
+provide canonical field names. Preserve this metadata through ofetch errors,
+`unwrap`, and auth calls. In form catches call `applyApiFieldErrors` from
+`~/lib/api-errors` with `setErrors` and an explicit allowlist of this form's
+fields. `*Field` wrappers then receive the message through vee-validate; manual
+controls bind `errors.<field>` to `Fieldset.error`. A central toast is additional
+feedback, never a substitute for inline field errors. Never infer a field from
+localized message text. Unattributed transport/system errors remain general.
+
 ## Verification Gates
 
 Run through these before opening the PR — they are cheap and each catches a
@@ -134,9 +166,15 @@ class of bug this project has actually hit:
       references/web.md); no hardcoded user-facing strings.
 - [ ] Web: no new Nitro route, no new per-entity Pinia store, feature imported
       only via its barrel.
-- [ ] Web: form fields render through `Fieldset` (directly or via a `*Field`
+- [ ] Web: **all inputs**, including search/filter/disabled/file controls,
+      render through `Fieldset` (directly or via a `*Field`
       wrapper); the error/hint id is wired to the control through
-      `aria-describedby`, `aria-invalid` follows the error state.
+      `aria-describedby` on the actual focus target, `aria-invalid` follows
+      the bound field error, and clearing the error restores the hint.
+- [ ] Web: attributed API failures (DTO validation, duplicate email/name,
+      wrong password/code) appear in the matching Fieldset with invalid and
+      description attributes; correcting/retrying clears the stale error.
+      A structured domain 401 must not trigger token refresh/replay.
 - [ ] Any color/token change: contrast probed in both themes (≥ 4.5:1).
 - [ ] Skill itself still matches the code — if the pattern changed, update this
       skill in the same PR.

@@ -7,6 +7,7 @@ import {
   UnsupportedMediaTypeException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { withFieldErrors } from '@common/validation/field-exception';
 import { RedisService } from '@infrastructure/redis/redis.service';
 import { STORAGE_DRIVER, type StorageDriver, type StoredFile } from './storage.types';
 
@@ -46,14 +47,21 @@ export class StorageService {
   }
 
   async upload(file: UploadedFile | undefined, folder?: string): Promise<StoredFile> {
-    if (!file?.buffer) throw new BadRequestException('No file provided (field "file")');
+    if (!file?.buffer)
+      throw withFieldErrors(new BadRequestException('No file provided (field "file")'), ['file']);
     if (file.size > this.maxBytes) {
-      throw new PayloadTooLargeException(
-        `File exceeds the ${Math.round(this.maxBytes / 1024 / 1024)}MB limit`,
+      throw withFieldErrors(
+        new PayloadTooLargeException(
+          `File exceeds the ${Math.round(this.maxBytes / 1024 / 1024)}MB limit`,
+        ),
+        ['file'],
       );
     }
     if (this.allowedMime.length && !this.allowedMime.includes(file.mimetype)) {
-      throw new UnsupportedMediaTypeException(`Unsupported file type: ${file.mimetype}`);
+      throw withFieldErrors(
+        new UnsupportedMediaTypeException(`Unsupported file type: ${file.mimetype}`),
+        ['file'],
+      );
     }
     return this.driver.upload({
       buffer: file.buffer,

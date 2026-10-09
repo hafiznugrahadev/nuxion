@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { applyApiFieldErrors } from '~/lib/api-errors';
 import { computed, ref } from 'vue';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
@@ -24,7 +25,7 @@ const schema = toTypedSchema(
     password: z.string().min(8, 'Password must be at least 8 characters'),
   }),
 );
-const { handleSubmit } = useForm({ validationSchema: schema });
+const { handleSubmit, setErrors } = useForm({ validationSchema: schema });
 
 const onSubmit = handleSubmit(async (values) => {
   submitting.value = true;
@@ -33,6 +34,7 @@ const onSubmit = handleSubmit(async (values) => {
     toast.success(t('auth.welcomeAboard'));
     await navigateTo('/admin/dashboard');
   } catch (err) {
+    applyApiFieldErrors(err, setErrors, ['name', 'email', 'password']);
     const message = (err as { data?: { message?: string } })?.data?.message;
     toast.error(message || t('auth.createAccountError'));
   } finally {

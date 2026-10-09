@@ -403,6 +403,13 @@
       "confirmPassword": "Konfirmasi kata sandi baru",
       "update": "Perbarui kata sandi",
       "updating": "Memperbarui…"
+    },
+    "avatar": {
+      "change": "Ubah foto",
+      "notImage": "Pilih berkas gambar.",
+      "tooLarge": "Ukuran gambar harus di bawah {mb} MB.",
+      "uploadFailed": "Gagal mengunggah.",
+      "saveFailed": "Gagal menyimpan foto."
     }
   },
   "notifications": {
@@ -419,7 +426,10 @@
   "common": {
     "cancel": "Batal",
     "done": "Selesai",
-    "working": "Memproses…"
+    "working": "Memproses…",
+    "search": "Cari",
+    "select": "Pilih opsi",
+    "noResults": "Tidak ada hasil."
   },
   "security": {
     "twoFactor": {
@@ -463,7 +473,8 @@
       "removeTitle": "Hapus passkey?",
       "removeDescription": "Hapus \"{name}\"? Anda tidak bisa memakainya untuk login lagi.",
       "removed": "Passkey dihapus.",
-      "removeFailed": "Gagal menghapus passkey."
+      "removeFailed": "Gagal menghapus passkey.",
+      "nameTooLong": "Nama maksimal 64 karakter."
     }
   },
   "settings": {
@@ -491,5 +502,16 @@
       "tooLarge": "Ukuran berkas melebihi {mb} MB.",
       "superAdminOnly": "Hanya Super Admin yang dapat mengubah branding."
     }
+  },
+  "demo": {
+    "view": "Tampilan",
+    "formats": "Pemformatan"
+  },
+  "editor": {
+    "imageLabel": "Sisipkan gambar",
+    "chooseImage": "Pilih berkas gambar.",
+    "imageTooLarge": "Ukuran gambar harus di bawah {max} MB.",
+    "uploadFailed": "Gagal mengunggah gambar.",
+    "label": "Editor teks kaya"
   }
 }

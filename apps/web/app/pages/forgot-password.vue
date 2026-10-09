@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { applyApiFieldErrors } from '~/lib/api-errors';
 import { ref } from 'vue';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
@@ -17,14 +18,15 @@ const submitting = ref(false);
 const sent = ref(false);
 
 const schema = toTypedSchema(z.object({ email: z.string().email('Enter a valid email') }));
-const { handleSubmit } = useForm({ validationSchema: schema });
+const { handleSubmit, setErrors } = useForm({ validationSchema: schema });
 
 const onSubmit = handleSubmit(async (values) => {
   submitting.value = true;
   try {
     await auth.forgotPassword(values.email);
     sent.value = true;
-  } catch {
+  } catch (err) {
+    applyApiFieldErrors(err, setErrors, ['email']);
     toast.error(t('auth.somethingWrong'));
   } finally {
     submitting.value = false;

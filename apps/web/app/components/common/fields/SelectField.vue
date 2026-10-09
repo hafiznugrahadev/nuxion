@@ -15,6 +15,7 @@ const props = defineProps<{
 }>();
 
 const { value, errorMessage } = useField<string | string[]>(toRef(props, 'name'));
+const { t } = useI18n();
 
 const open = ref(false);
 const search = ref('');
@@ -103,13 +104,13 @@ const isEmpty = computed(() => (props.multiple ? !multiValues.value.length : !si
                 </span>
               </span>
               <span v-if="isEmpty" class="flex-1 text-left text-muted-foreground">
-                {{ placeholder ?? 'Select…' }}
+                {{ placeholder ?? t('common.select') }}
               </span>
             </template>
 
             <!-- Single: label -->
             <span v-else class="flex-1 truncate text-left">
-              {{ selectedLabel || (placeholder ?? 'Select…') }}
+              {{ selectedLabel || (placeholder ?? t('common.select')) }}
             </span>
 
             <MaterialSymbol name="unfold_more" :size="18" class="ml-auto shrink-0 opacity-50" />
@@ -123,18 +124,28 @@ const isEmpty = computed(() => (props.multiple ? !multiValues.value.length : !si
             :style="{ width: 'var(--reka-popover-trigger-width)' }"
             :side-offset="4"
           >
-            <div class="flex items-center border-b border-outline-variant px-4">
-              <input
-                ref="searchInput"
-                v-model="search"
-                class="flex h-10 w-full bg-transparent text-sm outline-none placeholder:text-on-surface-variant/85"
-                placeholder="Search…"
-                @keydown.esc="open = false"
-              />
-            </div>
+            <Fieldset
+              :name="`${name}-search`"
+              :label="t('common.search')"
+              label-class="sr-only"
+              class="border-b border-outline-variant px-4"
+            >
+              <template #default="{ id, describedBy: searchDescribedBy, invalid: searchInvalid }">
+                <input
+                  :id="id"
+                  ref="searchInput"
+                  v-model="search"
+                  :aria-describedby="searchDescribedBy"
+                  :aria-invalid="searchInvalid"
+                  class="flex h-10 w-full bg-transparent text-sm outline-none placeholder:text-on-surface-variant/85"
+                  :placeholder="t('common.search')"
+                  @keydown.esc="open = false"
+                />
+              </template>
+            </Fieldset>
             <ul class="max-h-60 overflow-y-auto p-1.5">
               <li v-if="!filteredOptions.length" class="px-3 py-2 text-sm text-muted-foreground">
-                No results found.
+                {{ t('common.noResults') }}
               </li>
               <li
                 v-for="opt in filteredOptions"

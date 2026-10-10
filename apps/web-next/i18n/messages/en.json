@@ -492,5 +492,31 @@
       "updated": "Profile updated",
       "passwordChanged": "Password changed"
     }
+  },
+  "settings": {
+    "title": "Settings",
+    "tabs": {
+      "branding": "Branding"
+    },
+    "branding": {
+      "title": "Application branding",
+      "subtitle": "The app name, logo, and favicon shown across the UI.",
+      "appName": "Application name",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "saved": "Branding updated.",
+      "uploadLogo": "Upload logo",
+      "uploadFavicon": "Upload favicon",
+      "uploaded": "File uploaded — save to apply.",
+      "uploadFailed": "Upload failed.",
+      "useDefault": "Use default",
+      "logoHint": "PNG or WebP, transparent background, up to 5 MB. Wide marks work best.",
+      "faviconHint": "Square PNG recommended (32–512 px), up to 5 MB.",
+      "logoAlt": "Logo preview",
+      "faviconAlt": "Favicon preview",
+      "notImage": "Please choose an image file.",
+      "tooLarge": "File is larger than {mb} MB.",
+      "superAdminOnly": "Only a Super Admin can change branding."
+    }
   }
 }

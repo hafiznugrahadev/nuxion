@@ -1,5 +1,6 @@
 'use client';
 
+import { XhrProgressBar } from '@/components/common/xhr-progress-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from 'sonner';
@@ -32,6 +33,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         enableSystem
       >
         {children}
+        {/* One shared top bar for every instrumented XHR (see lib/xhr-progress). */}
+        <XhrProgressBar />
         {/* Global toast outlet, themed as an MD3 snackbar (see globals.css). */}
         <Toaster position="bottom-right" toastOptions={{ className: 'md3-snackbar' }} />
       </ThemeProvider>

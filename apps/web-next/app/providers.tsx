@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
+import { Toaster } from 'sonner';
 import { useState } from 'react';
 
 /*
@@ -31,6 +32,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         enableSystem
       >
         {children}
+        {/* Global toast outlet, themed as an MD3 snackbar (see globals.css). */}
+        <Toaster position="bottom-right" toastOptions={{ className: 'md3-snackbar' }} />
       </ThemeProvider>
     </QueryClientProvider>
   );

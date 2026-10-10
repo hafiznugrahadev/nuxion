@@ -1,16 +1,39 @@
 import { expect, test } from '@playwright/test';
 
 /*
- * Stage 0 smoke: the foundation renders, the i18n cookie works, unknown
- * routes hit the 404 screen, and the same-origin proxy actually reaches the
- * API. Runs against the dev stack (docker compose --profile next up) or a
- * local dev server on 8080.
+ * Smoke: the landing renders with its variant-honest copy, the i18n cookie
+ * works, the code tabs switch, unknown routes hit the 404 screen, and the
+ * same-origin proxy actually reaches the API. Runs against the dev stack
+ * (docker compose --profile next up) or a local dev server on 8080.
  */
 
-test('landing renders the foundation placeholder', async ({ page }) => {
+test('landing renders the ported hero with the Next-variant facts', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('NestJS + Next');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Nuxion');
-  await expect(page.getByTestId('landing-status')).toBeVisible();
+  // Terminal reports this variant's real port.
+  await expect(page.getByText('web:next')).toBeVisible();
+  await expect(page.getByText('ready on http://localhost:8080')).toBeVisible();
+  // Scaffolder command includes the variant flag.
+  await expect(
+    page.getByText('bun create nuxion@latest my-app --frontend next').first(),
+  ).toBeVisible();
+});
+
+test('nav anchors point at their real sections', async ({ page }) => {
+  await page.goto('/');
+  for (const anchor of ['quickstart', 'features', 'why', 'stack']) {
+    await expect(page.locator(`header nav a[href="#${anchor}"]`)).toBeVisible();
+    await expect(page.locator(`#${anchor}`)).toBeAttached();
+  }
+});
+
+test('code tabs switch panels', async ({ page }) => {
+  await page.goto('/#stack');
+  await page.getByRole('tab', { name: '.env' }).click();
+  await expect(page.getByRole('tabpanel')).toContainText('DATABASE_URL');
+  await page.getByRole('tab', { name: 'turbo.json' }).click();
+  await expect(page.getByRole('tabpanel')).toContainText('"globalDependencies"');
 });
 
 test('locale cookie switches the copy without changing the URL', async ({ page }) => {
@@ -18,7 +41,7 @@ test('locale cookie switches the copy without changing the URL', async ({ page }
   await page.getByTestId('language-switcher').click();
   await page.getByRole('option', { name: 'Bahasa Indonesia' }).click();
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Nuxion');
-  await expect(page.getByTestId('landing-status')).toContainText('Variant Next.js aktif');
+  await expect(page.getByText('Instalasi dengan Bun')).toBeVisible();
   await expect(page).toHaveURL('/');
 });
 

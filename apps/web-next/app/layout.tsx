@@ -12,7 +12,9 @@ export async function generateMetadata(): Promise<Metadata> {
     ),
     title: {
       default: t('name'),
-      template: `%s · ${t('name')}`,
+      // Every page title already ends with the app name (see the landing's
+      // metaTitle), so no template suffix — same rule as the Nuxt variant.
+      template: '%s',
     },
     description: t('description'),
   };

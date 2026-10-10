@@ -40,11 +40,13 @@ nuxion/
   sign-in on `/login`, plus register/remove passkeys from the profile Security
   section. A user-verified passkey satisfies the mandatory TOTP step.
 - **Users datatable** — admin-only `GET /users` (paginated, searchable; password never
-  returned) rendered with the generic `ui/Table.vue` data table (server-side sort,
-  search, and role filters).
-- **Reusable components** — shadcn-vue UI primitives, VeeValidate form fields, and
-  Error/Empty/Loading state blocks; `BaseRepository`/`BaseCrudService`/`BaseQueryDto`
-  on the backend.
+  returned) rendered with the shared data-table contract (server-side sort, search,
+  and role filters): `ui/Table.vue` + VeeValidate fields in the Nuxt variant,
+  `ui/table.tsx` + React Hook Form in the Next variant.
+- **Reusable components** — both variants ship the same MD3 token layer and
+  state vocabulary: shadcn-vue + VeeValidate (Nuxt) / shadcn/ui + RHF (Next),
+  Error/Empty/Loading blocks, the confirm dialog, and the tiptap editor;
+  `BaseRepository`/`BaseCrudService`/`BaseQueryDto` on the backend.
 
 ## Getting started
 
@@ -166,10 +168,12 @@ behind the `next` profile).
 global `ValidationPipe`, `IsUnique` async validator, `ApiPaginatedResponse` decorator,
 `@InjectDrizzle()` database + Redis module (global).
 
-**Frontend** (`apps/web/app`): generic `ui/Table.vue` data table, VeeValidate field components,
-single `apiClient` (ofetch) with transparent 401→refresh→retry, `usePaginatedQuery`,
-`useApiMutation`, and shared Error/Empty/Loading blocks. `features/` is intentionally
-**not** auto-imported — explicit barrel imports enforce the dependency rule.
+**Frontend** (`apps/web/app` Nuxt / `apps/web-next` React): the generic data table,
+typed field components, one api client with transparent 401→refresh→retry,
+`usePaginatedQuery`/`useApiMutation`, and shared Error/Empty/Loading blocks —
+same contracts, idiomatically implemented per framework. `features/` is
+intentionally **not** auto-imported — explicit barrel imports enforce the
+dependency rule.
 
 ## Scripts (root)
 

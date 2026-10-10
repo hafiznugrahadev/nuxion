@@ -364,6 +364,20 @@ body {
 }
 
 /*
+ * Landing hero entrance: the pitch column reveals top-to-bottom, once, right
+ * after first paint. Implemented as CSS (the Nuxt variant uses VueUse
+ * useAnimate) so it also plays without hydration; elements carry no
+ * hidden-by-default style, the keyframes only touch opacity/transform, and
+ * motion-reduce:animate-none at the call site freezes it.
+ */
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+/*
  * Landing hero ambience (ported with the design system; used by the landing
  * port). Pure-CSS, GPU-friendly (transform-only) animation: a blueprint grid
  * panning under a radial mask, tonal blobs drifting behind the content, and a

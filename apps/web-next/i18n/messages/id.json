@@ -4,10 +4,149 @@
     "name": "Nuxion",
     "description": "Starter kit monorepo NestJS + Next.js (Bun + Turbo)"
   },
-  "landing": {
-    "tagline": "Starter kit admin: API NestJS, Drizzle, auth, roles, pengaturan",
-    "status": "Variant Next.js aktif. Fondasi terpasang; fitur UI sedang di-port dari variant Nuxt.",
-    "source": "Sumber kit"
+  "nav": {
+    "menu": "Menu",
+    "dashboard": "Dasbor",
+    "users": "Pengguna",
+    "roles": "Peran",
+    "profile": "Profil",
+    "signOut": "Keluar",
+    "login": "Masuk",
+    "settings": "Pengaturan"
+  },
+  "state": {
+    "loading": "Memuat…",
+    "empty": "Belum ada data",
+    "error": "Terjadi kesalahan",
+    "retry": "Coba lagi"
+  },
+  "home": {
+    "metaTitle": "{app} · Starter kit NestJS + Next.js",
+    "metaDescription": "Starter kit monorepo NestJS + Next.js siap produksi: autentikasi JWT, akses berbasis peran, tabel data pengguna, dan komponen yang dapat dipakai ulang. Kloning, konfigurasi, rilis.",
+    "description": "Starter kit monorepo NestJS + Next.js, autentikasi, akses berbasis peran, tabel data pengguna, dan komponen yang siap dikembangkan.",
+    "goToDashboard": "Ke dasbor",
+    "signIn": "Masuk",
+    "installCta": "Instalasi dengan Bun",
+    "nav": {
+      "features": "Fitur",
+      "quickstart": "Mulai Cepat",
+      "why": "Alasan",
+      "stack": "Stack"
+    },
+    "pills": {
+      "access": "JWT access 15 mnt + rotasi refresh 7 hari",
+      "roles": "Penjaga peran di route admin",
+      "docker": "Docker dev stack disertakan"
+    },
+    "term": {
+      "copyScaffold": "Salin scaffold"
+    },
+    "install": {
+      "eyebrow": "CLI jalur cepat",
+      "title": "Mulai proyek Anda dalam satu perintah",
+      "lead": "Scaffolder meng-clone kit ini, mengganti identitasnya menjadi proyek Anda, menulis .env dengan JWT secret yang digenerate, memasang dependensi, dan membuat commit dengan riwayat git yang bersih. Semua dengan Bun.",
+      "cloneTitle": "Lebih suka bekerja di dalam clone?",
+      "cloneLead": "Stack yang sama, dijalankan manual:",
+      "scaffolderLabel": "Scaffolder rekomendasi",
+      "manualChip": "Bootstrap manual",
+      "copyAll": "Salin semua langkah",
+      "zeroDriftTitle": "Jaminan tanpa drift",
+      "zeroDriftText": "Tipe bersama menjaga DTO tetap sinkron di kedua aplikasi",
+      "steps": {
+        "install": "Instal dependensi (workspace Bun)",
+        "init": "Jadikan proyek MILIK ANDA (rename scope, container, volume, DB)",
+        "services": "Service pendukung (Postgres + Redis)",
+        "migrate": "Migrasi database dan data seed",
+        "serve": "Jalankan semuanya (API + web, satu perintah)"
+      },
+      "checks": {
+        "workspaces": "Workspace Bun + task Turborepo",
+        "env": "Satu .env root untuk kedua aplikasi",
+        "seed": "Seed idempoten dengan role demo"
+      },
+      "variantNote": "Lebih suka variant Nuxt? Hapus --frontend next (Nuxt adalah default)"
+    },
+    "inside": {
+      "eyebrow": "Lengkap dan siap pakai",
+      "typed": "Semua modul bertipe ujung ke ujung",
+      "title": "Apa saja di dalamnya",
+      "lead": "Semua di bawah ini ada di repositori ini sekarang, terpasang dan berfungsi.",
+      "authTag": "Spesifikasi keamanan",
+      "authF1": "Access token 15 mnt",
+      "authF2": "Rotasi refresh 7 hari",
+      "authF3": "Penjaga RBAC",
+      "datatableTag": "TanStack Query 5",
+      "datatableF": "Paginasi + pencarian di server",
+      "datatableF2": "Klien API bertipe",
+      "uiTag": "30+ komponen M3",
+      "uiPills": "Dialog · Drawer · Editor",
+      "sharedTag": "Satu sumber",
+      "dockerTag": "Siap dijalankan",
+      "dockerF": "Inbox SMTP lokal Mailpit",
+      "dockerF2": "Pasang dan jalankan",
+      "authTitle": "Auth & RBAC",
+      "authText": "Login email/password, JWT access berumur pendek, cookie refresh berputar dengan deteksi reuse, penjaga peran di setiap route admin.",
+      "datatableTitle": "Tabel pengguna",
+      "datatableText": "Manajemen pengguna dengan paginasi, pencarian, dan filter di sisi server melalui klien API bertipe. Password tidak pernah dikirim ke klien.",
+      "uiTitle": "UI Reusable",
+      "uiText": "30+ komponen Material Design 3: tombol, field formulir, overlay, editor WYSIWYG, dan status kosong, loading, error yang jujur.",
+      "sharedTitle": "Kontrak bersama",
+      "sharedText": "Satu paket TypeScript memuat UserRole, amplop API, dan tipe entitas, dikompilasi ke CJS/ESM dan dipakai kedua aplikasi.",
+      "dockerTitle": "Dev stack disertakan",
+      "dockerText": "Docker Compose menyalakan Postgres, Redis, object storage, dan Mailpit. Satu file env di root mengendalikan kedua aplikasi."
+    },
+    "why": {
+      "eyebrow": "Arsitektur",
+      "title": "Kenapa API NestJS — bukan fullstack Next",
+      "lead": "Server Next.js memang praktis. Tapi begitu API menjadi produk — banyak klien, pekerjaan background, kontrak yang ketat — backend terpisah cepat mengembalikan modalnya.",
+      "c1t": "API-nya adalah produk",
+      "c1x": "Satu API melayani aplikasi web hari ini — aplikasi mobile, partner, dan skrip besok. Klien mengonsumsi kontrak ter-tipe, bukan server route yang dilekatkan ke sebuah website.",
+      "c2t": "Framework backend sesungguhnya",
+      "c2x": "Dependency injection, guards, pipes, interceptors, plus OpenAPI/Swagger langsung dari kotaknya — pola yang dijalankan backend production, bukan konvensi yang dirakit sendiri.",
+      "c3t": "Background & realtime",
+      "c3x": "Queue, cron scheduler, dan WebSocket adalah kelas satu di ekosistem Nest — tidak ada kerja panjang yang diparkir di dalam proses SSR.",
+      "c4t": "Lifecycle independen",
+      "c4x": "Deploy dan scale API serta aplikasi web secara terpisah — image berbeda, ritme berbeda. Web bahkan bisa menjadi full static saat API terus berevolusi.",
+      "vsTitle": "Berbanding langsung",
+      "vsNuxt": "Fullstack Next",
+      "vsNest": "NestJS + Next",
+      "r1l": "Konsumen API",
+      "r1n": "Terikat aplikasi web",
+      "r1s": "Web, mobile, partner",
+      "r2l": "Validasi & docs",
+      "r2n": "Dirakit manual per route",
+      "r2s": "DTO pipes + OpenAPI",
+      "r3l": "Pekerjaan background",
+      "r3n": "Terbatas",
+      "r3s": "Ekosistem queue & cron",
+      "r4l": "Scaling",
+      "r4n": "Satu proses, satu nasib",
+      "r4s": "Service independen",
+      "note": "Masih lebih suka fullstack Next? Aplikasi web ini bicara ke API mana pun — arahkan klien API ke tempat lain dan pertahankan frontend-nya."
+    },
+    "stackEyebrow": "Inti modern",
+    "stackTitle": "Stack-nya",
+    "stackLead": "Ketat bertipe, dependensi ramping, dipilih untuk kecepatan tanpa gesekan framework.",
+    "tabs": {
+      "sharedLead": "packages/shared-types: tipe dan enum bersama, dikompilasi sekali, dipakai kedua aplikasi.",
+      "envLead": ".env.example: satu file konfigurasi yang dipetakan ke Docker, ConfigService NestJS, dan env runtime aplikasi web.",
+      "turboLead": "turbo.json: pipeline build ter-cache di seluruh workspace."
+    },
+    "cta": {
+      "eyebrow": "Tanpa konfigurasi",
+      "title": "Berhenti merakit auth dan tabel. Mulailah membangun produk Anda.",
+      "lead": "Monorepo TypeScript full-stack yang tumbuh dari prototipe sampai produksi.",
+      "copy": "Salin perintah scaffolder",
+      "docs": "Baca dokumentasi"
+    },
+    "footer": {
+      "tagline": "Monorepo full-stack NestJS + Next.js",
+      "repo": "Repo GitHub",
+      "releases": "Rilisan",
+      "license": "Open-source di bawah Lisensi MIT."
+    },
+    "copy": "Salin",
+    "copied": "Tersalin"
   },
   "error": {
     "backHome": "Kembali ke beranda",

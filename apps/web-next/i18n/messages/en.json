@@ -4,10 +4,149 @@
     "name": "Nuxion",
     "description": "NestJS + Next.js starter kit monorepo (Bun + Turbo)"
   },
-  "landing": {
-    "tagline": "Admin starter kit: NestJS API, Drizzle, auth, roles, settings",
-    "status": "Next.js variant online. Foundation active; UI features are being ported from the Nuxt variant.",
-    "source": "Kit source"
+  "nav": {
+    "menu": "Menu",
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "roles": "Roles",
+    "profile": "Profile",
+    "signOut": "Sign out",
+    "login": "Login",
+    "settings": "Settings"
+  },
+  "state": {
+    "loading": "Loading…",
+    "empty": "No data yet",
+    "error": "Something went wrong",
+    "retry": "Retry"
+  },
+  "home": {
+    "metaTitle": "{app} · NestJS + Next.js starter kit",
+    "metaDescription": "Production-ready NestJS + Next.js monorepo starter kit: JWT authentication, role-based access, a users datatable, and reusable components. Clone, configure, ship.",
+    "description": "A NestJS + Next.js monorepo starter kit, authentication, role-based access, a users datatable, and reusable components to build on.",
+    "goToDashboard": "Go to dashboard",
+    "signIn": "Sign in",
+    "installCta": "Install with Bun",
+    "nav": {
+      "features": "Features",
+      "quickstart": "Quickstart",
+      "why": "Why",
+      "stack": "Tech Stack"
+    },
+    "pills": {
+      "access": "15m JWT access + 7d refresh rotation",
+      "roles": "Role guards on admin routes",
+      "docker": "Docker dev stack included"
+    },
+    "term": {
+      "copyScaffold": "Copy scaffold"
+    },
+    "install": {
+      "eyebrow": "Fast-track CLI",
+      "title": "Start your project in one command",
+      "lead": "The scaffolder clones the kit, renames it to your project, writes .env with a generated JWT secret, installs dependencies, and commits fresh git history. Bun all the way down.",
+      "cloneTitle": "Working inside a clone instead?",
+      "cloneLead": "The same stack, driven by hand:",
+      "scaffolderLabel": "Recommended scaffolder",
+      "manualChip": "Manual bootstrap",
+      "copyAll": "Copy all steps",
+      "zeroDriftTitle": "Zero drift guarantee",
+      "zeroDriftText": "Shared types keep DTOs in sync across both apps",
+      "steps": {
+        "install": "Install dependencies (Bun workspaces)",
+        "init": "Make it YOUR project (rename scope, containers, volumes, DB)",
+        "services": "Backing services (Postgres + Redis)",
+        "migrate": "Database migrations, seed data",
+        "serve": "Run everything (API + web, one command)"
+      },
+      "checks": {
+        "workspaces": "Bun workspaces + Turborepo tasks",
+        "env": "Single root .env for both apps",
+        "seed": "Idempotent seed with demo roles"
+      },
+      "variantNote": "Prefer the Nuxt variant? Drop --frontend next (Nuxt is the default)"
+    },
+    "inside": {
+      "eyebrow": "Batteries fully loaded",
+      "typed": "All modules end-to-end typed",
+      "title": "What's inside",
+      "lead": "Everything below is in this repository right now, wired and working.",
+      "authTag": "Security spec",
+      "authF1": "15m access token",
+      "authF2": "7d refresh rotation",
+      "authF3": "RBAC guards",
+      "datatableTag": "TanStack Query 5",
+      "datatableF": "Server pagination + search",
+      "datatableF2": "Typed API client",
+      "uiTag": "30+ M3 components",
+      "uiPills": "Dialogs · Drawers · Editor",
+      "sharedTag": "Single source",
+      "dockerTag": "Ready to run",
+      "dockerF": "Mailpit local SMTP inbox",
+      "dockerF2": "Plug and play",
+      "authTitle": "Auth & RBAC",
+      "authText": "Email/password login, short-lived JWT access, rotating refresh cookie with reuse detection, role guards on every admin route.",
+      "datatableTitle": "Users datatable",
+      "datatableText": "Paginated, searchable, server-filtered user management over a typed API client. The password never leaves the API.",
+      "uiTitle": "Reusable UI",
+      "uiText": "30+ Material Design 3 components: buttons, fields, overlays, a WYSIWYG editor, and honest empty, loading, error states.",
+      "sharedTitle": "Shared contracts",
+      "sharedText": "One TypeScript package holds UserRole, API envelopes, and entity types, compiled to CJS/ESM and consumed by both apps.",
+      "dockerTitle": "Dev stack included",
+      "dockerText": "Docker Compose brings up Postgres, Redis, object storage, and Mailpit. One env file at the root drives both apps."
+    },
+    "why": {
+      "eyebrow": "Architecture",
+      "title": "Why a NestJS API — not fullstack Next",
+      "lead": "Next's server layer is a fine app server. But when the API is a product — many clients, background work, strict contracts — a dedicated backend pays for itself.",
+      "c1t": "The API is a product",
+      "c1x": "One API serves the web app today — mobile apps, partners, and scripts tomorrow. Clients consume typed contracts, not server routes welded to a website.",
+      "c2t": "A real backend framework",
+      "c2x": "Dependency injection, guards, pipes, interceptors, and OpenAPI/Swagger out of the box — the patterns production backends run on, not conventions you assemble yourself.",
+      "c3t": "Background work & realtime",
+      "c3x": "Queues, cron schedulers, and WebSockets are first-class in the Nest ecosystem — no long-running work parked inside the SSR process.",
+      "c4t": "Independent lifecycles",
+      "c4x": "Deploy and scale the API and the web app separately — different images, different pace. The web can even go fully static while the API keeps evolving.",
+      "vsTitle": "Side by side",
+      "vsNuxt": "Fullstack Next",
+      "vsNest": "NestJS + Next",
+      "r1l": "API consumers",
+      "r1n": "Tied to the web app",
+      "r1s": "Web, mobile, partners",
+      "r2l": "Validation & docs",
+      "r2n": "Hand-rolled per route",
+      "r2s": "DTO pipes + OpenAPI",
+      "r3l": "Background jobs",
+      "r3n": "Limited",
+      "r3s": "Queues & cron ecosystem",
+      "r4l": "Scaling",
+      "r4n": "One process, one fate",
+      "r4s": "Independent services",
+      "note": "Still prefer fullstack Next? The web app talks to any API — point the API client elsewhere and keep the frontend."
+    },
+    "stackEyebrow": "Modern core",
+    "stackTitle": "The stack",
+    "stackLead": "Strictly typed, lean dependencies chosen for speed and zero framework friction.",
+    "tabs": {
+      "sharedLead": "packages/shared-types: shared types and enums compiled once, consumed by both apps.",
+      "envLead": ".env.example: one configuration file mapped into Docker, the NestJS ConfigService, and the web app's runtime env.",
+      "turboLead": "turbo.json: a cached build pipeline across the workspace."
+    },
+    "cta": {
+      "eyebrow": "Zero config required",
+      "title": "Stop wiring auth and tables. Start building your product.",
+      "lead": "A full-stack TypeScript monorepo that scales from prototype to production.",
+      "copy": "Copy scaffolder command",
+      "docs": "Read the docs"
+    },
+    "footer": {
+      "tagline": "Full-stack NestJS + Next.js monorepo",
+      "repo": "GitHub Repo",
+      "releases": "Releases",
+      "license": "Open-source under the MIT License."
+    },
+    "copy": "Copy",
+    "copied": "Copied"
   },
   "error": {
     "backHome": "Back to home",

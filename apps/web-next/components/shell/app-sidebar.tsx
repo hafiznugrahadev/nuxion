@@ -3,7 +3,7 @@
 import { BrandLogo } from '@/components/common/brand-logo';
 import { UserMenu } from '@/components/shell/user-menu';
 import { closeMobile, getSidebarState, subscribeSidebar } from '@/lib/use-sidebar';
-import { LayoutDashboard, ShieldCheck, Users } from 'lucide-react';
+import { CircleUserRound, LayoutDashboard, ShieldCheck, Users } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -32,6 +32,7 @@ export function AppSidebar() {
     { label: t('nav.users'), href: '/admin/users', icon: Users },
     // Shield glyph: access control, the meaning roles carry in this app.
     { label: t('nav.roles'), href: '/admin/roles', icon: ShieldCheck },
+    { label: t('nav.profile'), href: '/admin/profile', icon: CircleUserRound },
   ];
 
   function isActive(href: string) {

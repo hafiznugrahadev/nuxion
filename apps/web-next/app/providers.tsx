@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from 'sonner';
 import { useState } from 'react';
+import { ConfirmProvider } from '@/lib/use-confirm';
 
 /*
  * next-themes mirrors the Nuxt variant's useTheme contract exactly: the
@@ -32,11 +33,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
         storageKey="theme-mode"
         enableSystem
       >
-        {children}
-        {/* One shared top bar for every instrumented XHR (see lib/xhr-progress). */}
-        <XhrProgressBar />
-        {/* Global toast outlet, themed as an MD3 snackbar (see globals.css). */}
-        <Toaster position="bottom-right" toastOptions={{ className: 'md3-snackbar' }} />
+        <ConfirmProvider>
+          {children}
+          {/* One shared top bar for every instrumented XHR (see lib/xhr-progress). */}
+          <XhrProgressBar />
+          {/* Global toast outlet, themed as an MD3 snackbar (see globals.css). */}
+          <Toaster position="bottom-right" toastOptions={{ className: 'md3-snackbar' }} />
+        </ConfirmProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

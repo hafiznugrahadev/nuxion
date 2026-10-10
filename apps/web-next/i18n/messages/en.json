@@ -239,5 +239,93 @@
     "resetInvalidExpired": "This reset link is invalid or has expired.",
     "invalidToken": "Invalid or missing reset token.",
     "twoFactorRequired": "This account has two-factor authentication enabled. The verification step arrives with the kit's 2FA stage; sign in with an account without 2FA or wait for the update."
+  },
+  "users": {
+    "title": "Users",
+    "allAccounts": "All accounts",
+    "subtitle": "Registered users across the workspace (admin only).",
+    "search": "Search users…",
+    "addUser": "Add user",
+    "noResults": "No users found",
+    "noResultsHint": "Try a different search, or add a new user.",
+    "filter": {
+      "title": "Filter",
+      "desc": "Narrow down the user list.",
+      "roles": "Roles",
+      "reset": "Reset filter"
+    },
+    "columns": {
+      "user": "User",
+      "roles": "Roles",
+      "joined": "Joined",
+      "action": "Action"
+    },
+    "roles": {
+      "all": "All",
+      "superAdmin": "Super Admin",
+      "admin": "Admin",
+      "user": "User"
+    },
+    "pagination": {
+      "prev": "Prev",
+      "next": "Next",
+      "page": "Page",
+      "of": "/",
+      "total": "{n} users"
+    },
+    "deleteModal": {
+      "title": "Delete user",
+      "body": "Delete {name}? This cannot be undone.",
+      "confirm": "Delete",
+      "deleting": "Deleting…",
+      "cancel": "Cancel"
+    },
+    "form": {
+      "newTitle": "New user",
+      "editTitle": "Edit user",
+      "newDesc": "Create an account and assign roles.",
+      "editDesc": "Update account details and roles.",
+      "email": "Email",
+      "name": "Name",
+      "password": "Password",
+      "passwordHint": "(leave blank to keep)",
+      "roles": "Roles",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "saveChanges": "Save changes",
+      "createUser": "Create user",
+      "securityConfirmTitle": "Change account access?",
+      "rolesConfirmDescription": "Changing roles will change what {name} can access.",
+      "passwordConfirmDescription": "The current password for {name} will stop working.",
+      "privilegedCreateTitle": "Create an administrator account?",
+      "privilegedCreateDescription": "This gives {name} administrative access. Check the selected roles before creating this account."
+    },
+    "toasts": {
+      "created": "User created",
+      "updated": "User updated",
+      "deleted": "User deleted"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Welcome back, here's what's happening today.",
+    "metrics": {
+      "users": "Users"
+    },
+    "quicklinksTitle": "Quick actions",
+    "quicklinks": {
+      "users": "Manage users",
+      "docs": "Kit docs"
+    }
+  },
+  "confirm": {
+    "cancel": "Cancel",
+    "ok": "Confirm"
+  },
+  "a11y": {
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar"
   }
 }

@@ -15,7 +15,8 @@ export interface RequestOptions {
   method?: string;
   /** JSON body; a body implies POST unless `method` says otherwise. */
   body?: unknown;
-  query?: Record<string, string | number | boolean | undefined | null>;
+  /** Query params; array values repeat the key (`roles=a&roles=b`). */
+  query?: Record<string, string | number | boolean | undefined | null | readonly string[]>;
   headers?: Record<string, string>;
   signal?: AbortSignal;
 }
@@ -37,7 +38,9 @@ export function createApiClient({ baseURL, getToken, onStart, onEnd }: ApiClient
       const base = baseURL.replace(/\/$/, '');
       const search = new URLSearchParams();
       for (const [key, value] of Object.entries(options.query ?? {})) {
-        if (value !== undefined && value !== null) search.set(key, String(value));
+        if (value === undefined || value === null) continue;
+        if (Array.isArray(value)) value.forEach((item) => search.append(key, item));
+        else search.set(key, String(value));
       }
       const qs = search.size > 0 ? `?${search.toString()}` : '';
 

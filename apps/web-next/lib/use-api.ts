@@ -1,8 +1,9 @@
 import { ApiError } from './api-errors';
-import { createApiClient, unwrap } from './api-client';
+import { createApiClient, unwrap, unwrapPaginated } from './api-client';
 import { getAuthState } from './auth-store';
 import { refreshSession } from './auth-api';
 import { xhrProgressEnd, xhrProgressStart } from './xhr-progress';
+import type { Paginated } from '@nuxion/shared-types';
 import type { RequestOptions } from './api-client';
 
 /**
@@ -27,22 +28,39 @@ const client = createApiClient({
 });
 
 /**
- * API fetch with a transparent 401 → refresh → retry: when a request fails
- * with 401 (expired access token) and carries no field errors, it silently
- * calls refreshSession() once and replays the request with the new token.
+ * Shared retry plumbing: run the request, and on a 401 (expired access token)
+ * silently refresh once and replay — unless the route mints tokens itself.
  */
-export async function apiFetch<T>(url: string, options?: RequestOptions): Promise<T> {
-  const request = () => client<T>(url, options ?? {});
+async function withRefreshRetry<T>(
+  url: string,
+  options: RequestOptions | undefined,
+  run: () => Promise<T>,
+): Promise<T> {
   try {
-    return unwrap(await request());
+    return await run();
   } catch (err) {
     const status =
       err instanceof ApiError ? (err as ApiError & { status?: number }).status : undefined;
     const noRetry = NO_RETRY_AUTH_ROUTES.some((route) => url.startsWith(route));
     if (status === 401 && !noRetry) {
       const refreshed = await refreshSession();
-      if (refreshed) return unwrap(await request());
+      if (refreshed) return await run();
     }
     throw err;
   }
+}
+
+/** API fetch returning the envelope's `data` (throws ApiError on failure). */
+export async function apiFetch<T>(url: string, options?: RequestOptions): Promise<T> {
+  return withRefreshRetry(url, options, async () => unwrap<T>(await client<T>(url, options ?? {})));
+}
+
+/** API fetch returning `{ data, meta }` from a paginated envelope. */
+export async function apiFetchPaginated<T>(
+  url: string,
+  options?: RequestOptions,
+): Promise<Paginated<T>> {
+  return withRefreshRetry(url, options, async () =>
+    unwrapPaginated<T>(await client<T[]>(url, options ?? {})),
+  );
 }

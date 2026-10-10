@@ -99,3 +99,20 @@ test('landing exposes the auth-aware sign-in CTA', async ({ page }) => {
   await cta.click();
   await expect(page).toHaveURL(/\/login$/);
 });
+
+test('admin routes bounce unauthenticated visitors to /login with a redirect back', async ({
+  page,
+}) => {
+  await page.goto('/admin/users');
+  await expect(page).toHaveURL(/\/login\?redirect=%2Fadmin%2Fusers$/);
+  // The login form still renders normally behind the guard.
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Sign In');
+});
+
+test('/admin lands on the dashboard section', async ({ page }) => {
+  await page.goto('/admin');
+  // Server redirect to /admin/dashboard races the guard's mount (which may
+  // capture /admin before the router settles) — either redirect target is
+  // fine: post-login both converge on the dashboard.
+  await expect(page).toHaveURL(/\/login\?redirect=%2Fadmin(%2Fdashboard)?$/);
+});

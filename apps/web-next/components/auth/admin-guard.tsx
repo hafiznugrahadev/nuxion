@@ -22,6 +22,9 @@ import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react
  * redirect back, and render the dedicated 403 screen for authenticated
  * non-admins (mirroring the Nuxt admin middleware's fatal 403).
  */
+/** Routes whose Nuxt counterparts carry the `admin` middleware. */
+const ADMIN_ONLY_ROUTES = ['/admin/users', '/admin/roles', '/admin/settings'];
+
 export function AdminGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
   const t = useTranslations();
@@ -37,15 +40,25 @@ export function AdminGuard({ children }: { children: ReactNode }) {
       if (!isAuthenticated(state)) {
         setStatus('denied');
         router.replace(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
-      } else if (!hasRole(state, UserRole.ADMIN) && !hasRole(state, UserRole.SUPER_ADMIN)) {
-        setStatus('forbidden');
       } else if (TWO_FACTOR_ENABLED && state.user && !state.user.twoFactorEnabled) {
         // The "hook": every admin route keeps un-activated users on the setup
         // page (the one exempt route) until an authenticator is registered.
+        // Ordered BEFORE the role check — the Nuxt variant's auth middleware
+        // (funnel) runs ahead of the admin middleware (403), so a pending
+        // account of any role is funnelled first.
         setStatus('denied');
         router.replace(
           `/two-factor/setup?redirect=${encodeURIComponent(window.location.pathname)}`,
         );
+      } else if (
+        ADMIN_ONLY_ROUTES.some((route) => window.location.pathname.startsWith(route)) &&
+        !hasRole(state, UserRole.ADMIN) &&
+        !hasRole(state, UserRole.SUPER_ADMIN)
+      ) {
+        // Role gate mirrors the Nuxt per-page middleware: users/roles/settings
+        // are ['auth','admin']; dashboard/profile/demo are ['auth'] only —
+        // any signed-in account may see its own dashboard.
+        setStatus('forbidden');
       } else {
         setStatus('ok');
       }

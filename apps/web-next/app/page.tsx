@@ -34,6 +34,7 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react';
+import { getBranding } from '@/lib/branding-server';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 
@@ -93,9 +94,23 @@ const RISE =
 
 export async function generateMetadata() {
   const t = await getTranslations();
+  // Branding-aware like the Nuxt variant: the title and OG tags carry the
+  // live app name from the settings API (SSR-fetched, fail-open).
+  const branding = await getBranding();
+  const appName = branding.appName || t('app.name');
+  const description = t('home.metaDescription');
+  const url = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.APP_URL ?? 'http://localhost:8080';
   return {
-    title: t('home.metaTitle', { app: t('app.name') }),
-    description: t('home.metaDescription'),
+    title: t('home.metaTitle', { app: appName }),
+    description,
+    alternates: { canonical: '/' },
+    openGraph: {
+      title: t('home.metaTitle', { app: appName }),
+      description,
+      url,
+      siteName: appName,
+      type: 'website',
+    },
   };
 }
 

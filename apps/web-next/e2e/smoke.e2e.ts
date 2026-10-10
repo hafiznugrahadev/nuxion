@@ -122,3 +122,8 @@ test('two-factor setup requires a session', async ({ page }) => {
   // Unauthenticated visitors bounce to /login (the setup flow needs a user).
   await expect(page).toHaveURL(/\/login/);
 });
+
+test('roles admin route is guarded like the rest of /admin', async ({ page }) => {
+  await page.goto('/admin/roles');
+  await expect(page).toHaveURL(/\/login\?redirect=%2Fadmin%2Froles$/);
+});

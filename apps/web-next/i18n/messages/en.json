@@ -364,5 +364,51 @@
   },
   "common": {
     "working": "Working…"
+  },
+  "roles": {
+    "title": "Roles",
+    "subtitle": "Roles available to assign, built-in and custom (admin only).",
+    "addRole": "Add role",
+    "noResults": "No roles",
+    "noResultsHint": "Add a custom role to assign it to users.",
+    "builtIn": "Built-in",
+    "protected": "Built-in role: its name and permissions are fixed by the app.",
+    "usersCount": "{n} users",
+    "usersCountOne": "1 user",
+    "columns": {
+      "role": "Role",
+      "users": "Users",
+      "created": "Created",
+      "action": "Action"
+    },
+    "deleteModal": {
+      "title": "Delete role",
+      "body": "Delete {name}? This cannot be undone.",
+      "bodyHolders": "Delete {name}? {n} users hold this role and will lose it immediately.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    },
+    "form": {
+      "newTitle": "New role",
+      "editTitle": "Rename role",
+      "newDesc": "Add a custom role you can assign to users.",
+      "editDesc": "Renaming applies to every user who holds this role.",
+      "name": "Role name",
+      "nameHint": "UPPER_SNAKE_CASE, e.g. CONTENT_EDITOR",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "saveChanges": "Save changes",
+      "createRole": "Create role",
+      "errors": {
+        "tooShort": "At least 2 characters",
+        "tooLong": "At most 50 characters",
+        "pattern": "Use UPPER_SNAKE_CASE (A-Z, digits, underscore)"
+      }
+    },
+    "toasts": {
+      "created": "Role created",
+      "updated": "Role renamed",
+      "deleted": "Role deleted"
+    }
   }
 }

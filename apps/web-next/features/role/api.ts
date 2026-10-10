@@ -1,12 +1,24 @@
 import type { Role } from '@nuxion/shared-types';
 import { apiFetch } from '@/lib/use-api';
+import type { RoleFormValues } from './schemas';
 
 /**
- * Role catalog fetchers. Reads are admin-scoped on the API; this slice grows
- * into the full roles feature (custom role CRUD) in its own stage — the
- * catalog read exists now because the users module needs it for filters and
- * the assignment form.
+ * Feature fetchers — all go through the shared apiFetch (auth, 401-replay).
+ * Reads are ADMIN+, writes SUPER_ADMIN; the API enforces both.
  */
-export async function listRoles(): Promise<Role[]> {
-  return apiFetch<Role[]>('/roles');
-}
+export const roleApi = {
+  /** The full catalog: a role list is small by nature, so the API returns
+   *  everything and this feature does not paginate. */
+  list(): Promise<Role[]> {
+    return apiFetch<Role[]>('/roles');
+  },
+  create(body: RoleFormValues): Promise<Role> {
+    return apiFetch<Role>('/roles', { method: 'POST', body });
+  },
+  update(id: string, body: RoleFormValues): Promise<Role> {
+    return apiFetch<Role>(`/roles/${id}`, { method: 'PATCH', body });
+  },
+  remove(id: string): Promise<Role> {
+    return apiFetch<Role>(`/roles/${id}`, { method: 'DELETE' });
+  },
+};

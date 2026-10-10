@@ -8,7 +8,7 @@ const props = defineProps<{
   label?: string;
   placeholder?: string;
   required?: boolean;
-  /** Material Symbols name for a leading glyph (e.g. 'lock'). */
+  /** Lucide icon name for a leading glyph (e.g. 'lock'). */
   prefixIcon?: string;
   /** MD3 supporting text below the field; the error replaces it when present. */
   hint?: string;
@@ -48,7 +48,7 @@ const show = ref(false);
           :aria-pressed="show"
           @click="show = !show"
         >
-          <MaterialSymbol :name="show ? 'visibility' : 'visibility_off'" :size="18" />
+          <AppIcon :name="show ? 'visibility' : 'visibility_off'" :size="18" />
         </button>
       </div>
     </template>

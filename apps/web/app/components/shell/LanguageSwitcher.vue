@@ -22,7 +22,7 @@ async function choose(code: string) {
       :aria-label="$t('language')"
       @click="open = !open"
     >
-      <MaterialSymbol name="translate" :size="18" />
+      <AppIcon name="translate" :size="18" />
       <span>{{ current }}</span>
     </button>
 
@@ -38,7 +38,7 @@ async function choose(code: string) {
           @click="choose(l.code)"
         >
           {{ l.name }}
-          <MaterialSymbol v-if="l.code === locale" name="check" :size="18" class="text-primary" />
+          <AppIcon v-if="l.code === locale" name="check" :size="18" class="text-primary" />
         </button>
       </div>
     </template>

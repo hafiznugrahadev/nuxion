@@ -90,7 +90,7 @@ const global = {
     }),
     Checkbox: true,
     PasswordField: true,
-    MaterialSymbol: true,
+    AppIcon: true,
   },
 };
 beforeEach(() => {

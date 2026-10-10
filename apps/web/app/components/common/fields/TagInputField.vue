@@ -53,7 +53,7 @@ const tags = computed({
           <TagsInputItemDelete
             class="rounded-sm opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring"
           >
-            <MaterialSymbol name="close" :size="14" />
+            <AppIcon name="close" :size="14" />
           </TagsInputItemDelete>
         </TagsInputItem>
         <TagsInputInput

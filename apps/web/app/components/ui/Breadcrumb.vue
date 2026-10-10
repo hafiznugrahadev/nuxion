@@ -26,7 +26,7 @@ const props = defineProps<{ items: Crumb[]; class?: string }>();
         >
           {{ item.label }}
         </span>
-        <MaterialSymbol
+        <AppIcon
           v-if="i < items.length - 1"
           name="chevron_right"
           :size="16"

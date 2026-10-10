@@ -247,7 +247,7 @@ useHead({
                 />
                 <span class="relative inline-flex h-2 w-2 rounded-full" :class="v.pingClass" />
               </span>
-              <MaterialSymbol
+              <AppIcon
                 :name="
                   variant === 'notFound'
                     ? 'satellite_alt'
@@ -273,7 +273,7 @@ useHead({
             <div
               class="absolute bottom-4 left-3 z-10 hidden items-center gap-1.5 rounded-xl border border-slate-200 bg-white/90 px-2.5 py-1.5 shadow-md backdrop-blur-md sm:flex"
             >
-              <MaterialSymbol
+              <AppIcon
                 :name="variant === 'forbidden' ? 'verified_user' : 'my_location'"
                 :size="15"
                 class="text-slate-500"
@@ -302,7 +302,7 @@ useHead({
         <!-- Right: status, copy, and recovery actions. -->
         <div class="order-1 flex flex-col items-start text-left lg:order-2 lg:col-span-6">
           <Badge :variant="v.badgeVariant" class="mb-4 gap-1.5 uppercase tracking-wider">
-            <MaterialSymbol :name="v.badgeIcon" :size="16" fill />
+            <AppIcon :name="v.badgeIcon" :size="16" fill />
             {{ badgeLabel }}
           </Badge>
 
@@ -347,7 +347,7 @@ useHead({
                 data-testid="error-signout"
                 @click="signOut"
               >
-                <MaterialSymbol name="switch_account" :size="16" />
+                <AppIcon name="switch_account" :size="16" />
                 {{ $t('error.forbidden.signOut') }}
               </button>
             </div>
@@ -361,7 +361,7 @@ useHead({
           >
             <div class="mb-3 flex items-center justify-between">
               <span class="flex items-center gap-1.5 text-sm font-semibold text-on-surface">
-                <MaterialSymbol
+                <AppIcon
                   name="terminal"
                   :size="18"
                   class="text-brand-teal-deep dark:text-brand-mint"
@@ -374,7 +374,7 @@ useHead({
                 data-testid="error-copy-details"
                 @click="copyDetails"
               >
-                <MaterialSymbol :name="copied ? 'check' : 'content_copy'" :size="16" />
+                <AppIcon :name="copied ? 'check' : 'content_copy'" :size="16" />
                 {{ copied ? $t('error.serverError.copied') : $t('error.serverError.copyDetails') }}
               </button>
             </div>
@@ -409,7 +409,7 @@ useHead({
             data-testid="error-dev-details"
           >
             <div class="mb-2 flex items-center gap-1.5 text-sm font-semibold text-on-surface">
-              <MaterialSymbol
+              <AppIcon
                 name="terminal"
                 :size="18"
                 class="text-brand-teal-deep dark:text-brand-mint"
@@ -430,7 +430,7 @@ useHead({
               data-testid="error-cta-primary"
               @click="go('/admin/dashboard')"
             >
-              <MaterialSymbol name="space_dashboard" :size="20" />
+              <AppIcon name="space_dashboard" :size="20" />
               {{ $t('error.forbidden.backToDashboard') }}
             </Button>
             <Button
@@ -440,7 +440,7 @@ useHead({
               data-testid="error-cta-primary"
               @click="reloadPage"
             >
-              <MaterialSymbol name="refresh" :size="20" />
+              <AppIcon name="refresh" :size="20" />
               {{ $t('error.serverError.reload') }}
             </Button>
             <Button
@@ -450,7 +450,7 @@ useHead({
               data-testid="error-cta-primary"
               @click="go('/')"
             >
-              <MaterialSymbol name="home" :size="20" />
+              <AppIcon name="home" :size="20" />
               {{ $t('error.backHome') }}
             </Button>
 
@@ -461,7 +461,7 @@ useHead({
               data-testid="error-cta-secondary"
               @click="go('/')"
             >
-              <MaterialSymbol name="cottage" :size="20" />
+              <AppIcon name="cottage" :size="20" />
               {{ $t('error.backHome') }}
             </Button>
             <Button
@@ -471,7 +471,7 @@ useHead({
               data-testid="error-cta-secondary"
               @click="go('/')"
             >
-              <MaterialSymbol name="home" :size="20" />
+              <AppIcon name="home" :size="20" />
               {{ $t('error.backHome') }}
             </Button>
           </div>
@@ -490,7 +490,7 @@ useHead({
               class="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/60 bg-surface-container px-3 py-1.5 text-xs font-medium text-on-surface transition-colors hover:border-outline hover:bg-surface-container-high"
               @click.prevent="go('/admin/dashboard')"
             >
-              <MaterialSymbol
+              <AppIcon
                 name="space_dashboard"
                 :size="16"
                 class="text-brand-teal-deep dark:text-brand-mint"
@@ -502,11 +502,7 @@ useHead({
               class="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/60 bg-surface-container px-3 py-1.5 text-xs font-medium text-on-surface transition-colors hover:border-outline hover:bg-surface-container-high"
               @click.prevent="go('/login')"
             >
-              <MaterialSymbol
-                name="login"
-                :size="16"
-                class="text-brand-teal-deep dark:text-brand-mint"
-              />
+              <AppIcon name="login" :size="16" class="text-brand-teal-deep dark:text-brand-mint" />
               {{ $t('error.notFound.login') }}
             </a>
           </div>
@@ -525,11 +521,7 @@ useHead({
               class="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/60 bg-surface-container px-3 py-1.5 text-xs font-medium text-on-surface transition-colors hover:border-outline hover:bg-surface-container-high"
               @click.prevent="go('/admin/profile')"
             >
-              <MaterialSymbol
-                name="person"
-                :size="16"
-                class="text-brand-teal-deep dark:text-brand-mint"
-              />
+              <AppIcon name="person" :size="16" class="text-brand-teal-deep dark:text-brand-mint" />
               {{ $t('error.forbidden.profile') }}
             </a>
             <a
@@ -537,7 +529,7 @@ useHead({
               class="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/60 bg-surface-container px-3 py-1.5 text-xs font-medium text-on-surface transition-colors hover:border-outline hover:bg-surface-container-high"
               @click.prevent="go('/')"
             >
-              <MaterialSymbol
+              <AppIcon
                 name="cottage"
                 :size="16"
                 class="text-brand-teal-deep dark:text-brand-mint"

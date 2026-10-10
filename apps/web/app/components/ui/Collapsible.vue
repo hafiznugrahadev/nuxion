@@ -18,7 +18,7 @@ const open = defineModel<boolean>('open', { default: false });
       class="group flex w-full items-center justify-between gap-3 rounded-sm py-2 text-left text-sm font-medium text-on-surface outline-none transition-colors hover:bg-on-surface/4 focus-visible:ring-2 focus-visible:ring-ring"
     >
       {{ title }}
-      <MaterialSymbol
+      <AppIcon
         name="expand_more"
         :size="20"
         class="shrink-0 text-on-surface-variant transition-transform duration-200 ease-emphasized group-data-[state=open]:rotate-180"

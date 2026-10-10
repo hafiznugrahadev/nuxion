@@ -153,14 +153,14 @@ function onSort(next: SortState) {
         class="order-first w-full sm:order-last sm:w-auto"
         @click="openCreate"
       >
-        <MaterialSymbol name="person_add" :size="20" />
+        <AppIcon name="person_add" :size="20" />
         {{ $t('users.addUser') }}
       </Button>
       <div class="flex flex-row items-center gap-3">
         <Fieldset name="users-search" class="min-w-0 flex-1 sm:max-w-xs">
           <template #default="{ id, describedBy, invalid }">
             <div class="relative">
-              <MaterialSymbol
+              <AppIcon
                 name="search"
                 :size="18"
                 class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
@@ -187,7 +187,7 @@ function onSort(next: SortState) {
           :aria-label="$t('users.filter.title')"
           @click="filterOpen = true"
         >
-          <MaterialSymbol name="filter_list" :size="20" />
+          <AppIcon name="filter_list" :size="20" />
           <span
             v-if="selectedRoles.length"
             class="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground"
@@ -254,14 +254,14 @@ function onSort(next: SortState) {
               :title="$t('profile.personalInfo.edit')"
               @click="openEdit(asUser(row))"
             >
-              <MaterialSymbol name="edit" :size="18" />
+              <AppIcon name="edit" :size="18" />
             </button>
             <button
               class="touch-target relative flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-error/10 hover:text-error"
               :title="$t('users.deleteModal.title')"
               @click="askDelete(asUser(row))"
             >
-              <MaterialSymbol name="delete" :size="18" />
+              <AppIcon name="delete" :size="18" />
             </button>
           </div>
         </template>
@@ -343,7 +343,7 @@ function onSort(next: SortState) {
           :disabled="selectedRoles.length === 0"
           @click="clearRoles"
         >
-          <MaterialSymbol name="filter_alt_off" :size="18" />
+          <AppIcon name="filter_alt_off" :size="18" />
           {{ $t('users.filter.reset') }}
         </Button>
       </div>

@@ -73,9 +73,8 @@ export default defineNuxtConfig({
       // and :root in main.css already defaults to the light tokens, so the
       // attribute is simply absent from the SSR'd HTML.
       // Type system: Google Sans (UI) + Poppins (headings, see the heading
-      // rule in main.css) + Material Symbols Outlined for icons. The icon
-      // font uses display=block so ligature names never flash as raw text
-      // while the font loads.
+      // rule in main.css). UI icons are local Lucide Vue components, so no
+      // icon font needs to load before rendering.
       // Favicon links are NOT static here — app.vue sets them reactively so an
       // uploaded branding favicon (Settings → Branding) wins once set.
       link: [
@@ -84,10 +83,6 @@ export default defineNuxtConfig({
         {
           rel: 'stylesheet',
           href: 'https://fonts.googleapis.com/css2?family=Google+Sans:wght@300;400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap',
-        },
-        {
-          rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block',
         },
       ],
       script: [

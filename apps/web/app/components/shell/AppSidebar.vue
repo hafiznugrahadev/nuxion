@@ -11,7 +11,7 @@ const { isExpanded, isMobileOpen, closeMobile } = useSidebar();
 interface NavItem {
   label: string;
   to: string;
-  icon: string; // Material Symbols name
+  icon: string; // Lucide icon name
   adminOnly?: boolean;
 }
 
@@ -110,7 +110,7 @@ const showFull = computed(() => isMobileOpen.value || isExpanded.value);
                 v-if="isActive(item.to)"
                 class="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-full bg-primary"
               />
-              <MaterialSymbol :name="item.icon" :size="22" class="shrink-0" />
+              <AppIcon :name="item.icon" :size="22" class="shrink-0" />
               <span v-if="showFull">{{ $t(item.label) }}</span>
             </NuxtLink>
           </Tooltip>

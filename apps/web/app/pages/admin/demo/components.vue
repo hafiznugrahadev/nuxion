@@ -93,7 +93,7 @@ function showToast() {
         <Button variant="destructive">Error</Button>
         <Button variant="link">Link</Button>
         <Button disabled>Disabled</Button>
-        <Button size="icon"><MaterialSymbol name="favorite" :size="18" /></Button>
+        <Button size="icon"><AppIcon name="favorite" :size="18" /></Button>
         <Button size="sm">Small</Button>
         <Button size="lg">Large</Button>
       </div>
@@ -116,7 +116,7 @@ function showToast() {
         <Separator orientation="vertical" class="h-6" />
         <Tooltip text="MD3 tooltip (inverse surface)">
           <Toggle v-model:pressed="toggleOn" :aria-label="'Favorite'">
-            <MaterialSymbol :name="toggleOn ? 'favorite' : 'favorite_border'" :size="18" />
+            <AppIcon :name="toggleOn ? 'favorite' : 'favorite_border'" :size="18" />
           </Toggle>
         </Tooltip>
       </div>
@@ -197,7 +197,7 @@ function showToast() {
         <DropdownMenu :items="menuItems" label="Account" @select="onMenuSelect">
           <Button variant="outline">
             Dropdown menu
-            <MaterialSymbol name="keyboard_arrow_down" :size="18" />
+            <AppIcon name="keyboard_arrow_down" :size="18" />
           </Button>
         </DropdownMenu>
         <HoverCard>

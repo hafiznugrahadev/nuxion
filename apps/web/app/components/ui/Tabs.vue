@@ -6,7 +6,7 @@ import { cn } from '~/lib/utils';
 export interface TabDef {
   value: string;
   label: string;
-  /** Material Symbols name (optional). */
+  /** Lucide icon name (optional). */
   icon?: string;
 }
 
@@ -32,7 +32,7 @@ const model = defineModel<string>('modelValue');
         :value="tab.value"
         class="-mb-px inline-flex items-center gap-2 whitespace-nowrap border-b-[3px] border-transparent px-4 py-2.5 text-sm font-medium text-on-surface-variant transition-colors hover:text-on-surface data-[state=active]:border-primary data-[state=active]:font-semibold data-[state=active]:text-primary outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <MaterialSymbol v-if="tab.icon" :name="tab.icon" :size="18" />
+        <AppIcon v-if="tab.icon" :name="tab.icon" :size="18" />
         {{ tab.label }}
       </TabsTrigger>
     </TabsList>

@@ -84,7 +84,7 @@ const columns = computed(() => {
     <!-- Toolbar. Mobile: add button first (full-width); desktop: right. -->
     <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <Button v-if="canManage" class="w-full sm:ml-auto sm:w-auto" @click="openCreate">
-        <MaterialSymbol name="add" :size="20" />
+        <AppIcon name="add" :size="20" />
         {{ $t('roles.addRole') }}
       </Button>
     </div>
@@ -129,7 +129,7 @@ const columns = computed(() => {
               :aria-label="$t('roles.form.editTitle')"
               @click="openEdit(asRole(row))"
             >
-              <MaterialSymbol name="edit" :size="18" />
+              <AppIcon name="edit" :size="18" />
             </button>
             <button
               class="touch-target relative flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-error/10 hover:text-error disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
@@ -138,7 +138,7 @@ const columns = computed(() => {
               :aria-label="$t('roles.deleteModal.title')"
               @click="askDelete(asRole(row))"
             >
-              <MaterialSymbol name="delete" :size="18" />
+              <AppIcon name="delete" :size="18" />
             </button>
           </div>
         </template>

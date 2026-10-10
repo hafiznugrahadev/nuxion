@@ -13,7 +13,7 @@ const props = defineProps<{
   type?: string;
   placeholder?: string;
   required?: boolean;
-  /** Material Symbols name for a leading glyph (e.g. 'lock'). */
+  /** Lucide icon name for a leading glyph (e.g. 'lock'). */
   prefixIcon?: string;
   /** MD3 supporting text below the field; the error replaces it when present. */
   hint?: string;

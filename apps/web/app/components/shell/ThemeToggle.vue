@@ -27,7 +27,7 @@ const NEXT_LABEL: Record<ThemeMode, string> = {
       :title="`Theme: ${mode}${mode === 'system' ? ` (${isDark ? 'dark' : 'light'})` : ''}`"
       @click="toggle"
     >
-      <MaterialSymbol :name="ICONS[mode]" :size="22" />
+      <AppIcon :name="ICONS[mode]" :size="22" />
     </button>
     <template #fallback>
       <div class="h-10 w-10 rounded-full" />

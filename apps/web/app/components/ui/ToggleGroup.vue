@@ -6,7 +6,7 @@ import { cn } from '~/lib/utils';
 export interface ToggleOption {
   value: string;
   label: string;
-  /** Material Symbols name (optional). */
+  /** Lucide icon name (optional). */
   icon?: string;
 }
 
@@ -48,7 +48,7 @@ const model = defineModel<string | string[]>('modelValue');
       v-bind="controlAria()"
       class="touch-target relative inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-medium text-on-surface-variant outline-none transition-colors hover:bg-on-surface-variant/10 focus-visible:ring-2 focus-visible:ring-ring aria-pressed:bg-secondary-container aria-pressed:text-on-secondary-container"
     >
-      <MaterialSymbol v-if="opt.icon" :name="opt.icon" :size="18" />
+      <AppIcon v-if="opt.icon" :name="opt.icon" :size="18" />
       {{ opt.label }}
     </ToggleGroupItem>
   </ToggleGroupRoot>

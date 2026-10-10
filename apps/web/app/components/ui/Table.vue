@@ -96,7 +96,7 @@ const keyOf = (row: T, i: number) => String(cellOf(row, props.rowKey ?? 'id') ??
                 @click="toggleSort(col)"
               >
                 {{ col.label }}
-                <MaterialSymbol
+                <AppIcon
                   :name="
                     sort?.key === col.key
                       ? sort.order === 'asc'

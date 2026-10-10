@@ -51,7 +51,7 @@ async function handleClick(id: string) {
         class="touch-target relative inline-flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-on-surface-variant/10 hover:text-foreground"
         :aria-label="$t('notifications.title')"
       >
-        <MaterialSymbol name="notifications" :size="22" />
+        <AppIcon name="notifications" :size="22" />
         <!-- MD3 badge: error-colored dot -->
         <span
           v-if="store.unreadCount > 0"
@@ -77,7 +77,7 @@ async function handleClick(id: string) {
             class="flex items-center gap-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10 rounded-sm px-1.5 py-1"
             @click="store.markAllRead()"
           >
-            <MaterialSymbol name="check" :size="14" />
+            <AppIcon name="check" :size="14" />
             {{ $t('notifications.markAllRead') }}
           </button>
         </div>
@@ -92,7 +92,7 @@ async function handleClick(id: string) {
             v-else-if="store.notifications.length === 0"
             class="flex flex-col items-center justify-center gap-1 py-8 text-center"
           >
-            <MaterialSymbol name="inbox" :size="32" class="text-muted-foreground" />
+            <AppIcon name="inbox" :size="32" class="text-muted-foreground" />
             <p class="text-sm font-medium text-foreground">{{ $t('notifications.empty') }}</p>
             <p class="text-xs text-muted-foreground">{{ $t('notifications.emptyHint') }}</p>
           </div>
@@ -105,7 +105,7 @@ async function handleClick(id: string) {
               :class="{ 'bg-secondary-container/40': !n.readAt }"
               @click="handleClick(n.id)"
             >
-              <MaterialSymbol
+              <AppIcon
                 :name="typeIcon[n.type] ?? 'info'"
                 :size="18"
                 class="mt-0.5 shrink-0"

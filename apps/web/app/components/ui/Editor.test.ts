@@ -48,7 +48,7 @@ function mountEditor(disabled = false) {
   const wrapper = mount(host, {
     global: {
       components: { Fieldset },
-      stubs: { ClientOnly: { template: '<slot />' }, MaterialSymbol: true },
+      stubs: { ClientOnly: { template: '<slot />' }, AppIcon: true },
     },
   });
   return { wrapper, error };

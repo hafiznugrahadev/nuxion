@@ -3,7 +3,7 @@ import type { HTMLAttributes } from 'vue';
 import { cn } from '~/lib/utils';
 
 /**
- * MD3 outlined text field base. Optional `prefixIcon` (Material Symbols name)
+ * MD3 outlined text field base. Optional `prefixIcon` (Lucide icon name)
  * renders a non-interactive leading glyph with matching inset padding.
  */
 const props = defineProps<{ class?: HTMLAttributes['class']; prefixIcon?: string }>();
@@ -19,7 +19,7 @@ const BASE =
 
 <template>
   <div v-if="prefixIcon" class="relative w-full">
-    <MaterialSymbol
+    <AppIcon
       :name="prefixIcon"
       :size="18"
       class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant"

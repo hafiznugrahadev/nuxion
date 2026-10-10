@@ -5,7 +5,7 @@
 const props = defineProps<{
   label: string;
   value: string;
-  icon: string; // Material Symbols name
+  icon: string; // Lucide icon name
   change?: number; // signed percentage; positive = up
 }>();
 
@@ -17,7 +17,7 @@ const isUp = computed(() => (props.change ?? 0) >= 0);
     <div
       class="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary-container text-on-secondary-container"
     >
-      <MaterialSymbol :name="icon" :size="20" />
+      <AppIcon :name="icon" :size="20" />
     </div>
 
     <div class="mt-5 flex items-end justify-between gap-3">
@@ -33,7 +33,7 @@ const isUp = computed(() => (props.change ?? 0) >= 0);
           isUp ? 'bg-success/12 text-success' : 'bg-error/12 text-error',
         ]"
       >
-        <MaterialSymbol :name="isUp ? 'arrow_upward' : 'arrow_downward'" :size="14" />
+        <AppIcon :name="isUp ? 'arrow_upward' : 'arrow_downward'" :size="14" />
         {{ Math.abs(change).toFixed(2) }}%
       </span>
     </div>

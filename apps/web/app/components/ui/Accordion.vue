@@ -43,7 +43,7 @@ const props = withDefaults(
           class="group flex flex-1 items-center justify-between gap-3 px-4 py-3.5 text-left text-sm font-medium text-on-surface transition-colors hover:bg-on-surface/4 outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {{ item.title }}
-          <MaterialSymbol
+          <AppIcon
             name="expand_more"
             :size="20"
             class="shrink-0 text-on-surface-variant transition-transform duration-200 ease-emphasized group-data-[state=open]:rotate-180"

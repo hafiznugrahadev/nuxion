@@ -11,7 +11,7 @@ const activeIndex = ref(0);
 
 interface Command {
   label: string;
-  icon: string; // Material Symbols name
+  icon: string; // Lucide icon name
   action: () => void;
 }
 
@@ -82,7 +82,7 @@ function onKeydown(e: KeyboardEvent) {
         <Fieldset name="cp-input">
           <template #default="{ id, describedBy, invalid }">
             <div class="flex items-center gap-3 border-b border-outline-variant px-4 py-3">
-              <MaterialSymbol name="search" :size="18" class="shrink-0 text-muted-foreground" />
+              <AppIcon name="search" :size="18" class="shrink-0 text-muted-foreground" />
               <input
                 :id="id"
                 v-model="query"
@@ -127,7 +127,7 @@ function onKeydown(e: KeyboardEvent) {
                 @mouseenter="activeIndex = i"
                 @click="execute(cmd)"
               >
-                <MaterialSymbol
+                <AppIcon
                   :name="cmd.icon"
                   :size="18"
                   class="shrink-0"

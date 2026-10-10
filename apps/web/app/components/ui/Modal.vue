@@ -44,7 +44,7 @@ defineProps<{ title?: string; description?: string }>();
             class="touch-target relative rounded-full p-2 text-muted-foreground transition-colors hover:bg-on-surface-variant/10 hover:text-foreground"
             aria-label="Close"
           >
-            <MaterialSymbol name="close" :size="20" />
+            <AppIcon name="close" :size="20" />
           </DialogClose>
         </div>
         <slot />

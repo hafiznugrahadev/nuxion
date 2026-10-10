@@ -198,7 +198,7 @@ async function removePasskey(passkey: Passkey) {
           <p class="mt-1 text-sm text-muted-foreground">{{ $t('security.passkeys.subtitle') }}</p>
         </div>
         <Button variant="outline" data-testid="add-passkey-button" @click="addOpen = true">
-          <MaterialSymbol name="add" :size="18" />
+          <AppIcon name="add" :size="18" />
           {{ $t('security.passkeys.add') }}
         </Button>
       </div>
@@ -236,7 +236,7 @@ async function removePasskey(passkey: Passkey) {
             :disabled="removeBusy === p.id"
             @click="removePasskey(p)"
           >
-            <MaterialSymbol name="delete" :size="18" class="text-destructive" />
+            <AppIcon name="delete" :size="18" class="text-destructive" />
           </Button>
         </li>
       </ul>

@@ -87,7 +87,7 @@ const panelClass = computed(() =>
           <span v-else class="hidden text-sm font-medium text-foreground sm:inline">
             {{ auth.user?.name }}
           </span>
-          <MaterialSymbol
+          <AppIcon
             :class="[
               'shrink-0 text-muted-foreground transition-transform',
               variant === 'compact' && 'hidden sm:inline',
@@ -118,7 +118,7 @@ const panelClass = computed(() =>
               class="flex w-full items-center gap-2.5 rounded-sm px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-on-surface-variant/10 hover:text-foreground"
               @click="go('/admin/profile')"
             >
-              <MaterialSymbol name="person" :size="18" />
+              <AppIcon name="person" :size="18" />
               {{ $t('nav.profile') }}
             </button>
             <button
@@ -126,7 +126,7 @@ const panelClass = computed(() =>
               class="flex w-full items-center gap-2.5 rounded-sm px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
               @click="onLogout"
             >
-              <MaterialSymbol name="logout" :size="18" />
+              <AppIcon name="logout" :size="18" />
               {{ $t('nav.signOut') }}
             </button>
           </div>

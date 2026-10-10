@@ -85,6 +85,7 @@
       "name": "@nuxion/web",
       "version": "0.1.0",
       "dependencies": {
+        "@lucide/vue": "^1.54.0",
         "@nuxion/shared-types": "workspace:*",
         "@nuxtjs/i18n": "^10.4.0",
         "@simplewebauthn/browser": "^14.0.0",
@@ -563,6 +564,8 @@
     "@kwsites/promise-deferred": ["@kwsites/promise-deferred@1.1.1", "", {}, "sha512-GaHYm+c0O9MjZRu0ongGBRbinu8gVAMd2UZjji6jVmqKtZluZnptXGWhz1E8j8D2HJ3f/yMxKAUC0b+57wncIw=="],
 
     "@levischuck/tiny-cbor": ["@levischuck/tiny-cbor@0.2.11", "", {}, "sha512-llBRm4dT4Z89aRsm6u2oEZ8tfwL/2l6BwpZ7JcyieouniDECM5AqNgr/y08zalEIvW3RSK4upYyybDcmjXqAow=="],
+
+    "@lucide/vue": ["@lucide/vue@1.54.0", "", { "peerDependencies": { "vue": ">=3.0.1" } }, "sha512-fq5S0Fk3a3c2VPs+QRiiHZylZV+1pxyTyOYxoH507b/OdiqciUiEm83N7d7xijS8lDlsGFf12ad9AkLGVHRevg=="],
 
     "@lukeed/csprng": ["@lukeed/csprng@1.1.0", "", {}, "sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA=="],
 

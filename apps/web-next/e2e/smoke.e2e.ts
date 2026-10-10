@@ -132,3 +132,8 @@ test('profile admin route is guarded like the rest of /admin', async ({ page }) 
   await page.goto('/admin/profile');
   await expect(page).toHaveURL(/\/login\?redirect=%2Fadmin%2Fprofile$/);
 });
+
+test('settings admin route is guarded like the rest of /admin', async ({ page }) => {
+  await page.goto('/admin/settings');
+  await expect(page).toHaveURL(/\/login\?redirect=%2Fadmin%2Fsettings$/);
+});

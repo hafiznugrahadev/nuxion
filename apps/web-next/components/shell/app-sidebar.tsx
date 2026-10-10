@@ -2,8 +2,9 @@
 
 import { BrandLogo } from '@/components/common/brand-logo';
 import { UserMenu } from '@/components/shell/user-menu';
+import { useBranding } from '@/lib/branding';
 import { closeMobile, getSidebarState, subscribeSidebar } from '@/lib/use-sidebar';
-import { CircleUserRound, LayoutDashboard, ShieldCheck, Users } from 'lucide-react';
+import { CircleUserRound, LayoutDashboard, Settings, ShieldCheck, Users } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -23,6 +24,7 @@ export function AppSidebar() {
     getSidebarState,
     getSidebarState,
   );
+  const branding = useBranding();
 
   // The icon-only rail is a desktop concept; the mobile drawer is always full.
   const showFull = isMobileOpen || isExpanded;
@@ -33,6 +35,7 @@ export function AppSidebar() {
     // Shield glyph: access control, the meaning roles carry in this app.
     { label: t('nav.roles'), href: '/admin/roles', icon: ShieldCheck },
     { label: t('nav.profile'), href: '/admin/profile', icon: CircleUserRound },
+    { label: t('nav.settings'), href: '/admin/settings', icon: Settings },
   ];
 
   function isActive(href: string) {
@@ -64,7 +67,7 @@ export function AppSidebar() {
           >
             <BrandLogo className="h-10" />
             {showFull && (
-              <span className="text-base tracking-tight text-foreground">{t('app.name')}</span>
+              <span className="text-base tracking-tight text-foreground">{branding.appName}</span>
             )}
           </Link>
         </div>

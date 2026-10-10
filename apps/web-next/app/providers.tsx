@@ -7,6 +7,7 @@ import { Toaster } from 'sonner';
 import { useEffect, useState } from 'react';
 import { ConfirmProvider } from '@/lib/use-confirm';
 import { BrandingProvider } from '@/components/common/branding-provider';
+import type { BrandingSettings } from '@nuxion/shared-types';
 
 /*
  * next-themes mirrors the Nuxt variant's useTheme contract exactly: the
@@ -16,7 +17,13 @@ import { BrandingProvider } from '@/components/common/branding-provider';
  * anti-FOUC script. The only dropped behaviour is migrating the legacy
  * 'theme' key, which no Next-variant install can have.
  */
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({
+  initialBranding,
+  children,
+}: {
+  initialBranding?: BrandingSettings;
+  children: React.ReactNode;
+}) {
   // Hydration marker: e2e waits for this before clicking submit buttons —
   // a non-hydrated React form falls back to a native GET submit.
   useEffect(() => {
@@ -40,7 +47,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         storageKey="theme-mode"
         enableSystem
       >
-        <BrandingProvider>
+        <BrandingProvider initial={initialBranding}>
           <ConfirmProvider>
             {children}
             {/* One shared top bar for every instrumented XHR (see lib/xhr-progress). */}

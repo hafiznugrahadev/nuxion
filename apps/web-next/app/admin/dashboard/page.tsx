@@ -4,6 +4,7 @@ import { EmptyState, LoadingState } from '@/components/blocks/states';
 import { PageHeading } from '@/components/blocks/page-heading';
 import { Card } from '@/components/ui/card';
 import { Users } from 'lucide-react';
+import { usePageTitle } from '@/lib/use-page-title';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useUsers } from '@/features/user';
@@ -16,6 +17,7 @@ import { useUsers } from '@/features/user';
  */
 export default function DashboardPage() {
   const t = useTranslations('dashboard');
+  usePageTitle(t('title'));
   const { data, isLoading } = useUsers({ page: 1, limit: 1 });
   const total = data?.meta?.total;
 

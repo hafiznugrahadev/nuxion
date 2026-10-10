@@ -2,6 +2,7 @@
 
 import { BrandLogo } from '@/components/common/brand-logo';
 import { useTranslations } from 'next-intl';
+import { useBranding } from '@/lib/branding';
 import { useEffect, useState } from 'react';
 
 /*
@@ -24,6 +25,7 @@ const AUTH_PANELS = [
 
 export function AuthPanel() {
   const t = useTranslations();
+  const { appName } = useBranding();
   const [panel, setPanel] = useState<string | null>(null);
   const [panelLoaded, setPanelLoaded] = useState(false);
 
@@ -54,7 +56,7 @@ export function AuthPanel() {
       />
       <div className="relative z-10 max-w-md px-8 text-center text-white">
         <BrandLogo className="mx-auto mb-6 h-16" />
-        <h2 className="text-2xl font-semibold tracking-tight">{t('app.name')}</h2>
+        <h2 className="text-2xl font-semibold tracking-tight">{appName}</h2>
         <p className="mt-3 text-sm text-white/80">{t('appTagline')}</p>
       </div>
     </div>

@@ -17,6 +17,7 @@ import {
   TriangleAlert,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useBranding } from '@/lib/branding';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -34,6 +35,7 @@ export default function ErrorPage({
   reset: () => void;
 }) {
   const t = useTranslations();
+  const { appName } = useBranding();
   // Client-time only exists after hydration; this boundary renders on the
   // client, so a lazy initializer is safe (SSR keeps the em dash placeholder).
   const [occurredAt] = useState(() =>
@@ -215,7 +217,7 @@ export default function ErrorPage({
 
       <footer className="border-t border-outline-variant/40 py-4">
         <p className="mx-auto max-w-7xl px-4 text-center text-xs text-on-surface-variant sm:px-6">
-          © {year} {t('app.name')}
+          © {year} {appName}
         </p>
       </footer>
     </div>

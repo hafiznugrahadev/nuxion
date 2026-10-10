@@ -2,12 +2,14 @@
 
 import { ErrorState, LoadingState } from '@/components/blocks/states';
 import { PageHeading } from '@/components/blocks/page-heading';
+import { usePageTitle } from '@/lib/use-page-title';
 import { useTranslations } from 'next-intl';
 import { ChangePasswordCard, PersonalInfoCard, ProfileHeaderCard, useMe } from '@/features/profile';
 import { SecuritySection } from '@/features/security';
 
 export default function ProfilePage() {
   const t = useTranslations();
+  usePageTitle(t('profile.title'));
   const { data: user, isLoading, isError, error, refetch } = useMe();
 
   return (

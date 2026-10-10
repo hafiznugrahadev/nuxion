@@ -1,12 +1,15 @@
 'use client';
 
 import { BrandLogo } from '@/components/common/brand-logo';
+import { BrandName } from '@/components/common/brand-name';
 import { Button } from '@/components/ui/button';
 import { ensureSession, TWO_FACTOR_ENABLED } from '@/lib/auth-api';
 import { getAuthState, hasRole, isAuthenticated, subscribeAuth } from '@/lib/auth-store';
 import { logout } from '@/lib/auth-api';
+import { Badge } from '@/components/ui/badge';
+import { roleLabel } from '@/lib/roles';
 import { UserRole } from '@nuxion/shared-types';
-import { House, LogOut, ShieldCheck } from 'lucide-react';
+import { House, LayoutDashboard, LogOut, PersonStanding, ShieldCheck } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -55,6 +58,21 @@ export function AdminGuard({ children }: { children: ReactNode }) {
   if (status === 'ok') return <>{children}</>;
 
   if (status === 'forbidden') {
+    // The Nuxt variant's error.vue forbidden screen: the session card answers
+    // "who am I signed in as" (the question a 403 raises), the primary CTA
+    // returns to the visitor's own dashboard, and the chips offer the profile
+    // and home.
+    const user = getAuthState().user;
+    const initials =
+      user?.name
+        ?.trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase())
+        .join('') ?? '?';
+    const primaryRole = user?.roles?.[0] ?? 'USER';
+    const year = new Date().getFullYear();
+
     return (
       <div
         className="flex min-h-svh flex-col bg-background text-on-surface"
@@ -73,24 +91,87 @@ export function AdminGuard({ children }: { children: ReactNode }) {
             <p className="mt-3 text-sm leading-relaxed text-on-surface-variant">
               {t('error.forbidden.description')}
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button
-                className="bg-brand-navy text-white hover:bg-brand-blue dark:bg-brand-mint/15 dark:text-brand-mint"
-                asChild
+
+            {/* Session card: the account that just got denied. */}
+            {user && (
+              <div
+                className="mt-6 flex w-full max-w-xl items-center justify-between gap-3 rounded-xl border border-outline-variant/50 bg-surface-container-lowest p-3 shadow-sm"
+                data-testid="error-session-card"
               >
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-navy/10 text-sm font-bold text-brand-teal-deep dark:bg-brand-mint/15 dark:text-brand-mint">
+                    {initials}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-on-surface">{user.name}</p>
+                    <p className="truncate text-xs text-on-surface-variant">{user.email}</p>
+                  </div>
+                  <Badge variant="muted" className="ml-1 shrink-0 font-mono text-[10px] uppercase">
+                    {roleLabel(primaryRole, (key) => t(key))}
+                  </Badge>
+                </div>
+                <button
+                  type="button"
+                  className="touch-target relative flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
+                  data-testid="error-signout"
+                  onClick={() => void logout().then(() => router.replace('/login'))}
+                >
+                  <LogOut size={16} aria-hidden="true" />
+                  {t('error.forbidden.signOut')}
+                </button>
+              </div>
+            )}
+
+            <div className="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+              <Button
+                size="lg"
+                className="bg-brand-navy text-white hover:bg-brand-blue dark:bg-brand-mint/15 dark:text-brand-mint"
+                data-testid="error-cta-primary"
+                onClick={() => router.replace('/admin/dashboard')}
+              >
+                <LayoutDashboard size={20} aria-hidden="true" />
+                {t('error.forbidden.backToDashboard')}
+              </Button>
+              <Button variant="outline" size="lg" asChild data-testid="error-cta-secondary">
                 <Link href="/">
                   <House size={20} aria-hidden="true" />
-                  {t('error.backHome')}
+                  {t('error.forbidden.home')}
                 </Link>
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => void logout().then(() => router.replace('/login'))}
-              >
-                <LogOut size={18} aria-hidden="true" />
-                {t('error.forbidden.signOut')}
-              </Button>
             </div>
+
+            {/* Navigation help chips. */}
+            <div
+              className="mt-6 flex w-full flex-wrap items-center justify-center gap-1.5"
+              data-testid="error-links"
+            >
+              <span className="mr-1 text-xs font-medium text-on-surface-variant">
+                {t('error.forbidden.helpTitle')}
+              </span>
+              <Link
+                href="/admin/profile"
+                className="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/60 bg-surface-container px-3 py-1.5 text-xs font-medium text-on-surface transition-colors hover:border-outline hover:bg-surface-container-high"
+              >
+                <PersonStanding
+                  size={16}
+                  className="text-brand-teal-deep dark:text-brand-mint"
+                  aria-hidden="true"
+                />
+                {t('error.forbidden.profile')}
+              </Link>
+              <Link
+                href="/"
+                className="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/60 bg-surface-container px-3 py-1.5 text-xs font-medium text-on-surface transition-colors hover:border-outline hover:bg-surface-container-high"
+              >
+                <House
+                  size={16}
+                  className="text-brand-teal-deep dark:text-brand-mint"
+                  aria-hidden="true"
+                />
+                {t('error.forbidden.home')}
+              </Link>
+            </div>
+
             <p className="mt-8 flex items-center gap-1.5 text-xs text-on-surface-variant">
               <ShieldCheck size={14} aria-hidden="true" />
               {t('error.forbidden.protocol')}
@@ -101,7 +182,7 @@ export function AdminGuard({ children }: { children: ReactNode }) {
           <div className="mx-auto flex max-w-7xl items-center justify-center gap-2 px-4">
             <BrandLogo className="h-5" />
             <p className="text-xs text-on-surface-variant">
-              © {new Date().getFullYear()} {t('app.name')}
+              © {year} <BrandName />
             </p>
           </div>
         </footer>

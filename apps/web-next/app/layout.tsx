@@ -1,3 +1,4 @@
+import { getBranding } from '@/lib/branding-server';
 import type { Metadata, Viewport } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages, getTranslations } from 'next-intl/server';
@@ -6,12 +7,15 @@ import './globals.css';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('app');
+  // SSR branding (the Nuxt variant's branding plugin parity): the default
+  // tab title carries the live app name, falling back to the i18n default.
+  const branding = await getBranding();
   return {
     metadataBase: new URL(
       process.env.NEXT_PUBLIC_SITE_URL ?? process.env.APP_URL ?? 'http://localhost:8080',
     ),
     title: {
-      default: t('name'),
+      default: branding.appName || t('name'),
       // Every page title already ends with the app name (see the landing's
       // metaTitle), so no template suffix — same rule as the Nuxt variant.
       template: '%s',
@@ -30,6 +34,7 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale();
   const messages = await getMessages();
+  const branding = await getBranding();
 
   return (
     // suppressHydrationWarning: next-themes writes data-theme pre-paint.
@@ -48,7 +53,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@300;400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap"
         />
         <NextIntlClientProvider messages={messages}>
-          <Providers>{children}</Providers>
+          <Providers initialBranding={branding}>{children}</Providers>
         </NextIntlClientProvider>
       </body>
     </html>

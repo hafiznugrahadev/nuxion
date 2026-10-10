@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { LanguageSwitcher } from '@/components/shell/language-switcher';
 import { ThemeToggle } from '@/components/shell/theme-toggle';
-import { Crosshair, House, Radar, TriangleAlert } from 'lucide-react';
+import { BrandName } from '@/components/common/brand-name';
+import { Crosshair, House, LayoutDashboard, LogIn, Radar, TriangleAlert } from 'lucide-react';
+import { getBranding } from '@/lib/branding-server';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 
@@ -17,6 +19,7 @@ import Link from 'next/link';
  */
 export default async function NotFound() {
   const t = await getTranslations();
+  await getBranding(); // warm the request cache for the tab-title default
   const year = new Date().getFullYear();
 
   return (
@@ -26,7 +29,7 @@ export default async function NotFound() {
           <Link href="/" className="flex shrink-0 items-center gap-3">
             <BrandLogo className="h-8" />
             <span className="text-base font-semibold tracking-tight text-on-surface">
-              {t('app.name')}
+              <BrandName />
             </span>
           </Link>
           <div className="flex items-center gap-2">
@@ -86,13 +89,45 @@ export default async function NotFound() {
                 </Link>
               </Button>
             </div>
+
+            {/* Helpful destination chips (both routes exist in this variant). */}
+            <div
+              className="mt-6 flex w-full flex-wrap items-center gap-1.5"
+              data-testid="error-links"
+            >
+              <span className="mr-1 text-xs font-medium text-on-surface-variant">
+                {t('error.notFound.links')}
+              </span>
+              <Link
+                href="/admin/dashboard"
+                className="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/60 bg-surface-container px-3 py-1.5 text-xs font-medium text-on-surface transition-colors hover:border-outline hover:bg-surface-container-high"
+              >
+                <LayoutDashboard
+                  size={16}
+                  className="text-brand-teal-deep dark:text-brand-mint"
+                  aria-hidden="true"
+                />
+                {t('error.notFound.dashboard')}
+              </Link>
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/60 bg-surface-container px-3 py-1.5 text-xs font-medium text-on-surface transition-colors hover:border-outline hover:bg-surface-container-high"
+              >
+                <LogIn
+                  size={16}
+                  className="text-brand-teal-deep dark:text-brand-mint"
+                  aria-hidden="true"
+                />
+                {t('error.notFound.login')}
+              </Link>
+            </div>
           </div>
         </div>
       </main>
 
       <footer className="border-t border-outline-variant/40 py-4">
         <p className="mx-auto max-w-7xl px-4 text-center text-xs text-on-surface-variant sm:px-6">
-          © {year} {t('app.name')}
+          © {year} <BrandName />
         </p>
       </footer>
     </div>

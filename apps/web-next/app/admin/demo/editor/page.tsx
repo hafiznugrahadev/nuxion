@@ -2,6 +2,7 @@
 
 import { PageHeading } from '@/components/blocks/page-heading';
 import { Editor } from '@/components/ui/editor';
+import { usePageTitle } from '@/lib/use-page-title';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
@@ -13,6 +14,7 @@ import { useState } from 'react';
  */
 export default function EditorDemoPage() {
   const t = useTranslations();
+  usePageTitle(t('editorDemo.title'));
   const [html, setHtml] = useState('');
 
   return (

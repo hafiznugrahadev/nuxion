@@ -6,12 +6,25 @@ import { apiFetch } from '@/lib/use-api';
 import { useEffect } from 'react';
 
 /**
- * Seeds the global branding store from the public settings endpoint once per
- * load. Reads go through the shared client (same-origin proxy → API); a
- * failure keeps the defaults — branding must never break the shell.
+ * Owns the global branding store. `initial` comes from the root layout's
+ * server-side fetch (SSR parity with the Nuxt variant's branding plugin); the
+ * fallback fetch covers RSC payloads that arrive without it. Either way the
+ * seed lands in an effect — one paint on the defaults at worst, never a
+ * broken render. Settings → Branding keeps the store live via setBranding.
  */
-export function BrandingProvider({ children }: { children: React.ReactNode }) {
+export function BrandingProvider({
+  initial,
+  children,
+}: {
+  initial?: BrandingSettings;
+  children: React.ReactNode;
+}) {
   useEffect(() => {
+    // Prefer the SSR-fetched branding; fall back to fetching it here.
+    if (initial) {
+      setBranding(initial);
+      return;
+    }
     let cancelled = false;
     void apiFetch<BrandingSettings>('/settings/branding')
       .then((branding) => {
@@ -23,7 +36,7 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [initial]);
 
   return <>{children}</>;
 }

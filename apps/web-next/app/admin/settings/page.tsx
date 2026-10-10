@@ -2,6 +2,7 @@
 
 import { PageHeading } from '@/components/blocks/page-heading';
 import { Tabs } from '@/components/ui/tabs';
+import { usePageTitle } from '@/lib/use-page-title';
 import { useTranslations } from 'next-intl';
 import { BrandingTab } from '@/features/settings';
 
@@ -9,6 +10,7 @@ import { BrandingTab } from '@/features/settings';
 // restructuring the page.
 export default function SettingsPage() {
   const t = useTranslations();
+  usePageTitle(t('settings.title'));
   return (
     <div className="space-y-6">
       <PageHeading

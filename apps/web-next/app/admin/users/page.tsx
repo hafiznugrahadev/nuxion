@@ -1,6 +1,7 @@
 'use client';
 
 import { PageHeading } from '@/components/blocks/page-heading';
+import { usePageTitle } from '@/lib/use-page-title';
 import { useTranslations } from 'next-intl';
 import { UsersTable } from '@/features/user';
 
@@ -8,6 +9,7 @@ import { UsersTable } from '@/features/user';
 // features/ is not auto-imported).
 export default function UsersPage() {
   const t = useTranslations();
+  usePageTitle(t('users.title'));
   return (
     <div className="space-y-6">
       <PageHeading

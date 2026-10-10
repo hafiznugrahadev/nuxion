@@ -1,6 +1,7 @@
 import { CopyButton } from '@/components/common/copy-button';
 import { BrandLogo } from '@/components/common/brand-logo';
 import { AuthCta } from '@/components/auth/auth-cta';
+import { BrandName } from '@/components/common/brand-name';
 import { LanguageSwitcher } from '@/components/shell/language-switcher';
 import { ThemeToggle } from '@/components/shell/theme-toggle';
 import { Tabs } from '@/components/ui/tabs';
@@ -100,7 +101,7 @@ export async function generateMetadata() {
 
 export default async function Home() {
   const t = await getTranslations();
-  const appName = t('app.name');
+  const appName = t('app.name'); // metaTitle only; visible chrome reads the live branding store
   const year = new Date().getFullYear();
 
   const cloneSteps: CloneStep[] = [
@@ -331,7 +332,7 @@ export default async function Home() {
                   className={`inline-flex cursor-default items-center gap-1.5 rounded-full bg-secondary-container px-4 py-0.5 text-xs font-medium text-on-secondary-container shadow-sm ${RISE}`}
                 >
                   <BrandLogo className="h-4" />
-                  <span>{appName}</span>
+                  <BrandName />
                   <span
                     className="mx-1 h-1.5 w-1.5 rounded-full bg-brand-teal"
                     aria-hidden="true"
@@ -347,7 +348,7 @@ export default async function Home() {
                   NestJS + Next
                   <br className="hidden sm:inline" />{' '}
                   <span className="bg-gradient-to-r from-brand-navy via-brand-blue to-brand-teal bg-clip-text text-transparent dark:from-brand-mint dark:via-brand-teal dark:to-brand-mint">
-                    {appName}
+                    <BrandName />
                   </span>
                 </h1>
 
@@ -909,7 +910,9 @@ export default async function Home() {
             <div className="flex items-center gap-3">
               <BrandLogo className="h-8" />
               <div>
-                <p className="text-base font-semibold text-on-surface">{appName}</p>
+                <p className="text-base font-semibold text-on-surface">
+                  <BrandName />
+                </p>
                 <p className="text-xs text-on-surface-variant">{t('home.footer.tagline')}</p>
               </div>
             </div>
@@ -942,7 +945,7 @@ export default async function Home() {
           </div>
           <div className="flex flex-col items-center justify-between gap-3 pt-2 md:flex-row">
             <p className="text-xs text-on-surface-variant">
-              © {year} {appName} · {t('home.footer.license')}
+              © {year} <BrandName /> · {t('home.footer.license')}
             </p>
             <div className="flex items-center gap-2">
               {['NestJS 12', 'Next.js 16', 'Turborepo'].map((pill) => (

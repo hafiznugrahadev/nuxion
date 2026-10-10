@@ -239,5 +239,93 @@
     "resetInvalidExpired": "Tautan reset ini tidak valid atau telah kedaluwarsa.",
     "invalidToken": "Token reset tidak valid atau tidak ada.",
     "twoFactorRequired": "Akun ini mengaktifkan autentikasi dua langkah. Langkah verifikasi tiba bersama stage 2FA kit; masuk dengan akun tanpa 2FA atau tunggu pembaruan."
+  },
+  "users": {
+    "title": "Pengguna",
+    "allAccounts": "Semua akun",
+    "subtitle": "Pengguna terdaftar di seluruh ruang kerja (khusus admin).",
+    "search": "Cari pengguna…",
+    "addUser": "Tambah pengguna",
+    "noResults": "Tidak ada pengguna ditemukan",
+    "noResultsHint": "Coba pencarian lain, atau tambah pengguna baru.",
+    "filter": {
+      "title": "Filter",
+      "desc": "Sempitkan daftar pengguna.",
+      "roles": "Peran",
+      "reset": "Reset filter"
+    },
+    "columns": {
+      "user": "Pengguna",
+      "roles": "Peran",
+      "joined": "Bergabung",
+      "action": "Aksi"
+    },
+    "roles": {
+      "all": "Semua",
+      "superAdmin": "Super Admin",
+      "admin": "Admin",
+      "user": "Pengguna"
+    },
+    "pagination": {
+      "prev": "Sebelumnya",
+      "next": "Berikutnya",
+      "page": "Halaman",
+      "of": "/",
+      "total": "{n} pengguna"
+    },
+    "deleteModal": {
+      "title": "Hapus pengguna",
+      "body": "Hapus {name}? Ini tidak dapat dibatalkan.",
+      "confirm": "Hapus",
+      "deleting": "Menghapus…",
+      "cancel": "Batal"
+    },
+    "form": {
+      "newTitle": "Pengguna baru",
+      "editTitle": "Edit pengguna",
+      "newDesc": "Buat akun dan tetapkan peran.",
+      "editDesc": "Perbarui detail akun dan peran.",
+      "email": "Email",
+      "name": "Nama",
+      "password": "Kata sandi",
+      "passwordHint": "(kosongkan untuk tetap sama)",
+      "roles": "Peran",
+      "cancel": "Batal",
+      "saving": "Menyimpan…",
+      "saveChanges": "Simpan perubahan",
+      "createUser": "Buat pengguna",
+      "securityConfirmTitle": "Ubah akses akun?",
+      "rolesConfirmDescription": "Perubahan peran akan mengubah akses {name}.",
+      "passwordConfirmDescription": "Kata sandi {name} yang sekarang tidak akan berlaku lagi.",
+      "privilegedCreateTitle": "Buat akun administrator?",
+      "privilegedCreateDescription": "Ini memberikan akses administrasi kepada {name}. Periksa peran yang dipilih sebelum membuat akun ini."
+    },
+    "toasts": {
+      "created": "Pengguna dibuat",
+      "updated": "Pengguna diperbarui",
+      "deleted": "Pengguna dihapus"
+    }
+  },
+  "dashboard": {
+    "title": "Dasbor",
+    "subtitle": "Selamat datang kembali, inilah yang terjadi hari ini.",
+    "metrics": {
+      "users": "Pengguna"
+    },
+    "quicklinksTitle": "Aksi cepat",
+    "quicklinks": {
+      "users": "Kelola pengguna",
+      "docs": "Dokumentasi kit"
+    }
+  },
+  "confirm": {
+    "cancel": "Batal",
+    "ok": "Konfirmasi"
+  },
+  "a11y": {
+    "openMenu": "Buka menu",
+    "closeMenu": "Tutup menu",
+    "expandSidebar": "Lebarkan sidebar",
+    "collapseSidebar": "Ciutkan sidebar"
   }
 }

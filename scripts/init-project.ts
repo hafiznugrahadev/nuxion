@@ -6,13 +6,22 @@
  * the buckets, the `.orb.local` domains, and the "Starter Kit" display name) to
  * yours, then writes a fresh `.env` with a generated JWT secret.
  *
+ * The kit carries TWO frontend variants: `apps/web` (Nuxt, default) and
+ * `apps/web-next` (Next.js). `--frontend` picks which one the new project
+ * keeps; the other app plus its root references (compose services, env
+ * section, scripts, docs blocks) are removed, and a Next pick additionally
+ * moves `apps/web-next` into `apps/web` so every project has exactly one
+ * frontend at the same path.
+ *
  *   bun run init                                  # interactive
  *   bun run init --name portal-desa --yes         # non-interactive
  *   bun run init --name portal-desa --dry-run     # preview the changes only
+ *   bun run init --frontend next --name my-app --yes --reset-git
  *
  * Flags:
  *   --name <slug>       kebab-case project slug (default: this directory's name)
  *   --display <name>    human-readable app name (default: Title Case of the slug)
+ *   --frontend <v>      keep the Nuxt (default) or the Next frontend variant
  *   --yes, -y           accept defaults, skip prompts
  *   --dry-run           list the files that would change; write nothing
  *   --reset-git         delete .git and start a fresh history
@@ -20,7 +29,7 @@
  */
 import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { existsSync } from 'node:fs';
+import { existsSync, renameSync, rmSync } from 'node:fs';
 import { readFile, rm, writeFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
@@ -46,9 +55,12 @@ const red = (s: string) => `\x1b[31m${s}\x1b[0m`;
 const green = (s: string) => `\x1b[32m${s}\x1b[0m`;
 const yellow = (s: string) => `\x1b[33m${s}\x1b[0m`;
 
+export type FrontendVariant = 'nuxt' | 'next';
+
 interface Options {
   name?: string;
   display?: string;
+  frontend?: FrontendVariant;
   yes: boolean;
   dryRun: boolean;
   resetGit: boolean;
@@ -67,9 +79,19 @@ export function parseArgs(argv: string[]): Options {
     else if (arg.startsWith('--name=')) opts.name = arg.slice('--name='.length);
     else if (arg === '--display') opts.display = argv[++i];
     else if (arg.startsWith('--display=')) opts.display = arg.slice('--display='.length);
-    else throw new Error(`Unknown option: ${arg}`);
+    else if (arg === '--frontend') opts.frontend = validateFrontendVariant(argv[++i] ?? '');
+    else if (arg.startsWith('--frontend=')) {
+      opts.frontend = validateFrontendVariant(arg.slice('--frontend='.length));
+    } else throw new Error(`Unknown option: ${arg}`);
   }
   return opts;
+}
+
+export function validateFrontendVariant(value: string): FrontendVariant {
+  if (value !== 'nuxt' && value !== 'next') {
+    throw new Error(`Invalid frontend variant "${value}" — use "nuxt" or "next".`);
+  }
+  return value;
 }
 
 /**
@@ -109,8 +131,227 @@ export function rename(content: string, slug: string, display: string): string {
     .join(slug);
 }
 
+// ── Frontend-variant surgery (pure string helpers) ─────────────────────────────
+
+/** Drop every line that contains one of the needles. */
+export function removeLinesContaining(content: string, needles: string[]): string {
+  if (!needles.length) return content;
+  return content
+    .split('\n')
+    .filter((line) => !needles.some((needle) => line.includes(needle)))
+    .join('\n');
+}
+
+/**
+ * Remove a compose service block: the `  <name>:` key line, the banner
+ * comment lines glued directly above it, and every deeper-indented line
+ * below — up to (exclusive) the next service key, the comment block that
+ * belongs to it, or a top-level key. Assumes the kit's layout: block content
+ * is indented 4+ and sibling services never carry indent-2 comments inside
+ * their own bodies.
+ */
+export function removeServiceBlock(yaml: string, service: string): string {
+  const lines = yaml.split('\n');
+  const keyIndex = lines.findIndex((line) => line === `  ${service}:`);
+  if (keyIndex === -1) return yaml;
+
+  let start = keyIndex;
+  while (start > 0 && /^ {2}#/.test(lines[start - 1]!)) start -= 1;
+
+  let end = lines.length;
+  for (let i = keyIndex + 1; i < lines.length; i++) {
+    const line = lines[i]!;
+    if (line.trim() === '' || /^ {4,}/.test(line)) continue;
+    end = i; // first indent-0..2 key/comment after the block
+    break;
+  }
+  while (end > keyIndex && lines[end - 1]?.trim() === '') end -= 1;
+
+  lines.splice(start, end - start);
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n');
+}
+
+/** Remove a `# ── …` section (banner line through the next banner/box header). */
+export function removeEnvSection(content: string, banner: string): string {
+  const lines = content.split('\n');
+  const start = lines.findIndex((line) => line.startsWith(banner));
+  if (start === -1) return content;
+  let end = lines.length;
+  for (let i = start + 1; i < lines.length; i++) {
+    if (/^# [─╭]/.test(lines[i]!)) {
+      end = i;
+      break;
+    }
+  }
+  while (end > start && lines[end - 1]?.trim() === '') end -= 1;
+  lines.splice(start, end - start);
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n');
+}
+
+/** Remove a `<!-- marker --> … <!-- /marker -->` documentation block. */
+export function removeMarkedBlock(markdown: string, marker: string): string {
+  const pattern = new RegExp(
+    `<!--[\\s]*${marker}[\\s]*-->[\\s\\S]*?<!--[\\s]*/${marker}[\\s]*-->\\n?`,
+  );
+  return markdown.replace(pattern, '').replace(/\n{3,}/g, '\n\n');
+}
+
+/**
+ * Remove the YAML list stanza containing the needle: the `  - ` item the
+ * needle lives in, up to (exclusive) the next `  - ` sibling or a top-level
+ * key. Used for dependabot entries.
+ */
+export function removeListEntry(content: string, needle: string): string {
+  const lines = content.split('\n');
+  const needleIndex = lines.findIndex((line) => line.includes(needle));
+  if (needleIndex === -1) return content;
+  let start = needleIndex;
+  while (start > 0 && !/^ {2}- /.test(lines[start - 1]!)) start -= 1;
+  start -= 1; // the list item line itself
+  let end = lines.length;
+  for (let i = needleIndex + 1; i < lines.length; i++) {
+    if (/^ {2}- /.test(lines[i]!) || /^\S/.test(lines[i]!)) {
+      end = i;
+      break;
+    }
+  }
+  while (end > needleIndex && lines[end - 1]?.trim() === '') end -= 1;
+  lines.splice(start, end - start);
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n');
+}
+
+/** Sequential literal replacements (split/join, no regex escaping traps). */
+export function replaceLiterals(content: string, pairs: Array<[string, string]>): string {
+  return pairs.reduce((acc, [from, to]) => acc.split(from).join(to), content);
+}
+
+interface FileOps {
+  removeServices?: string[];
+  removeEnvSections?: string[];
+  removeMarkers?: string[];
+  removeListEntries?: string[];
+  removeLines?: string[];
+  replace?: Array<[string, string]>;
+}
+
+function applyFileOps(content: string, ops: FileOps): string {
+  let out = content;
+  for (const service of ops.removeServices ?? []) out = removeServiceBlock(out, service);
+  for (const banner of ops.removeEnvSections ?? []) out = removeEnvSection(out, banner);
+  for (const marker of ops.removeMarkers ?? []) out = removeMarkedBlock(out, marker);
+  for (const needle of ops.removeListEntries ?? []) out = removeListEntry(out, needle);
+  // Replacements run before line removals: a replacement can rescue a line
+  // (e.g. re-point the ports-table row at the Next var) that a NUXT_ needle
+  // would otherwise delete wholesale.
+  out = replaceLiterals(out, ops.replace ?? []);
+  out = removeLinesContaining(out, ops.removeLines ?? []);
+  return out;
+}
+
+// What each variant removes from the root files. Both directions are
+// idempotent: needles that no longer match simply leave the file untouched,
+// so running against an older tree (or twice) is safe.
+const NUXT_OPS: Record<string, FileOps> = {
+  'docker-compose.yml': {
+    removeServices: ['web-next'],
+    removeLines: ['web-next', 'web_next_node_modules'],
+  },
+  'docker-compose.prod.yml': { removeServices: ['web-next'] },
+  '.env.example': { removeEnvSections: ['# ── Web variant: Next'] },
+  'README.md': {
+    removeMarkers: ['web-variant:next'],
+    replace: [
+      [
+        'A **Bun + Turbo monorepo** starter kit — NestJS API + a web frontend in two\nvariants (**Nuxt 4** by default, **Next.js 16** via `--frontend next`), with',
+        'A **Bun + Turbo monorepo** starter kit — NestJS API + a **Nuxt 4** web frontend, with',
+      ],
+      ['Nuxt: `--dotenv ../../.env` · Next: dotenv-cli scripts', 'Nuxt: `--dotenv ../../.env`'],
+    ],
+    removeLines: [
+      'web-next/',
+      'WEB_NEXT_PORT',
+      'serve:web-next',
+      '--frontend next',
+      'Frontend (variant)',
+    ],
+  },
+  'package.json': { removeLines: ['"serve:web-next"'] },
+  '.github/dependabot.yml': {
+    removeListEntries: ["directory: '/apps/web-next'"],
+    removeLines: ['next 17', 'react 20'],
+  },
+  'turbo.json': {
+    replace: [
+      [
+        '"outputs": ["dist/**", ".output/**", ".nuxt/**", ".next/**", "!.next/cache/**"]',
+        '"outputs": ["dist/**", ".output/**", ".nuxt/**"]',
+      ],
+    ],
+  },
+};
+
+const NEXT_OPS: Record<string, FileOps> = {
+  'docker-compose.yml': {
+    removeServices: ['web'],
+    replace: [['web (nuxt HMR)', 'web (next HMR)']],
+    // The surviving web service loses its opt-in profile — it is now the
+    // only frontend, so `docker compose up` must start it by default. The
+    // stale Nuxt references go too (the nuxt web block is already gone).
+    removeLines: [
+      'profiles: [next]',
+      '`next` profile',
+      '--profile next up',
+      'side by side',
+      'container port 3000',
+      'web_node_modules:',
+      'NUXT_',
+    ],
+  },
+  'docker-compose.prod.yml': {
+    removeServices: ['web'],
+    removeLines: ['profiles: [next]', '`next` profile', '--profile next up', 'side by side'],
+  },
+  '.env.example': {
+    removeEnvSections: ['# ── Web variant: Nuxt'],
+    replace: [['APP_URL=http://localhost:3000', 'APP_URL=http://localhost:8080']],
+    removeLines: ['NUXT_', 'WEB_PORT=3000'],
+  },
+  'README.md': {
+    removeMarkers: ['web-variant:nuxt'],
+    replace: [
+      [
+        'A **Bun + Turbo monorepo** starter kit — NestJS API + a web frontend in two\nvariants (**Nuxt 4** by default, **Next.js 16** via `--frontend next`), with',
+        'A **Bun + Turbo monorepo** starter kit — NestJS API + a **Next.js 16** web frontend, with',
+      ],
+      ['`NUXT_API_INTERNAL_BASE` / `NEXT_API_INTERNAL_BASE`', '`NEXT_API_INTERNAL_BASE`'],
+      ['Frontend (variant) |', 'Frontend |'],
+      ['Nuxt: `--dotenv ../../.env` · Next: dotenv-cli scripts', 'dotenv-cli scripts'],
+    ],
+    removeLines: [
+      'Nuxt 4 (Vue 3) frontend',
+      '· shadcn-vue (Reka UI)',
+      '| Web (Nuxt)',
+      '— Nuxt (`:3000`',
+      'NUXT_',
+    ],
+  },
+  'package.json': { removeLines: ['"serve:web": "turbo run dev --filter=@nuxion/web",'] },
+  '.github/dependabot.yml': { removeListEntries: ["directory: '/apps/web'"] },
+};
+
+// After the structural ops, a Next pick re-points every remaining literal at
+// the canonical `web` name so the moved app owns the default slot: package
+// scope, compose service, scripts, docs. The pairs are disjoint strings
+// (underscore volume vs hyphen names vs env casing), so ordering is cosmetic.
+const NEXT_GLOBAL_REPLACEMENTS: Array<[string, string]> = [
+  ['web_next_node_modules', 'web_node_modules'],
+  ['WEB_NEXT_PORT', 'WEB_PORT'],
+  ['WEB_PORT:-3000', 'WEB_PORT:-8080'],
+  ['web-next', 'web'],
+];
+
 const git = (args: string[]): string =>
-  execFileSync('git', args, { cwd: ROOT, encoding: 'utf8' }).trim();
+  execFileSync('git', args, { cwd: ROOT, encoding: 'utf-8' }).trim();
 
 /**
  * Only git-tracked files are rewritten. That excludes node_modules, build output
@@ -121,6 +362,55 @@ function trackedFiles(): string[] {
   return git(['ls-files'])
     .split('\n')
     .filter((file) => file && !SKIP_FILES.has(file));
+}
+
+/**
+ * Keep only the chosen frontend variant. Runs AFTER the kit-identity guard
+ * (never inside the kit itself) and BEFORE the identity rename, so the
+ * rename sees the post-swap tree — including `apps/web-next` already moved
+ * onto `apps/web`. The physical move is re-staged (`git add -A`) so the
+ * rename's `git ls-files` reflects the new paths.
+ */
+async function applyFrontendVariant(variant: FrontendVariant, dryRun: boolean): Promise<string[]> {
+  const ops = variant === 'next' ? NEXT_OPS : NUXT_OPS;
+
+  if (!dryRun) {
+    if (variant === 'next') {
+      rmSync(join(ROOT, 'apps/web'), { recursive: true, force: true });
+      rmSync(join(ROOT, 'docker/dev-web.sh'), { force: true });
+      rmSync(join(ROOT, 'docker/prod-web.sh'), { force: true });
+      renameSync(join(ROOT, 'apps/web-next'), join(ROOT, 'apps/web'));
+      renameSync(join(ROOT, 'docker/dev-web-next.sh'), join(ROOT, 'docker/dev-web.sh'));
+      renameSync(join(ROOT, 'docker/prod-web-next.sh'), join(ROOT, 'docker/prod-web.sh'));
+      // Refresh the index so `git ls-files` lists the moved files at their
+      // new paths (content edits alone don't need this; renames do).
+      execFileSync('git', ['add', '-A'], { cwd: ROOT });
+    } else {
+      rmSync(join(ROOT, 'apps/web-next'), { recursive: true, force: true });
+      rmSync(join(ROOT, 'docker/dev-web-next.sh'), { force: true });
+      rmSync(join(ROOT, 'docker/prod-web-next.sh'), { force: true });
+    }
+  }
+
+  const changed: string[] = [];
+  for (const file of trackedFiles()) {
+    const path = join(ROOT, file);
+    let content: string;
+    try {
+      content = await readFile(path, 'utf-8');
+    } catch {
+      continue; // unreadable / deleted since `git ls-files` — nothing to rewrite
+    }
+    if (content.includes('\0')) continue; // binaries stay untouched
+
+    let next = applyFileOps(content, ops[file] ?? {});
+    if (variant === 'next') next = replaceLiterals(next, NEXT_GLOBAL_REPLACEMENTS);
+    if (next === content) continue;
+
+    changed.push(file);
+    if (!dryRun) await writeFile(path, next);
+  }
+  return changed;
 }
 
 async function main(): Promise<void> {
@@ -140,6 +430,7 @@ async function main(): Promise<void> {
     .replace(/^-+|-+$/g, '');
   let slug = opts.name ?? defaultSlug;
   let display = opts.display ?? titleCase(slug);
+  let frontend: FrontendVariant = opts.frontend ?? 'nuxt';
 
   if (!opts.yes && process.stdin.isTTY) {
     const rl = createInterface({ input: process.stdin, output: process.stdout });
@@ -149,6 +440,10 @@ async function main(): Promise<void> {
       validateSlug(slug);
       display =
         (await rl.question(`Nama tampilan [${titleCase(slug)}]: `)).trim() || titleCase(slug);
+      const variantAnswer = (await rl.question(`Frontend variant [nuxt/next] (${frontend}): `))
+        .trim()
+        .toLowerCase();
+      if (variantAnswer) frontend = validateFrontendVariant(variantAnswer);
     } finally {
       rl.close();
     }
@@ -160,13 +455,27 @@ async function main(): Promise<void> {
     return;
   }
 
-  // ── 2. Rewrite tracked files ────────────────────────────────────────────────
+  // ── 2. Keep only the chosen frontend variant ────────────────────────────────
+  // Before the identity rename so the moved/trimmed tree is what gets renamed;
+  // after the slug guard so the kit itself is never swapped.
+  const variantChanged = await applyFrontendVariant(frontend, opts.dryRun);
+  if (opts.dryRun) {
+    console.log(
+      dim(`\nFrontend variant: ${frontend} — ${variantChanged.length} file akan disesuaikan.`),
+    );
+  } else if (variantChanged.length) {
+    console.log(
+      green(`✔ frontend variant "${frontend}" — ${variantChanged.length} file disesuaikan`),
+    );
+  }
+
+  // ── 3. Rewrite tracked files ────────────────────────────────────────────────
   const changed: string[] = [];
   for (const file of trackedFiles()) {
     const path = join(ROOT, file);
     let content: string;
     try {
-      content = await readFile(path, 'utf8');
+      content = await readFile(path, 'utf-8');
     } catch {
       continue; // unreadable / deleted since `git ls-files` — nothing to rename
     }
@@ -179,12 +488,13 @@ async function main(): Promise<void> {
     if (!opts.dryRun) await writeFile(path, renamed);
   }
 
-  // ── 3. Seed .env ────────────────────────────────────────────────────────────
+  // ── 4. Seed .env ────────────────────────────────────────────────────────────
   const envPath = join(ROOT, '.env');
   const envExists = existsSync(envPath);
   if (!envExists && !opts.dryRun) {
-    const example = await readFile(join(ROOT, '.env.example'), 'utf8');
-    // The example was rewritten in step 2, so it already carries the new slug.
+    const example = await readFile(join(ROOT, '.env.example'), 'utf-8');
+    // The example was rewritten in the steps above, so it already carries the
+    // new slug and the chosen variant's env section.
     const env = example.replace(
       /^JWT_SECRET=.*$/m,
       `JWT_SECRET=${randomBytes(32).toString('base64url')}`,
@@ -192,7 +502,7 @@ async function main(): Promise<void> {
     await writeFile(envPath, env);
   }
 
-  // ── 4. Report ───────────────────────────────────────────────────────────────
+  // ── 5. Report ───────────────────────────────────────────────────────────────
   if (opts.dryRun) {
     console.log(bold(`\nDry run — ${changed.length} file akan diubah:`));
     for (const file of changed) console.log(`  ${file}`);

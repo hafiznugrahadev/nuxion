@@ -7,6 +7,8 @@ node_modules/
 dist/
 .output/
 .nuxt/
+.next/
+next-env.d.ts
 .turbo/
 build/
 *.tsbuildinfo

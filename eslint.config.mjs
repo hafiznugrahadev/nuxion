@@ -13,6 +13,7 @@ export default ts.config(
       '**/dist/**',
       '**/.output/**',
       '**/.nuxt/**',
+      '**/.next/**',
       '**/.turbo/**',
       '**/coverage/**',
       '**/*.d.ts',

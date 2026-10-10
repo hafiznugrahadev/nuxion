@@ -2,10 +2,12 @@
 # │ DEV stack — full local environment with HOT RELOAD                          │
 # │   infra:  postgres + redis                                                   │
 # │   apps:   api (nest --watch) + web (nuxt HMR), source bind-mounted          │
+# │           web-next (Next.js variant, profile `next`)                        │
 # │                                                                            │
 # │ NO service publishes a host port. Everything is reached through OrbStack    │
 # │ container domains (HTTPS on 443 proxies to the service's port):            │
 # │   https://web.nuxion-dev.orb.local            (web, container port 3000)│
+# │   https://web-next.nuxion-dev.orb.local      (web-next, container port 8080)│
 # │   https://api.nuxion-dev.orb.local/api       (api, container port 8000)│
 # │   http://mailpit.nuxion-dev.orb.local:8025    (mailpit UI; port eksplisit│
 # │     karena mailpit punya dua port)                                           │
@@ -161,6 +163,7 @@ services:
         condition: service_started
     networks: [nuxion-network]
 
+  # ── web (Nuxt variant — default) ────────────────────────────────────────────
   web:
     image: oven/bun:1.3.3
     container_name: nuxion-web-dev
@@ -196,6 +199,37 @@ services:
     volumes:
       - ./:/app
       - web_node_modules:/app/node_modules
+    depends_on:
+      - api
+    networks: [nuxion-network]
+
+  # ── web-next (Next.js variant) ───────────────────────────────────────────────
+  # Opt-in via the `next` profile so the default `docker compose up` keeps
+  # starting only the Nuxt web:  docker compose --profile next up -d web-next
+  # Reached at https://web-next.nuxion-dev.orb.local (proxy 443 → 8080).
+  web-next:
+    image: oven/bun:1.3.3
+    container_name: nuxion-web-next-dev
+    restart: unless-stopped
+    profiles: [next]
+    working_dir: /app
+    # Bootstrap via the dev entrypoint script. See docker/dev-web-next.sh.
+    entrypoint: ['sh', '/app/docker/dev-web-next.sh']
+    environment:
+      NODE_ENV: development
+      PORT: ${WEB_NEXT_PORT:-8080}
+      HOSTNAME: 0.0.0.0
+      # Same-origin /api & /uploads: the Next route handlers proxy to the API
+      # below over plain http (runtime env, no CORS, first-party cookies).
+      NEXT_API_INTERNAL_BASE: http://api:${API_PORT:-8000}
+      # Mirror the API's self-service registration flag (sign-up UI).
+      NEXT_PUBLIC_REGISTRATION_ENABLED: ${REGISTRATION_ENABLED:-true}
+      NEXT_TELEMETRY_DISABLED: '1'
+    expose:
+      - '${WEB_NEXT_PORT:-8080}' # https://web-next.nuxion-dev.orb.local (proxy 443)
+    volumes:
+      - ./:/app
+      - web_next_node_modules:/app/node_modules
     depends_on:
       - api
     networks: [nuxion-network]
@@ -287,3 +321,4 @@ volumes:
   rustfs_data:
   api_node_modules:
   web_node_modules:
+  web_next_node_modules:

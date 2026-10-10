@@ -15,10 +15,12 @@ version: 2
 #   @tanstack/vue-table 9 — getCoreRowModel/useVueTable API rework
 #   pinia 4, vue-router 5, @pinia/nuxt 1 — must pair with a Nuxt 4.5 bump
 #   vue-sonner 2      — becomes a Nuxt module; needs Toaster usage migration
-#   zod 4             — @vee-validate/zod still peers zod ^3.24
+#   zod 4             — @vee-validate/zod still peers zod ^3.24 (both variants)
 #   apexcharts 7      — chart API unverified against the wrapper
 #   @tiptap/* 3       — CI-proven 2026-09-08: Editor.vue SetContentOptions API
 #                       break + vue-router volar plugin path no longer exported
+#   next 17           — Next major needs a codemod pass on apps/web-next
+#   react 20          — pairs with the Next major; migrate together
 # (migrated and un-held: @nestjs/* 12 + jest→vitest swap, 2026-09-02)
 updates:
   - package-ecosystem: 'npm'
@@ -49,6 +51,12 @@ updates:
         update-types: ['version-update:semver-major']
       - dependency-name: '@tiptap/*'
         update-types: ['version-update:semver-major']
+      - dependency-name: 'next'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react-dom'
+        update-types: ['version-update:semver-major']
     open-pull-requests-limit: 5
   - package-ecosystem: 'docker'
     directory: '/apps/api'
@@ -67,6 +75,16 @@ updates:
       day: 'monday'
     groups:
       docker-apps-web-dependencies:
+        patterns:
+          - '*'
+    open-pull-requests-limit: 5
+  - package-ecosystem: 'docker'
+    directory: '/apps/web-next'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    groups:
+      docker-apps-web-next-dependencies:
         patterns:
           - '*'
     open-pull-requests-limit: 5

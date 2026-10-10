@@ -181,7 +181,8 @@
         "workspaces": "Bun workspaces + Turborepo tasks",
         "env": "Single root .env for both apps",
         "seed": "Idempotent seed with demo roles"
-      }
+      },
+      "variantNote": "Want the Next.js variant? Add --frontend next"
     },
     "inside": {
       "eyebrow": "Batteries fully loaded",

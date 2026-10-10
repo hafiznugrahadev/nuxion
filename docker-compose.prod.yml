@@ -39,6 +39,7 @@ services:
       - '8000' # internal only — reached via the web app's /api proxy
     networks: [dokploy-network]
 
+  # ── web (Nuxt variant — default) ────────────────────────────────────────────
   web:
     build:
       context: .
@@ -67,6 +68,37 @@ services:
       # - traefik.http.routers.nuxion-web.entrypoints=websecure
       # - traefik.http.routers.nuxion-web.tls.certresolver=letsencrypt
       # - traefik.http.services.nuxion-web.loadbalancer.server.port=3000
+
+  # ── web-next (Next.js variant) ───────────────────────────────────────────────
+  # Opt-in via the `next` profile (the Nuxt web above stays the default route):
+  #   docker compose -f docker-compose.prod.yml --profile next up -d web-next
+  # Standalone output; the /api & /uploads proxies read NEXT_API_INTERNAL_BASE
+  # at runtime. Give it its own host rule when both variants run side by side.
+  web-next:
+    build:
+      context: .
+      dockerfile: apps/web-next/Dockerfile
+    image: nuxion-web-next:latest
+    restart: unless-stopped
+    profiles: [next]
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      HOSTNAME: 0.0.0.0
+      NEXT_API_INTERNAL_BASE: http://api:8000
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:8080}
+    expose:
+      - '8080'
+    depends_on:
+      - api
+    networks: [dokploy-network]
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=dokploy-network
+      # - traefik.http.routers.nuxion-web-next.rule=Host(`app.example.com`)
+      # - traefik.http.routers.nuxion-web-next.entrypoints=websecure
+      # - traefik.http.routers.nuxion-web-next.tls.certresolver=letsencrypt
+      # - traefik.http.services.nuxion-web-next.loadbalancer.server.port=8080
 
 networks:
   dokploy-network:

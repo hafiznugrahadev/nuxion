@@ -1,14 +1,23 @@
 'use client';
 
 import { GuestGuard } from '@/components/auth/guest-guard';
+import { LoginTotpStep } from '@/components/auth/login-totp-step';
 import { PasswordField } from '@/components/common/password-field';
 import { TextField } from '@/components/common/text-field';
 import { Button } from '@/components/ui/button';
 import { applyApiFieldErrors } from '@/lib/api-errors';
-import { login, REGISTRATION_ENABLED, type TwoFactorChallenge } from '@/lib/auth-api';
+import {
+  login,
+  passkeyLoginOptions,
+  passkeyLoginVerify,
+  PASSKEY_ENABLED,
+  REGISTRATION_ENABLED,
+  type TwoFactorChallenge,
+} from '@/lib/auth-api';
 import { intendedRedirect } from '@/lib/intended-redirect';
+import { startAuthentication } from '@simplewebauthn/browser';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ShieldCheck } from 'lucide-react';
+import { KeyRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -34,8 +43,7 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [submitting, setSubmitting] = useState(false);
-  // Password OK but TOTP is enabled — the verification UI ships with the 2FA
-  // stage; until then the user gets an honest notice instead of a dead form.
+  // Password OK but TOTP is enabled — swap the form for the code step.
   const [challenge, setChallenge] = useState<TwoFactorChallenge | null>(null);
 
   const { control, handleSubmit, setError } = useForm<LoginValues>({
@@ -72,21 +80,39 @@ export function LoginForm() {
     }
   });
 
+  // Passkey sign-in (discoverable credential — no username needed).
+  const [passkeyBusy, setPasskeyBusy] = useState(false);
+  async function signInWithPasskey() {
+    setPasskeyBusy(true);
+    try {
+      const { challengeId, options } = await passkeyLoginOptions();
+      const assertion = await startAuthentication({ optionsJSON: options });
+      const result = await passkeyLoginVerify(challengeId, assertion);
+      if ('twoFactorRequired' in result) {
+        // Passkey without user verification — the account still owes a TOTP step.
+        setChallenge(result);
+        toast.info(t('twoFactor.otpRequired'));
+        return;
+      }
+      finishLogin();
+    } catch (err) {
+      // A dismissed browser prompt is a user choice, not a failure.
+      if ((err as Error)?.name !== 'NotAllowedError') toast.error(t('passkey.failed'));
+    } finally {
+      setPasskeyBusy(false);
+    }
+  }
+
   if (challenge) {
     return (
-      <div className="space-y-4 rounded-lg bg-surface-container p-5 text-center">
-        <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-primary-container text-on-primary-container">
-          <ShieldCheck size={20} aria-hidden="true" />
-        </span>
-        <p className="text-sm text-foreground">{t('twoFactorRequired')}</p>
-        <button
-          type="button"
-          className="inline-block text-sm font-medium text-primary hover:underline"
-          onClick={() => setChallenge(null)}
-        >
-          {t('backToSignIn')}
-        </button>
-      </div>
+      <GuestGuard>
+        <LoginTotpStep
+          key={challenge.challengeId}
+          challengeId={challenge.challengeId}
+          onVerified={finishLogin}
+          onBack={() => setChallenge(null)}
+        />
+      </GuestGuard>
     );
   }
 
@@ -138,6 +164,18 @@ export function LoginForm() {
             </svg>
             {t('xSignIn')}
           </button>
+          {PASSKEY_ENABLED && (
+            <button
+              type="button"
+              data-testid="passkey-login-button"
+              className="inline-flex h-10 items-center justify-center gap-3 rounded-full border border-outline bg-transparent text-sm font-medium text-foreground transition-colors hover:bg-on-surface/8 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={passkeyBusy}
+              onClick={() => void signInWithPasskey()}
+            >
+              <KeyRound size={18} aria-hidden="true" />
+              {passkeyBusy ? t('signingIn') : t('passkey.signIn')}
+            </button>
+          )}
         </div>
 
         {/* Divider */}

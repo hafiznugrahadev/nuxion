@@ -1,5 +1,6 @@
 import { CopyButton } from '@/components/common/copy-button';
 import { BrandLogo } from '@/components/common/brand-logo';
+import { AuthCta } from '@/components/auth/auth-cta';
 import { LanguageSwitcher } from '@/components/shell/language-switcher';
 import { ThemeToggle } from '@/components/shell/theme-toggle';
 import { Tabs } from '@/components/ui/tabs';
@@ -289,6 +290,7 @@ export default async function Home() {
           <div className="flex items-center gap-2">
             <LanguageSwitcher />
             <ThemeToggle />
+            <AuthCta />
           </div>
         </div>
       </header>
@@ -367,6 +369,9 @@ export default async function Home() {
                     {t('home.installCta')}
                     <ArrowRight size={18} className="ml-1 opacity-80" aria-hidden="true" />
                   </CopyButton>
+                  {/* Auth-aware: sign-in now, dashboard once a session exists
+                      (Stage 2 restored the /login route). */}
+                  <AuthCta variant="hero" />
                 </div>
 
                 {/* Micro spec pills: repo facts only */}

@@ -60,3 +60,42 @@ test('the same-origin /api proxy reaches the API through the web origin', async 
   expect([404, 502]).toContain(res.status());
   expect(res.headers()['content-type']).toContain('application/json');
 });
+
+test('login renders the auth layout and validates before submitting', async ({ page }) => {
+  await page.goto('/login');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Sign In');
+  // Demo credentials card is part of the kit's dev surface.
+  await expect(page.getByText('admin@nuxion.test')).toBeVisible();
+
+  // Empty submit surfaces zod validation per field (aria-invalid wiring).
+  await page.getByRole('button', { name: 'Sign In', exact: true }).click();
+  await expect(page.getByText('Enter a valid email')).toBeVisible();
+  await expect(page.getByText('Password must be at least 6 characters')).toBeVisible();
+
+  // Forgot-password link reaches its page.
+  await page.getByRole('link', { name: 'Forgot password?' }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Forgot password');
+});
+
+test('reset-password without a token shows the invalid-link state', async ({ page }) => {
+  await page.goto('/reset-password');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Reset password');
+  await expect(page.getByText(/invalid or incomplete/i)).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Request a new link' })).toBeVisible();
+});
+
+test('the register page renders the sign-up form under the flag', async ({ page }) => {
+  // These tests run with NEXT_PUBLIC_REGISTRATION_ENABLED=true; with the flag
+  // off the page instead shows the disabled notice.
+  await page.goto('/register');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Create');
+  await expect(page.getByLabel(/Full name/i)).toBeVisible();
+});
+
+test('landing exposes the auth-aware sign-in CTA', async ({ page }) => {
+  await page.goto('/');
+  const cta = page.getByRole('banner').getByTestId('cta-login');
+  await expect(cta).toBeVisible();
+  await cta.click();
+  await expect(page).toHaveURL(/\/login$/);
+});

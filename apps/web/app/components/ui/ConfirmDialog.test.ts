@@ -154,7 +154,7 @@ describe('dangerous action confirmation', () => {
     });
     wrapper = mount(parent, {
       attachTo: document.body,
-      global: { components: { AlertDialog }, stubs: { MaterialSymbol: true } },
+      global: { components: { AlertDialog }, stubs: { AppIcon: true } },
     });
     await tick();
     const trigger = button('Regenerate');

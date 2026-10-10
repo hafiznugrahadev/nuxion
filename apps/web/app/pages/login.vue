@@ -153,7 +153,7 @@ const notImplemented = (provider: string) =>
           :disabled="passkeyBusy"
           @click="signInWithPasskey"
         >
-          <MaterialSymbol name="key" :size="18" />
+          <AppIcon name="key" :size="18" />
           {{ passkeyBusy ? $t('auth.signingIn') : $t('auth.passkey.signIn') }}
         </button>
       </div>

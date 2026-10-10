@@ -242,7 +242,7 @@ async function onImageChange(ev: Event) {
           :disabled="disabled"
           @click="tool.run"
         >
-          <MaterialSymbol :name="tool.icon" :size="18" />
+          <AppIcon :name="tool.icon" :size="18" />
         </button>
         <span class="mx-1 h-5 w-px bg-outline-variant" aria-hidden="true" />
         <Fieldset :label="t('editor.imageLabel')" :error="imageError" label-class="sr-only">
@@ -256,7 +256,7 @@ async function onImageChange(ev: Event) {
               :disabled="disabled || uploading"
               @click="fileInput?.click()"
             >
-              <MaterialSymbol
+              <AppIcon
                 :name="uploading ? 'progress_activity' : 'image'"
                 :size="18"
                 :class="uploading && 'animate-spin'"

@@ -14,7 +14,7 @@ defineProps<{
     </td>
   </tr>
   <div v-else class="flex flex-col items-center justify-center gap-2 py-12 text-center">
-    <MaterialSymbol name="inbox" :size="40" class="text-muted-foreground" />
+    <AppIcon name="inbox" :size="40" class="text-muted-foreground" />
     <p class="text-sm font-medium">{{ title ?? $t('state.empty') }}</p>
     <p v-if="description" class="text-xs text-muted-foreground">{{ description }}</p>
     <slot />

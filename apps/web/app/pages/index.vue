@@ -288,9 +288,9 @@ async function copy(textToCopy: string) {
                 class="bg-brand-teal-deep text-white hover:bg-brand-navy active:scale-[0.98]"
                 @click="copy(CREATE_CMD)"
               >
-                <MaterialSymbol name="terminal" :size="18" />
+                <AppIcon name="terminal" :size="18" />
                 {{ $t('home.installCta') }}
-                <MaterialSymbol name="arrow_forward" :size="18" class="ml-1 opacity-80" />
+                <AppIcon name="arrow_forward" :size="18" class="ml-1 opacity-80" />
               </Button>
               <ClientOnly>
                 <Button
@@ -300,7 +300,7 @@ async function copy(textToCopy: string) {
                   class="active:scale-[0.98]"
                   @click="navigateTo('/admin/dashboard')"
                 >
-                  <MaterialSymbol name="login" :size="18" />
+                  <AppIcon name="login" :size="18" />
                   {{ $t('home.goToDashboard') }}
                 </Button>
                 <Button
@@ -310,12 +310,12 @@ async function copy(textToCopy: string) {
                   class="active:scale-[0.98]"
                   @click="navigateTo('/login')"
                 >
-                  <MaterialSymbol name="login" :size="18" />
+                  <AppIcon name="login" :size="18" />
                   {{ $t('home.signIn') }}
                 </Button>
                 <template #fallback>
                   <Button variant="secondary" size="lg" @click="navigateTo('/login')">
-                    <MaterialSymbol name="login" :size="18" />
+                    <AppIcon name="login" :size="18" />
                     {{ $t('home.signIn') }}
                   </Button>
                 </template>
@@ -328,7 +328,7 @@ async function copy(textToCopy: string) {
               class="flex flex-wrap items-center gap-3 pt-2 text-xs font-medium text-on-surface-variant"
             >
               <span class="flex items-center gap-1">
-                <MaterialSymbol
+                <AppIcon
                   name="check_circle"
                   :size="16"
                   class="text-brand-teal-deep dark:text-brand-mint"
@@ -336,7 +336,7 @@ async function copy(textToCopy: string) {
                 {{ $t('home.pills.access') }}
               </span>
               <span class="flex items-center gap-1">
-                <MaterialSymbol
+                <AppIcon
                   name="check_circle"
                   :size="16"
                   class="text-brand-teal-deep dark:text-brand-mint"
@@ -344,7 +344,7 @@ async function copy(textToCopy: string) {
                 {{ $t('home.pills.roles') }}
               </span>
               <span class="flex items-center gap-1">
-                <MaterialSymbol
+                <AppIcon
                   name="check_circle"
                   :size="16"
                   class="text-brand-teal-deep dark:text-brand-mint"
@@ -391,7 +391,7 @@ async function copy(textToCopy: string) {
                 <div
                   class="mt-1 flex flex-wrap items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2"
                 >
-                  <MaterialSymbol
+                  <AppIcon
                     name="memory"
                     :size="16"
                     class="text-primary-container dark:text-brand-mint"
@@ -416,7 +416,7 @@ async function copy(textToCopy: string) {
                   class="touch-target relative flex items-center gap-1 font-mono text-[11px] text-primary-container transition-opacity hover:opacity-80 dark:text-brand-mint"
                   @click="copy(CREATE_CMD)"
                 >
-                  <MaterialSymbol name="content_copy" :size="14" />
+                  <AppIcon name="content_copy" :size="14" />
                   {{ $t('home.term.copyScaffold') }}
                 </button>
               </div>
@@ -433,7 +433,7 @@ async function copy(textToCopy: string) {
           <div
             class="flex items-center gap-1.5 font-mono text-xs font-medium uppercase tracking-wider text-brand-teal-deep dark:text-brand-mint"
           >
-            <MaterialSymbol name="terminal" :size="18" />
+            <AppIcon name="terminal" :size="18" />
             {{ $t('home.install.eyebrow') }}
           </div>
           <h2 class="text-3xl font-bold tracking-tight text-on-surface">
@@ -452,7 +452,7 @@ async function copy(textToCopy: string) {
             <div
               class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary-container text-on-secondary-container"
             >
-              <MaterialSymbol name="bolt" :size="20" />
+              <AppIcon name="bolt" :size="20" />
             </div>
             <div class="flex min-w-0 flex-col">
               <span class="text-xs text-on-surface-variant">
@@ -462,7 +462,7 @@ async function copy(textToCopy: string) {
             </div>
           </div>
           <Button variant="outline" size="sm" class="shrink-0" @click="copy(CREATE_CMD)">
-            <MaterialSymbol name="content_copy" :size="16" />
+            <AppIcon name="content_copy" :size="16" />
             {{ $t('home.copy') }}
           </Button>
         </div>
@@ -476,7 +476,7 @@ async function copy(textToCopy: string) {
               <div
                 class="inline-flex w-fit items-center gap-1.5 rounded-full bg-secondary-container px-3 py-0.5 font-mono text-xs text-on-secondary-container"
               >
-                <MaterialSymbol
+                <AppIcon
                   name="alt_route"
                   :size="16"
                   class="text-brand-teal-deep dark:text-brand-mint"
@@ -494,7 +494,7 @@ async function copy(textToCopy: string) {
                   <span
                     class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary-container"
                   >
-                    <MaterialSymbol
+                    <AppIcon
                       name="done"
                       :size="14"
                       class="text-brand-teal-deep dark:text-brand-mint"
@@ -506,7 +506,7 @@ async function copy(textToCopy: string) {
                   <span
                     class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary-container"
                   >
-                    <MaterialSymbol
+                    <AppIcon
                       name="done"
                       :size="14"
                       class="text-brand-teal-deep dark:text-brand-mint"
@@ -518,7 +518,7 @@ async function copy(textToCopy: string) {
                   <span
                     class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary-container"
                   >
-                    <MaterialSymbol
+                    <AppIcon
                       name="done"
                       :size="14"
                       class="text-brand-teal-deep dark:text-brand-mint"
@@ -531,7 +531,7 @@ async function copy(textToCopy: string) {
             <div
               class="flex items-center gap-4 rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-sm"
             >
-              <MaterialSymbol
+              <AppIcon
                 name="verified"
                 :size="28"
                 class="text-brand-teal-deep dark:text-brand-mint"
@@ -555,7 +555,7 @@ async function copy(textToCopy: string) {
               class="flex items-center justify-between border-b border-white/10 bg-black/25 px-4 py-2"
             >
               <span class="flex items-center gap-1.5 font-mono text-xs font-semibold opacity-70">
-                <MaterialSymbol
+                <AppIcon
                   name="code"
                   :size="16"
                   class="text-primary-container dark:text-brand-mint"
@@ -567,7 +567,7 @@ async function copy(textToCopy: string) {
                 class="touch-target relative flex items-center gap-1 font-mono text-xs text-primary-container transition-opacity hover:opacity-80 dark:text-brand-mint"
                 @click="copy(cloneStepsPlain)"
               >
-                <MaterialSymbol name="copy_all" :size="14" />
+                <AppIcon name="copy_all" :size="14" />
                 {{ $t('home.install.copyAll') }}
               </button>
             </div>
@@ -632,7 +632,7 @@ async function copy(textToCopy: string) {
                 <div
                   class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-navy text-white shadow-sm dark:bg-brand-mint/15 dark:text-brand-mint"
                 >
-                  <MaterialSymbol :name="inside[0]!.icon" :size="24" />
+                  <AppIcon :name="inside[0]!.icon" :size="24" />
                 </div>
                 <span
                   class="rounded-full border border-outline-variant/30 bg-surface px-3 py-0.5 font-mono text-xs font-semibold text-brand-teal-deep dark:text-brand-mint"
@@ -647,15 +647,11 @@ async function copy(textToCopy: string) {
               class="flex flex-wrap items-center gap-4 rounded-2xl border border-outline-variant/30 bg-surface p-4 font-mono text-xs text-on-surface"
             >
               <span class="flex items-center gap-1.5">
-                <MaterialSymbol
-                  name="key"
-                  :size="16"
-                  class="text-brand-teal-deep dark:text-brand-mint"
-                />
+                <AppIcon name="key" :size="16" class="text-brand-teal-deep dark:text-brand-mint" />
                 {{ $t('home.inside.authF1') }}
               </span>
               <span class="flex items-center gap-1.5">
-                <MaterialSymbol
+                <AppIcon
                   name="autorenew"
                   :size="16"
                   class="text-brand-teal-deep dark:text-brand-mint"
@@ -663,7 +659,7 @@ async function copy(textToCopy: string) {
                 {{ $t('home.inside.authF2') }}
               </span>
               <span class="flex items-center gap-1.5">
-                <MaterialSymbol
+                <AppIcon
                   name="admin_panel_settings"
                   :size="16"
                   class="text-brand-teal-deep dark:text-brand-mint"
@@ -682,7 +678,7 @@ async function copy(textToCopy: string) {
                 <div
                   class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-teal/15 text-brand-teal-deep shadow-sm dark:bg-brand-teal/20 dark:text-brand-mint"
                 >
-                  <MaterialSymbol :name="inside[1]!.icon" :size="24" />
+                  <AppIcon :name="inside[1]!.icon" :size="24" />
                 </div>
                 <span
                   class="rounded-full border border-outline-variant/30 bg-surface px-3 py-0.5 font-mono text-xs font-semibold text-brand-teal-deep dark:text-brand-mint"
@@ -712,7 +708,7 @@ async function copy(textToCopy: string) {
                 <div
                   class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-blue/10 text-brand-blue shadow-sm dark:bg-brand-mint/10 dark:text-brand-mint"
                 >
-                  <MaterialSymbol :name="inside[2]!.icon" :size="24" />
+                  <AppIcon :name="inside[2]!.icon" :size="24" />
                 </div>
                 <span
                   class="rounded-full border border-outline-variant/30 bg-surface px-3 py-0.5 font-mono text-xs font-semibold text-brand-teal-deep dark:text-brand-mint"
@@ -743,7 +739,7 @@ async function copy(textToCopy: string) {
                 <div
                   class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-navy to-brand-blue text-white shadow-sm"
                 >
-                  <MaterialSymbol :name="inside[3]!.icon" :size="24" />
+                  <AppIcon :name="inside[3]!.icon" :size="24" />
                 </div>
                 <span
                   class="rounded-full border border-outline-variant/30 bg-surface px-3 py-0.5 font-mono text-xs font-semibold text-brand-teal-deep dark:text-brand-mint"
@@ -777,7 +773,7 @@ async function copy(textToCopy: string) {
                 <div
                   class="flex h-12 w-12 items-center justify-center rounded-2xl border border-outline-variant/40 bg-surface-container-highest text-primary shadow-sm"
                 >
-                  <MaterialSymbol :name="inside[4]!.icon" :size="24" />
+                  <AppIcon :name="inside[4]!.icon" :size="24" />
                 </div>
                 <span
                   class="rounded-full border border-outline-variant/30 bg-surface px-3 py-0.5 font-mono text-xs font-semibold text-on-surface-variant"
@@ -793,7 +789,7 @@ async function copy(textToCopy: string) {
               <span
                 class="flex shrink-0 items-center gap-1 font-semibold text-brand-teal-deep dark:text-brand-mint"
               >
-                <MaterialSymbol name="power" :size="16" />
+                <AppIcon name="power" :size="16" />
                 {{ $t('home.inside.dockerF2') }}
               </span>
             </div>
@@ -809,7 +805,7 @@ async function copy(textToCopy: string) {
           <div
             class="flex items-center gap-1.5 font-mono text-xs font-medium uppercase tracking-wider text-brand-teal-deep dark:text-brand-mint"
           >
-            <MaterialSymbol name="architecture" :size="18" />
+            <AppIcon name="architecture" :size="18" />
             {{ $t('home.why.eyebrow') }}
           </div>
           <h2 class="text-3xl font-bold tracking-tight text-on-surface">
@@ -830,7 +826,7 @@ async function copy(textToCopy: string) {
                 class="flex h-11 w-11 items-center justify-center rounded-xl"
                 :class="reason.tint"
               >
-                <MaterialSymbol :name="reason.icon" :size="22" />
+                <AppIcon :name="reason.icon" :size="22" />
               </div>
               <h3 class="text-lg font-semibold text-on-surface">{{ reason.title }}</h3>
               <p class="text-sm leading-relaxed text-on-surface-variant">{{ reason.text }}</p>
@@ -867,13 +863,13 @@ async function copy(textToCopy: string) {
                 <span
                   class="flex w-28 items-center justify-center gap-1.5 text-center text-xs text-on-surface-variant sm:w-32"
                 >
-                  <MaterialSymbol name="close" :size="14" class="shrink-0 text-error" />
+                  <AppIcon name="close" :size="14" class="shrink-0 text-error" />
                   {{ row.nuxt }}
                 </span>
                 <span
                   class="flex w-28 items-center justify-center gap-1.5 text-center text-xs font-semibold text-on-surface sm:w-32"
                 >
-                  <MaterialSymbol
+                  <AppIcon
                     name="check"
                     :size="14"
                     class="shrink-0 text-brand-teal-deep dark:text-brand-mint"
@@ -992,7 +988,7 @@ JWT_SECRET=change-me-min-16-chars</code></pre>
               class="bg-white text-brand-navy hover:bg-brand-mint hover:text-brand-navy active:scale-[0.98]"
               @click="copy(CREATE_CMD)"
             >
-              <MaterialSymbol name="content_copy" :size="18" />
+              <AppIcon name="content_copy" :size="18" />
               {{ $t('home.cta.copy') }}
             </Button>
             <a :href="`${REPO_URL}#readme`" target="_blank" rel="noopener" class="inline-flex">
@@ -1001,7 +997,7 @@ JWT_SECRET=change-me-min-16-chars</code></pre>
                 size="lg"
                 class="border-white/40 bg-brand-navy/40 text-white hover:bg-brand-navy/60 hover:text-white active:scale-[0.98]"
               >
-                <MaterialSymbol name="menu_book" :size="18" />
+                <AppIcon name="menu_book" :size="18" />
                 {{ $t('home.cta.docs') }}
               </Button>
             </a>

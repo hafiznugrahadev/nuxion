@@ -13,7 +13,7 @@ import { cn } from '~/lib/utils';
 
 export interface DropdownMenuItemDef {
   label: string;
-  /** Material Symbols name. */
+  /** Lucide icon name. */
   icon?: string;
   danger?: boolean;
   disabled?: boolean;
@@ -63,7 +63,7 @@ const open = defineModel<boolean>('open');
           :class="item.danger ? 'text-error data-[highlighted]:bg-error/10' : 'text-on-surface'"
           @select="emit('select', item)"
         >
-          <MaterialSymbol v-if="item.icon" :name="item.icon" :size="18" />
+          <AppIcon v-if="item.icon" :name="item.icon" :size="18" />
           {{ item.label }}
         </DropdownMenuItem>
         <DropdownMenuSeparator v-if="$slots.footer" class="my-1 h-px bg-outline-variant" />

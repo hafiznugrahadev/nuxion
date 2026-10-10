@@ -48,7 +48,7 @@ const onSubmit = handleSubmit(async (values) => {
       <span
         class="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-primary-container text-on-primary-container"
       >
-        <MaterialSymbol name="mark_email_read" :size="20" />
+        <AppIcon name="mark_email_read" :size="20" />
       </span>
       <p class="text-sm text-foreground">{{ $t('auth.resetLinkSent') }}</p>
       <NuxtLink to="/login" class="inline-block text-sm font-medium text-primary hover:underline">

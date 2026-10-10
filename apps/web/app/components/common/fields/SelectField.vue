@@ -103,7 +103,7 @@ const isEmpty = computed(() => (props.multiple ? !multiValues.value.length : !si
                   class="shrink-0 opacity-70 hover:opacity-100"
                   @click.stop="removeTag(item.value)"
                 >
-                  <MaterialSymbol name="close" :size="14" />
+                  <AppIcon name="close" :size="14" />
                 </span>
               </span>
               <span v-if="isEmpty" class="min-w-0 flex-1 truncate text-left text-muted-foreground">
@@ -116,7 +116,7 @@ const isEmpty = computed(() => (props.multiple ? !multiValues.value.length : !si
               {{ selectedLabel || (placeholder ?? t('common.select')) }}
             </span>
 
-            <MaterialSymbol
+            <AppIcon
               name="unfold_more"
               :size="18"
               class="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 opacity-50"
@@ -160,7 +160,7 @@ const isEmpty = computed(() => (props.multiple ? !multiValues.value.length : !si
                 class="flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm transition-colors hover:bg-on-surface-variant/10"
                 @click="select(opt.value)"
               >
-                <MaterialSymbol
+                <AppIcon
                   name="check"
                   :size="18"
                   class="mr-2 shrink-0"

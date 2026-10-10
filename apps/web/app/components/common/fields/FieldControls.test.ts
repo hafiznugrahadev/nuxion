@@ -28,7 +28,7 @@ describe('field validation accessibility', () => {
         },
       });
       const wrapper = mount(host, {
-        global: { components: { Fieldset, Checkbox }, stubs: { MaterialSymbol: true } },
+        global: { components: { Fieldset, Checkbox }, stubs: { AppIcon: true } },
       });
       await nextTick();
       form.setFieldError('control', 'A field error');

@@ -27,7 +27,7 @@ type AlertVariants = VariantProps<typeof alertVariants>;
 const props = withDefaults(
   defineProps<{
     variant?: AlertVariants['variant'];
-    /** Material Symbols name; sensible default per variant. */
+    /** Lucide icon name; sensible default per variant. */
     icon?: string;
     class?: HTMLAttributes['class'];
   }>(),
@@ -44,7 +44,7 @@ const DEFAULT_ICON: Record<string, string> = {
 
 <template>
   <div role="alert" :class="cn(alertVariants({ variant }), props.class)">
-    <MaterialSymbol :name="icon ?? DEFAULT_ICON[variant ?? 'info'] ?? 'info'" :size="20" />
+    <AppIcon :name="icon ?? DEFAULT_ICON[variant ?? 'info'] ?? 'info'" :size="20" />
     <div class="flex-1 space-y-0.5">
       <p class="font-medium"><slot /></p>
       <p v-if="$slots.description" class="text-xs opacity-90">

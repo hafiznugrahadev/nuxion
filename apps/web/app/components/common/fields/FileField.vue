@@ -46,7 +46,7 @@ function clear() {
           class="state-layer relative m-1 flex h-8 shrink-0 items-center gap-1.5 rounded-sm bg-secondary px-3 text-xs font-medium text-secondary-foreground"
           @click="inputRef?.click()"
         >
-          <MaterialSymbol name="attach_file" :size="16" />
+          <AppIcon name="attach_file" :size="16" />
           Choose file
         </button>
         <span
@@ -62,7 +62,7 @@ function clear() {
           aria-label="Remove file"
           @click="clear"
         >
-          <MaterialSymbol name="close" :size="18" />
+          <AppIcon name="close" :size="18" />
         </button>
       </div>
       <input

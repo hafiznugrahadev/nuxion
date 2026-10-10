@@ -16,6 +16,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@lucide/vue": "^1.54.0",
     "@nuxion/shared-types": "workspace:*",
     "@nuxtjs/i18n": "^10.4.0",
     "@simplewebauthn/browser": "^14.0.0",

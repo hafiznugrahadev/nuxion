@@ -20,7 +20,7 @@ function renderPicker() {
     global: {
       mocks: { $t: t },
       components: { Fieldset },
-      stubs: { MaterialSymbol: true, Badge: true },
+      stubs: { AppIcon: true, Badge: true },
     },
   });
 }

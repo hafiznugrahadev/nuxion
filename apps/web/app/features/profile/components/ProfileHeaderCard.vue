@@ -96,13 +96,13 @@ async function onPick(e: Event) {
               :aria-invalid="invalid"
               @click="fileInput?.click()"
             >
-              <MaterialSymbol
+              <AppIcon
                 v-if="uploading"
                 name="progress_activity"
                 :size="14"
                 class="animate-spin"
               />
-              <MaterialSymbol v-else name="photo_camera" :size="14" />
+              <AppIcon v-else name="photo_camera" :size="14" />
             </button>
             <input
               :id="id"
@@ -126,11 +126,11 @@ async function onPick(e: Event) {
           class="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground sm:justify-start"
         >
           <span class="inline-flex items-center gap-1.5">
-            <MaterialSymbol name="shield" :size="18" />
+            <AppIcon name="shield" :size="18" />
             {{ roleLabel(primaryRole, $t) }}
           </span>
           <span class="inline-flex items-center gap-1.5">
-            <MaterialSymbol name="mail" :size="18" />
+            <AppIcon name="mail" :size="18" />
             {{ user.email }}
           </span>
         </div>

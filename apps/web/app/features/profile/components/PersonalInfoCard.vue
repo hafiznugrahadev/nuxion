@@ -46,7 +46,7 @@ const onSubmit = handleSubmit(async (values) => {
         {{ $t('profile.personalInfo.title') }}
       </h3>
       <Button v-if="!editing" variant="outline" size="sm" @click="startEdit">
-        <MaterialSymbol name="edit" :size="18" />
+        <AppIcon name="edit" :size="18" />
         {{ $t('profile.personalInfo.edit') }}
       </Button>
     </div>

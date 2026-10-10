@@ -32,10 +32,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll));
           :aria-label="isMobileOpen ? 'Close menu' : 'Open menu'"
           @click="toggleMobile"
         >
-          <MaterialSymbol
-            :name="isMobileOpen ? 'left_panel_close' : 'left_panel_open'"
-            :size="22"
-          />
+          <AppIcon :name="isMobileOpen ? 'left_panel_close' : 'left_panel_open'" :size="22" />
         </button>
         <button
           type="button"
@@ -43,7 +40,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll));
           :aria-label="isExpanded ? 'Collapse sidebar' : 'Expand sidebar'"
           @click="toggleExpanded"
         >
-          <MaterialSymbol :name="isExpanded ? 'left_panel_close' : 'left_panel_open'" :size="22" />
+          <AppIcon :name="isExpanded ? 'left_panel_close' : 'left_panel_open'" :size="22" />
         </button>
 
         <!-- MD3 search bar anchor: full pill on surface-container-high -->
@@ -52,7 +49,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll));
           class="relative hidden max-w-md flex-1 cursor-text items-center sm:flex"
           @click="openPalette"
         >
-          <MaterialSymbol
+          <AppIcon
             name="search"
             :size="18"
             class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"

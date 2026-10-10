@@ -518,5 +518,16 @@
       "tooLarge": "Ukuran berkas melebihi {mb} MB.",
       "superAdminOnly": "Hanya Super Admin yang dapat mengubah branding."
     }
+  },
+  "notifications": {
+    "title": "Notifikasi",
+    "markAllRead": "Tandai semua telah dibaca",
+    "empty": "Belum ada notifikasi",
+    "emptyHint": "Anda sudah membaca semua!"
+  },
+  "commandPalette": {
+    "placeholder": "Cari atau ketik perintah…",
+    "noResults": "Tidak ada hasil ditemukan.",
+    "navigation": "Navigasi"
   }
 }

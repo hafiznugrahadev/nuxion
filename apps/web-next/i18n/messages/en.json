@@ -518,5 +518,16 @@
       "tooLarge": "File is larger than {mb} MB.",
       "superAdminOnly": "Only a Super Admin can change branding."
     }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all as read",
+    "empty": "No notifications yet",
+    "emptyHint": "You're all caught up!"
+  },
+  "commandPalette": {
+    "placeholder": "Search or type command…",
+    "noResults": "No results found.",
+    "navigation": "Navigation"
   }
 }

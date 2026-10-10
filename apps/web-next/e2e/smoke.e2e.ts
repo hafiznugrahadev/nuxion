@@ -137,3 +137,8 @@ test('settings admin route is guarded like the rest of /admin', async ({ page })
   await page.goto('/admin/settings');
   await expect(page).toHaveURL(/\/login\?redirect=%2Fadmin%2Fsettings$/);
 });
+
+test('editor demo route is guarded like the rest of /admin', async ({ page }) => {
+  await page.goto('/admin/demo/editor');
+  await expect(page).toHaveURL(/\/login\?redirect=%2Fadmin%2Fdemo%2Feditor$/);
+});

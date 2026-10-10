@@ -4,7 +4,7 @@ import { XhrProgressBar } from '@/components/common/xhr-progress-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from 'sonner';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ConfirmProvider } from '@/lib/use-confirm';
 import { BrandingProvider } from '@/components/common/branding-provider';
 
@@ -17,6 +17,12 @@ import { BrandingProvider } from '@/components/common/branding-provider';
  * 'theme' key, which no Next-variant install can have.
  */
 export function Providers({ children }: { children: React.ReactNode }) {
+  // Hydration marker: e2e waits for this before clicking submit buttons —
+  // a non-hydrated React form falls back to a native GET submit.
+  useEffect(() => {
+    document.body.dataset.hydrated = 'true';
+  }, []);
+
   const [queryClient] = useState(
     () =>
       new QueryClient({

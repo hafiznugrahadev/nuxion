@@ -35,6 +35,7 @@ export function UserMenu({ showDetails = false }: { showDetails?: boolean }) {
       className="touch-target relative flex items-center gap-3 rounded-lg px-2 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-on-surface/8 hover:text-foreground"
       onClick={() => void logout().then(() => router.replace('/login'))}
       aria-label={t('signOut')}
+      data-testid="logout-button"
     >
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-container text-[11px] font-semibold text-on-primary-container">
         {initials}

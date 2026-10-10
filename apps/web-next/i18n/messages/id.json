@@ -356,14 +356,60 @@
     "collapseSidebar": "Ciutkan sidebar"
   },
   "security": {
+    "twoFactor": {
+      "title": "Autentikasi dua langkah",
+      "subtitle": "Kode sekali pakai dari aplikasi authenticator wajib saat login.",
+      "active": "Aktif",
+      "pending": "Belum aktif",
+      "incomplete": "Autentikasi dua langkah wajib untuk akun Anda.",
+      "setUp": "Selesaikan penyiapan"
+    },
     "recovery": {
+      "title": "Buat ulang kode pemulihan",
+      "description": "Konfirmasi password Anda untuk membuat set kode pemulihan baru. Kode lama tidak berlaku lagi.",
+      "subtitle": "Setiap kode pemulihan hanya bisa dipakai sekali jika Anda kehilangan akses authenticator.",
+      "regenerate": "Buat ulang kode",
+      "regenerated": "Kode pemulihan berhasil dibuat ulang.",
+      "failed": "Gagal membuat ulang kode pemulihan.",
       "showOnce": "Kode ini hanya ditampilkan sekali — simpan di tempat aman.",
       "copy": "Salin kode",
-      "copied": "Tersalin ke clipboard."
+      "copied": "Tersalin ke clipboard.",
+      "password": "Password saat ini",
+      "confirmDescription": "Semua kode pemulihan lama tidak akan berlaku lagi. Simpan kode baru sebelum menutup jendela ini."
+    },
+    "passkeys": {
+      "title": "Passkey",
+      "subtitle": "Login instan dengan Touch ID, Windows Hello, atau kunci keamanan.",
+      "add": "Tambah passkey",
+      "addTitle": "Tambah passkey",
+      "addDescription": "Beri nama perangkat, lalu ikuti perintah browser Anda.",
+      "nameLabel": "Nama perangkat (opsional)",
+      "namePlaceholder": "mis. MacBook Touch ID",
+      "nameHint": "Ditampilkan di daftar passkey agar mudah dikenali.",
+      "continue": "Lanjutkan",
+      "empty": "Belum ada passkey.",
+      "unnamed": "Passkey tanpa nama",
+      "lastUsed": "Terakhir dipakai {date}",
+      "neverUsed": "Belum pernah dipakai",
+      "addedOn": "Ditambahkan {date}",
+      "added": "Passkey ditambahkan.",
+      "addFailed": "Gagal menambahkan passkey.",
+      "remove": "Hapus",
+      "removeTitle": "Hapus passkey?",
+      "removeDescription": "Hapus \"{name}\"? Anda tidak bisa memakainya untuk login lagi.",
+      "removed": "Passkey dihapus.",
+      "removeFailed": "Gagal menghapus passkey.",
+      "nameTooLong": "Nama maksimal 64 karakter."
     }
   },
   "common": {
-    "working": "Memproses…"
+    "cancel": "Batal",
+    "done": "Selesai",
+    "working": "Memproses…",
+    "search": "Cari",
+    "select": "Pilih opsi",
+    "noResults": "Tidak ada hasil.",
+    "confirm": "Konfirmasi"
   },
   "roles": {
     "title": "Peran",
@@ -409,6 +455,42 @@
       "created": "Peran dibuat",
       "updated": "Nama peran diubah",
       "deleted": "Peran dihapus"
+    }
+  },
+  "profile": {
+    "title": "Profil",
+    "personalInfo": {
+      "title": "Informasi Pribadi",
+      "edit": "Edit",
+      "fullName": "Nama lengkap",
+      "emailAddress": "Alamat email",
+      "roles": "Peran",
+      "emailHint": "Email tidak dapat diubah.",
+      "cancel": "Batal",
+      "saving": "Menyimpan…",
+      "saveChanges": "Simpan perubahan"
+    },
+    "changePassword": {
+      "title": "Ubah Kata Sandi",
+      "subtitle": "Gunakan kata sandi kuat yang tidak digunakan di tempat lain.",
+      "currentPassword": "Kata sandi saat ini",
+      "newPassword": "Kata sandi baru",
+      "confirmPassword": "Konfirmasi kata sandi baru",
+      "update": "Perbarui kata sandi",
+      "updating": "Memperbarui…",
+      "confirmTitle": "Ganti kata sandi Anda?",
+      "confirmDescription": "Kata sandi Anda yang sekarang tidak akan berlaku lagi. Gunakan kata sandi baru saat masuk berikutnya."
+    },
+    "avatar": {
+      "change": "Ubah foto",
+      "notImage": "Pilih berkas gambar.",
+      "tooLarge": "Ukuran gambar harus di bawah {mb} MB.",
+      "uploadFailed": "Gagal mengunggah.",
+      "saveFailed": "Gagal menyimpan foto."
+    },
+    "toasts": {
+      "updated": "Profil diperbarui",
+      "passwordChanged": "Kata sandi diubah"
     }
   }
 }

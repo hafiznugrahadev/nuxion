@@ -48,7 +48,10 @@ export function createApiClient({ baseURL, getToken, onStart, onEnd }: ApiClient
       const token = getToken?.();
       if (token) headers.set('Authorization', `Bearer ${token}`);
       const hasBody = options.body !== undefined;
-      if (hasBody) headers.set('content-type', 'application/json');
+      // FormData bodies keep their browser-set multipart boundary header;
+      // everything else is JSON.
+      const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+      if (hasBody && !isFormData) headers.set('content-type', 'application/json');
 
       let res: Response;
       try {
@@ -56,7 +59,11 @@ export function createApiClient({ baseURL, getToken, onStart, onEnd }: ApiClient
           method: options.method ?? (hasBody ? 'POST' : 'GET'),
           headers,
           credentials: 'include',
-          body: hasBody ? JSON.stringify(options.body) : undefined,
+          body: hasBody
+            ? isFormData
+              ? (options.body as FormData)
+              : JSON.stringify(options.body)
+            : undefined,
           signal: options.signal,
         });
       } catch (cause) {

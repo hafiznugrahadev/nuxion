@@ -356,14 +356,60 @@
     "collapseSidebar": "Collapse sidebar"
   },
   "security": {
+    "twoFactor": {
+      "title": "Two-factor authentication",
+      "subtitle": "A one-time code from your authenticator app is required at sign-in.",
+      "active": "Active",
+      "pending": "Not set up",
+      "incomplete": "Two-factor authentication is required for your account.",
+      "setUp": "Complete setup"
+    },
     "recovery": {
+      "title": "Regenerate recovery codes",
+      "description": "Confirm your password to mint a fresh set of recovery codes. Existing codes become invalid.",
+      "subtitle": "Each recovery code works once if you lose access to your authenticator.",
+      "regenerate": "Regenerate codes",
+      "regenerated": "Recovery codes regenerated.",
+      "failed": "Could not regenerate recovery codes.",
       "showOnce": "These codes are shown only once — store them somewhere safe.",
       "copy": "Copy codes",
-      "copied": "Copied to clipboard."
+      "copied": "Copied to clipboard.",
+      "password": "Current password",
+      "confirmDescription": "All existing recovery codes will stop working. Save the new codes before closing this window."
+    },
+    "passkeys": {
+      "title": "Passkeys",
+      "subtitle": "Sign in instantly with Touch ID, Windows Hello, or a security key.",
+      "add": "Add passkey",
+      "addTitle": "Add a passkey",
+      "addDescription": "Name the device, then follow your browser's prompt.",
+      "nameLabel": "Device name (optional)",
+      "namePlaceholder": "e.g. MacBook Touch ID",
+      "nameHint": "Shown in the passkey list so you can recognize it.",
+      "continue": "Continue",
+      "empty": "No passkeys yet.",
+      "unnamed": "Unnamed passkey",
+      "lastUsed": "Last used {date}",
+      "neverUsed": "Never used",
+      "addedOn": "Added {date}",
+      "added": "Passkey added.",
+      "addFailed": "Could not add the passkey.",
+      "remove": "Remove",
+      "removeTitle": "Remove passkey?",
+      "removeDescription": "Remove \"{name}\"? You can't sign in with it afterwards.",
+      "removed": "Passkey removed.",
+      "removeFailed": "Could not remove the passkey.",
+      "nameTooLong": "Name must be at most 64 characters."
     }
   },
   "common": {
-    "working": "Working…"
+    "cancel": "Cancel",
+    "done": "Done",
+    "working": "Working…",
+    "search": "Search",
+    "select": "Select an option",
+    "noResults": "No results found.",
+    "confirm": "Confirm"
   },
   "roles": {
     "title": "Roles",
@@ -409,6 +455,42 @@
       "created": "Role created",
       "updated": "Role renamed",
       "deleted": "Role deleted"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "personalInfo": {
+      "title": "Personal Information",
+      "edit": "Edit",
+      "fullName": "Full name",
+      "emailAddress": "Email address",
+      "roles": "Roles",
+      "emailHint": "Email can't be changed.",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "saveChanges": "Save changes"
+    },
+    "changePassword": {
+      "title": "Change Password",
+      "subtitle": "Use a strong password you don't use anywhere else.",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "update": "Update password",
+      "updating": "Updating…",
+      "confirmTitle": "Replace your password?",
+      "confirmDescription": "Your current password will stop working. Use the new password the next time you sign in."
+    },
+    "avatar": {
+      "change": "Change photo",
+      "notImage": "Please choose an image file.",
+      "tooLarge": "Image must be under {mb} MB.",
+      "uploadFailed": "Upload failed.",
+      "saveFailed": "Could not save your photo."
+    },
+    "toasts": {
+      "updated": "Profile updated",
+      "passwordChanged": "Password changed"
     }
   }
 }

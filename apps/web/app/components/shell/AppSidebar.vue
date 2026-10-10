@@ -110,7 +110,9 @@ const showFull = computed(() => isMobileOpen.value || isExpanded.value);
                 v-if="isActive(item.to)"
                 class="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-full bg-primary"
               />
-              <AppIcon :name="item.icon" :size="22" class="shrink-0" />
+              <!-- 18 matches the label's optical size (text-sm); the collapsed
+                   rail keeps 22 because the icon is the item's only content. -->
+              <AppIcon :name="item.icon" :size="showFull ? 18 : 22" class="shrink-0" />
               <span v-if="showFull">{{ $t(item.label) }}</span>
             </NuxtLink>
           </Tooltip>

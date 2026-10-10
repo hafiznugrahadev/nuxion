@@ -19,6 +19,8 @@ export type LoginResult = SessionPayload | TwoFactorChallenge;
 // Nuxt variant's runtime config.
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '/api';
 export const REGISTRATION_ENABLED = process.env.NEXT_PUBLIC_REGISTRATION_ENABLED === 'true';
+export const TWO_FACTOR_ENABLED = process.env.NEXT_PUBLIC_2FA_ENABLED === 'true';
+export const PASSKEY_ENABLED = process.env.NEXT_PUBLIC_PASSKEY_ENABLED === 'true';
 
 /**
  * Bare fetch with the YouTube-style top progress bar — for the user-visible
@@ -62,6 +64,40 @@ export async function login(email: string, password: string): Promise<LoginResul
   const data = await trackedFetch<LoginResult>('/auth/login', {
     method: 'POST',
     body: { email, password },
+  });
+  if ('twoFactorRequired' in data) return data;
+  setSession(data);
+  return data;
+}
+
+/** Options JSON produced by the API for navigator.credentials.get(). */
+export interface PasskeyLoginOptions {
+  challengeId: string;
+  options: import('@simplewebauthn/browser').PublicKeyCredentialRequestOptionsJSON;
+}
+
+/** Second step of login: consume the challenge with a TOTP/recovery code. */
+export async function verifyTwoFactor(challengeId: string, code: string): Promise<void> {
+  const data = await trackedFetch<SessionPayload>('/auth/2fa/verify', {
+    method: 'POST',
+    body: { challengeId, code },
+  });
+  setSession(data);
+}
+
+/** Fetch a discoverable-credential login challenge (passkey sign-in). */
+export async function passkeyLoginOptions(): Promise<PasskeyLoginOptions> {
+  return trackedFetch<PasskeyLoginOptions>('/auth/webauthn/login/options', { method: 'POST' });
+}
+
+/** Verify the browser's assertion; returns a session or a 2FA challenge. */
+export async function passkeyLoginVerify(
+  challengeId: string,
+  response: unknown,
+): Promise<LoginResult> {
+  const data = await trackedFetch<LoginResult>('/auth/webauthn/login/verify', {
+    method: 'POST',
+    body: { challengeId, response },
   });
   if ('twoFactorRequired' in data) return data;
   setSession(data);

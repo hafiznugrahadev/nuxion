@@ -2,7 +2,7 @@
 
 import { BrandLogo } from '@/components/common/brand-logo';
 import { Button } from '@/components/ui/button';
-import { ensureSession } from '@/lib/auth-api';
+import { ensureSession, TWO_FACTOR_ENABLED } from '@/lib/auth-api';
 import { getAuthState, hasRole, isAuthenticated, subscribeAuth } from '@/lib/auth-store';
 import { logout } from '@/lib/auth-api';
 import { UserRole } from '@nuxion/shared-types';
@@ -36,6 +36,13 @@ export function AdminGuard({ children }: { children: ReactNode }) {
         router.replace(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
       } else if (!hasRole(state, UserRole.ADMIN) && !hasRole(state, UserRole.SUPER_ADMIN)) {
         setStatus('forbidden');
+      } else if (TWO_FACTOR_ENABLED && state.user && !state.user.twoFactorEnabled) {
+        // The "hook": every admin route keeps un-activated users on the setup
+        // page (the one exempt route) until an authenticator is registered.
+        setStatus('denied');
+        router.replace(
+          `/two-factor/setup?redirect=${encodeURIComponent(window.location.pathname)}`,
+        );
       } else {
         setStatus('ok');
       }

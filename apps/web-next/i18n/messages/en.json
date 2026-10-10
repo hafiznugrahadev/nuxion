@@ -238,7 +238,34 @@
     "resetSuccess": "Password reset. Please sign in.",
     "resetInvalidExpired": "This reset link is invalid or has expired.",
     "invalidToken": "Invalid or missing reset token.",
-    "twoFactorRequired": "This account has two-factor authentication enabled. The verification step arrives with the kit's 2FA stage; sign in with an account without 2FA or wait for the update."
+    "twoFactorRequired": "This account has two-factor authentication enabled. The verification step arrives with the kit's 2FA stage; sign in with an account without 2FA or wait for the update.",
+    "twoFactor": {
+      "title": "Two-factor verification",
+      "subtitle": "Enter the 6-digit code from your authenticator app.",
+      "recoverySubtitle": "Enter one of your recovery codes.",
+      "code": "Verification code",
+      "recoveryCode": "Recovery code",
+      "useRecovery": "Use a recovery code instead",
+      "useTotp": "Use an authenticator code instead",
+      "invalidCode": "Invalid or expired code.",
+      "back": "Back to sign in",
+      "otpRequired": "Enter your authenticator code to finish signing in.",
+      "setupTitle": "Set up two-factor authentication",
+      "setupSubtitle": "Your account requires an authenticator app before you can continue.",
+      "stepScan": "Scan the QR code with your authenticator app (Google Authenticator, Authy, 1Password…).",
+      "stepEnter": "Enter the 6-digit code it shows to confirm.",
+      "qrAlt": "TOTP QR code",
+      "manualSecret": "Can't scan? Enter this secret manually:",
+      "activate": "Activate",
+      "activated": "Two-factor authentication activated.",
+      "activatedTitle": "Save your recovery codes",
+      "continue": "Continue",
+      "signOut": "Sign out instead"
+    },
+    "passkey": {
+      "signIn": "Sign in with a passkey",
+      "failed": "Passkey sign-in failed."
+    }
   },
   "users": {
     "title": "Users",
@@ -327,5 +354,15 @@
     "closeMenu": "Close menu",
     "expandSidebar": "Expand sidebar",
     "collapseSidebar": "Collapse sidebar"
+  },
+  "security": {
+    "recovery": {
+      "showOnce": "These codes are shown only once — store them somewhere safe.",
+      "copy": "Copy codes",
+      "copied": "Copied to clipboard."
+    }
+  },
+  "common": {
+    "working": "Working…"
   }
 }

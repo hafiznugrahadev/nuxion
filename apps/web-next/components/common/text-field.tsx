@@ -22,6 +22,8 @@ export interface TextFieldProps<T extends FieldValues> {
   hint?: string;
   inputmode?: 'text' | 'numeric' | 'tel' | 'email' | 'url';
   maxLength?: number;
+  /** Passed through for autofill (e.g. 'one-time-code' on OTP fields). */
+  autocomplete?: string;
   disabled?: boolean;
 }
 
@@ -36,6 +38,7 @@ export function TextField<T extends FieldValues>({
   hint,
   inputmode,
   maxLength,
+  autocomplete,
   disabled,
 }: TextFieldProps<T>) {
   const { field, fieldState } = useController({ name, control });
@@ -56,6 +59,7 @@ export function TextField<T extends FieldValues>({
           prefixIcon={prefixIcon}
           inputMode={inputmode}
           maxLength={maxLength}
+          autoComplete={autocomplete}
           disabled={disabled}
           aria-describedby={describedBy}
           aria-invalid={invalid}

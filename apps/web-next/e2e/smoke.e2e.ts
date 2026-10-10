@@ -116,3 +116,9 @@ test('/admin lands on the dashboard section', async ({ page }) => {
   // fine: post-login both converge on the dashboard.
   await expect(page).toHaveURL(/\/login\?redirect=%2Fadmin(%2Fdashboard)?$/);
 });
+
+test('two-factor setup requires a session', async ({ page }) => {
+  await page.goto('/two-factor/setup');
+  // Unauthenticated visitors bounce to /login (the setup flow needs a user).
+  await expect(page).toHaveURL(/\/login/);
+});

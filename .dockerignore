@@ -3,6 +3,8 @@
 **/dist
 **/.output
 **/.nuxt
+**/.next
+**/next-env.d.ts
 **/.turbo
 **/coverage
 **/generated

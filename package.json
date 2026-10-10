@@ -2,7 +2,7 @@
   "name": "nuxion",
   "version": "0.1.0",
   "private": true,
-  "description": "Nuxion — NestJS API + Nuxt 4 web monorepo (Bun + Turbo)",
+  "description": "Nuxion — NestJS API + Nuxt 4 / Next.js 16 web monorepo (Bun + Turbo)",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -13,6 +13,7 @@
     "serve": "turbo run dev",
     "serve:api": "turbo run dev --filter=@nuxion/api",
     "serve:web": "turbo run dev --filter=@nuxion/web",
+    "serve:web-next": "turbo run dev --filter=@nuxion/web-next",
     "build": "turbo run build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

@@ -459,6 +459,9 @@ async function copy(textToCopy: string) {
                 {{ $t('home.install.scaffolderLabel') }}
               </span>
               <code class="truncate font-mono text-sm text-on-surface">{{ CREATE_CMD }}</code>
+              <span class="text-xs text-on-surface-variant">
+                {{ $t('home.install.variantNote') }}
+              </span>
             </div>
           </div>
           <Button variant="outline" size="sm" class="shrink-0" @click="copy(CREATE_CMD)">

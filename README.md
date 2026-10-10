@@ -1,27 +1,30 @@
 # Nuxion
 
-A **Bun + Turbo monorepo** starter kit — NestJS API + Nuxt 4 web with authentication,
-a users datatable, and reusable components, built to the team [`SPEC.md`](./SPEC.md)
-conventions.
+A **Bun + Turbo monorepo** starter kit — NestJS API + a web frontend in two
+variants (**Nuxt 4** by default, **Next.js 16** via `--frontend next`), with
+authentication, a users datatable, and reusable components, built to the team
+[`SPEC.md`](./SPEC.md) conventions.
 
 ```
 nuxion/
 ├── apps/
 │   ├── api/            NestJS 11 + Drizzle backend (JWT auth, class-validator, Swagger, Pino)
-│   └── web/            Nuxt 4 (Vue 3) frontend (shadcn-vue, Pinia, TanStack Query)
+│   ├── web/            Nuxt 4 (Vue 3) frontend — default variant (shadcn-vue, Pinia, TanStack Query)
+│   └── web-next/       Next.js 16 (React 19) frontend variant (shadcn/ui, TanStack Query, next-intl)
 ├── packages/
-│   └── shared-types/   TS contracts (UserRole, API envelope, entities) shared by both
+│   └── shared-types/   TS contracts (UserRole, API envelope, entities) shared by all apps
 ├── docker-compose.yml  Postgres + Redis (backing services for local dev)
 └── turbo.json
 ```
 
 ## Stack
 
-| Layer    | Tech                                                                         |
-| -------- | ---------------------------------------------------------------------------- |
-| Backend  | Bun · NestJS 11 · Drizzle ORM · PostgreSQL · Redis · JWT                     |
-| Frontend | Nuxt 4 · Vue 3 · Tailwind v4 · shadcn-vue (Reka UI) · Pinia · TanStack Query |
-| Shared   | `@nuxion/shared-types` (UserRole + API contracts, compiled to CJS/ESM)       |
+| Layer              | Tech                                                                         |
+| ------------------ | ---------------------------------------------------------------------------- |
+| Backend            | Bun · NestJS 11 · Drizzle ORM · PostgreSQL · Redis · JWT                     |
+| Frontend           | Nuxt 4 · Vue 3 · Tailwind v4 · shadcn-vue (Reka UI) · Pinia · TanStack Query |
+| Frontend (variant) | Next.js 16 · React 19 · Tailwind v4 · shadcn/ui · TanStack Query · next-intl |
+| Shared             | `@nuxion/shared-types` (UserRole + API contracts, compiled to CJS/ESM)       |
 
 ## What's included
 
@@ -79,7 +82,8 @@ bun run serve
 ```
 
 > **Single `.env`:** there is exactly one env file at the repo root. The API loads
-> it via `ConfigModule` (`envFilePath: ../../.env`) and Nuxt via `--dotenv ../../.env`.
+> it via `ConfigModule` (`envFilePath: ../../.env`); the web app loads it from the
+> root too (Nuxt: `--dotenv ../../.env` · Next: dotenv-cli scripts).
 
 - API → http://localhost:8000/api · Swagger → http://localhost:8000/api/docs
 - Web → http://localhost:3000 (the browser talks to the API same-origin at `/api` —
@@ -96,18 +100,57 @@ bun run serve
 
 ### Ports (configurable in the root `.env`)
 
-| App | Default | Where to change                                                          |
-| --- | ------- | ------------------------------------------------------------------------ |
-| Web | `3000`  | `.env` → `WEB_PORT`                                                      |
-| API | `8000`  | `.env` → `API_PORT` (also update `NUXT_API_INTERNAL_BASE` for the proxy) |
+| App        | Default | Where to change                                                                                       |
+| ---------- | ------- | ----------------------------------------------------------------------------------------------------- |
+| Web (Nuxt) | `3000`  | `.env` → `WEB_PORT`                                                                                   |
+| Web (Next) | `8080`  | `.env` → `WEB_NEXT_PORT`                                                                              |
+| API        | `8000`  | `.env` → `API_PORT` (also update the proxy base: `NUXT_API_INTERNAL_BASE` / `NEXT_API_INTERNAL_BASE`) |
 
 ### Serve commands
 
-| Command             | Starts                         |
-| ------------------- | ------------------------------ |
-| `bun run serve`     | API + Web together (Turbo)     |
-| `bun run serve:api` | API only (`:8000`, watch mode) |
-| `bun run serve:web` | Web only (`:3000`, HMR)        |
+| Command                  | Starts                               |
+| ------------------------ | ------------------------------------ |
+| `bun run serve`          | API + Web together (Turbo)           |
+| `bun run serve:api`      | API only (`:8000`, watch mode)       |
+| `bun run serve:web`      | Web only — Nuxt (`:3000`, HMR)       |
+| `bun run serve:web-next` | Web only — Next (`:8080`, Turbopack) |
+
+## Web variants (Nuxt / Next)
+
+The kit carries two frontends over the same API and the same
+`@nuxion/shared-types` contracts. **Nuxt (`apps/web`) is the default** and the
+most complete; **Next (`apps/web-next`)** is the React variant, ported feature
+by feature. Both keep the single-public-origin design: the browser only talks
+to the web origin, and `/api` + `/uploads` are proxied server-side to
+`*_API_INTERNAL_BASE` (Nitro server routes in Nuxt, buffered route handlers in
+Next — the Next proxy reads its env at runtime, not build time).
+
+Pick one when scaffolding a new project; ask for the React variant with
+`--frontend next`.
+The other app is deleted and the root references (compose service, env
+section, scripts) are cleaned up by `bun run init`. Inside the kit itself both
+can run side by side (different ports, and the `web-next` compose services sit
+behind the `next` profile).
+
+<!-- web-variant:nuxt -->
+
+### Nuxt (default)
+
+`bun run serve:web` on `:3000`. Env prefix `NUXT_*` (`NUXT_API_INTERNAL_BASE`,
+`NUXT_PUBLIC_SITE_URL`, …). Dev container: the `web` service in
+`docker-compose.yml` (https://web.nuxion-dev.orb.local).
+<!-- /web-variant:nuxt -->
+
+<!-- web-variant:next -->
+
+### Next.js
+
+`bun run serve:web-next` on `:8080`. Env prefix `NEXT_*`
+(`NEXT_API_INTERNAL_BASE`, `NEXT_PUBLIC_SITE_URL`, …). Dev container:
+`docker compose --profile next up -d web-next`
+(https://web-next.nuxion-dev.orb.local). Production image:
+`apps/web-next/Dockerfile` (Next standalone output on Bun).
+<!-- /web-variant:next -->
 
 ### Seed credentials
 
@@ -148,6 +191,7 @@ The published CLI wraps everything below in one command:
 
 ```bash
 bun create nuxion@latest portal-desa
+#   --frontend next  scaffold the Next.js variant instead of Nuxt (default)
 #   --branch <ref>   clone a branch/tag instead of main
 #   --repo <url>     clone from a fork/private mirror
 #   --display "Portal Desa"

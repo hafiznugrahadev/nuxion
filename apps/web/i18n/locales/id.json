@@ -181,7 +181,8 @@
         "workspaces": "Workspace Bun + task Turborepo",
         "env": "Satu .env root untuk kedua aplikasi",
         "seed": "Seed idempoten dengan role demo"
-      }
+      },
+      "variantNote": "Mau variant Next.js? Tambahkan --frontend next"
     },
     "inside": {
       "eyebrow": "Lengkap dan siap pakai",

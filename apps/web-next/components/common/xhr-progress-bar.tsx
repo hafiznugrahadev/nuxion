@@ -9,6 +9,6 @@ import { useSyncExternalStore } from 'react';
  * Route navigation stays a Nuxt concern; the bar here tracks XHRs only.
  */
 export function XhrProgressBar() {
-  const pending = useSyncExternalStore(subscribeXhrPending, getXhrPending);
+  const pending = useSyncExternalStore(subscribeXhrPending, getXhrPending, () => 0);
   return <div className="xhr-progress-bar" data-active={pending > 0} aria-hidden="true" />;
 }

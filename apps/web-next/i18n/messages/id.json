@@ -13,7 +13,8 @@
     "profile": "Profil",
     "signOut": "Keluar",
     "login": "Masuk",
-    "settings": "Pengaturan"
+    "settings": "Pengaturan",
+    "editorDemo": "Demo editor"
   },
   "state": {
     "loading": "Memuat…",
@@ -529,5 +530,17 @@
     "placeholder": "Cari atau ketik perintah…",
     "noResults": "Tidak ada hasil ditemukan.",
     "navigation": "Navigasi"
+  },
+  "editor": {
+    "imageLabel": "Sisipkan gambar",
+    "chooseImage": "Pilih berkas gambar.",
+    "imageTooLarge": "Ukuran gambar harus di bawah {max} MB.",
+    "uploadFailed": "Gagal mengunggah gambar.",
+    "label": "Editor teks kaya"
+  },
+  "editorDemo": {
+    "title": "Demo editor",
+    "subtitle": "Editor WYSIWYG tiptap di atas API storage bersama.",
+    "output": "Keluaran HTML"
   }
 }

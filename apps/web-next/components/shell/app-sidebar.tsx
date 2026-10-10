@@ -4,7 +4,14 @@ import { BrandLogo } from '@/components/common/brand-logo';
 import { UserMenu } from '@/components/shell/user-menu';
 import { useBranding } from '@/lib/branding';
 import { closeMobile, getSidebarState, subscribeSidebar } from '@/lib/use-sidebar';
-import { CircleUserRound, LayoutDashboard, Settings, ShieldCheck, Users } from 'lucide-react';
+import {
+  CircleUserRound,
+  LayoutDashboard,
+  PenLine,
+  Settings,
+  ShieldCheck,
+  Users,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -36,6 +43,7 @@ export function AppSidebar() {
     { label: t('nav.roles'), href: '/admin/roles', icon: ShieldCheck },
     { label: t('nav.profile'), href: '/admin/profile', icon: CircleUserRound },
     { label: t('nav.settings'), href: '/admin/settings', icon: Settings },
+    { label: t('nav.editorDemo'), href: '/admin/demo/editor', icon: PenLine },
   ];
 
   function isActive(href: string) {

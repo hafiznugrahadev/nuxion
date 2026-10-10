@@ -33,14 +33,15 @@ export function Field({
   return (
     <div className={cn('flex flex-col gap-1.5', className)}>
       {label && (
-        <Label htmlFor={id}>
+        // The required star renders via CSS so it never becomes part of the
+        // label text (getByLabel exact matches stay clean).
+        <Label
+          htmlFor={id}
+          className={
+            required ? `after:ml-0.5 after:text-destructive after:content-['*']` : undefined
+          }
+        >
           {label}
-          {required && (
-            <span className="text-destructive" aria-hidden="true">
-              {' '}
-              *
-            </span>
-          )}
         </Label>
       )}
       {children({ id, describedBy, invalid: !!error })}

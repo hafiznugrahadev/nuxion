@@ -19,6 +19,10 @@
     "@simplewebauthn/browser": "^14",
     "@tanstack/react-query": "^5.62.0",
     "@tanstack/react-table": "^8.20.5",
+    "@tiptap/extension-image": "^3.31.3",
+    "@tiptap/extensions": "^3.31.3",
+    "@tiptap/react": "^3.31.3",
+    "@tiptap/starter-kit": "^3.31.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.55.0",
@@ -42,6 +46,7 @@
     "eslint": "^10.9.1",
     "eslint-config-next": "^16.4.0",
     "happy-dom": "^20.14.5",
+    "otplib": "^13.5.0",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.2",
     "vitest": "^5.0.1"

@@ -13,7 +13,8 @@
     "profile": "Profile",
     "signOut": "Sign out",
     "login": "Login",
-    "settings": "Settings"
+    "settings": "Settings",
+    "editorDemo": "Editor demo"
   },
   "state": {
     "loading": "Loading…",
@@ -529,5 +530,17 @@
     "placeholder": "Search or type command…",
     "noResults": "No results found.",
     "navigation": "Navigation"
+  },
+  "editor": {
+    "imageLabel": "Insert image",
+    "chooseImage": "Please choose an image file.",
+    "imageTooLarge": "Image must be under {max} MB.",
+    "uploadFailed": "Image upload failed.",
+    "label": "Rich text editor"
+  },
+  "editorDemo": {
+    "title": "Editor demo",
+    "subtitle": "The tiptap WYSIWYG editor over the shared storage API.",
+    "output": "HTML output"
   }
 }

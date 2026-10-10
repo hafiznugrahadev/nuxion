@@ -1,20 +1,24 @@
 'use client';
 
+import { CommandPalette } from '@/components/shell/command-palette';
 import { LanguageSwitcher } from '@/components/shell/language-switcher';
+import { NotificationPanel } from '@/components/shell/notification-panel';
 import { ThemeToggle } from '@/components/shell/theme-toggle';
 import { UserMenu } from '@/components/shell/user-menu';
 import { toggleExpanded, toggleMobile, getSidebarState, subscribeSidebar } from '@/lib/use-sidebar';
-import { PanelLeft, PanelLeftClose } from 'lucide-react';
+import { openPalette } from '@/lib/use-command-palette';
+import { PanelLeft, PanelLeftClose, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useSyncExternalStore } from 'react';
 
 /**
- * MD3 top app bar (port of the Nuxt variant's AppHeader, minus the command
- * palette anchor — that ships with its own stage, and a dead search button
- * is worse than none). Surface at rest, tonal once the page scrolls under it.
+ * MD3 top app bar (port of the Nuxt variant's AppHeader): sidebar toggles,
+ * the command-palette search anchor (⌘K), language/theme, notifications, and
+ * the session menu.
  */
 export function AdminHeader() {
   const t = useTranslations('a11y');
+  const tp = useTranslations('commandPalette');
   const { isExpanded, isMobileOpen } = useSyncExternalStore(
     subscribeSidebar,
     getSidebarState,
@@ -50,15 +54,37 @@ export function AdminHeader() {
               <PanelLeft size={22} aria-hidden="true" />
             )}
           </button>
+
+          {/* MD3 search bar anchor: full pill on surface-container-high */}
+          <button
+            type="button"
+            className="relative hidden max-w-md flex-1 cursor-text items-center sm:flex"
+            onClick={openPalette}
+          >
+            <Search
+              size={18}
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <span className="flex h-10 w-full items-center rounded-full bg-surface-container-high pl-12 pr-16 text-sm text-muted-foreground">
+              {tp('placeholder')}
+            </span>
+            <span className="absolute right-3 top-1/2 hidden -translate-y-1/2 items-center gap-1 rounded-sm border border-outline-variant bg-surface px-1.5 py-0.5 text-xs text-muted-foreground md:inline-flex">
+              ⌘ K
+            </span>
+          </button>
         </div>
 
         {/* Right: actions */}
         <div className="flex items-center gap-1 sm:gap-2">
           <LanguageSwitcher />
           <ThemeToggle />
+          <NotificationPanel />
           <UserMenu />
         </div>
       </div>
+
+      <CommandPalette />
     </header>
   );
 }

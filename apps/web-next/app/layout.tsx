@@ -27,8 +27,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#fcfcfc' },
-    { media: '(prefers-color-scheme: dark)', color: '#1a1a1a' },
+    { media: '(prefers-color-scheme: light)', color: '#f1f1f1' },
+    { media: '(prefers-color-scheme: dark)', color: '#1b1b1b' },
   ],
 };
 
@@ -39,22 +39,20 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     // suppressHydrationWarning: next-themes writes data-theme pre-paint.
-    <html lang={locale} suppressHydrationWarning>
+    // data-astryx-theme scopes the Astryx token layer (CSS @scope) to the
+    // whole document from the first SSR paint — covers <body> and portals
+    // before the <Theme> wrapper mounts, which re-syncs the same value.
+    // Keep in sync with defaultThemeSlug in astryx-themes.ts (generated).
+    <html lang={locale} data-astryx-theme="neutral" suppressHydrationWarning>
       <body className="flex min-h-svh flex-col bg-background font-sans text-foreground antialiased">
         {/*
-         * Google Sans + Poppins via <link>, matching the Nuxt variant (Google
-         * Sans is not in the next/font catalog). React hoists these to <head>.
+         * The Astryx theme ships its own font (Figtree via
+         * theme-neutral/fonts.css, imported by astryx-themes.ts) — no
+         * Google Sans/Poppins <link>s in this variant.
          */}
         {}
         <link rel="icon" href="/favicon.png" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        {/* eslint-disable-next-line @next/next/no-page-custom-font -- app-router root layout, not pages/_document */}
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@300;400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap"
-        />
         <NextIntlClientProvider messages={messages}>
           <Providers initialBranding={branding}>
             <FaviconLinks />

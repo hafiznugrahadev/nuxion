@@ -14,7 +14,8 @@
     "signOut": "Keluar",
     "login": "Masuk",
     "settings": "Pengaturan",
-    "editorDemo": "Demo editor"
+    "editorDemo": "Demo editor",
+    "astryxDemo": "Demo Astryx"
   },
   "state": {
     "loading": "Memuat…",
@@ -542,5 +543,19 @@
     "title": "Demo editor",
     "subtitle": "Editor WYSIWYG tiptap di atas API storage bersama.",
     "output": "Keluaran HTML"
+  },
+  "astryxDemo": {
+    "title": "Demo Astryx",
+    "subtitle": "Komponen inti dari design system Astryx di atas tema neutral, berdampingan dengan utility Tailwind berbasis token.",
+    "variants": "Varian tombol",
+    "sizes": "Ukuran",
+    "layout": "Primitif layout",
+    "layoutHint": "VStack dan HStack yang mengatur jarak; tanpa div pembungkus.",
+    "bridge": "Bridge Tailwind",
+    "bridgeHint": "Utility berbasis token tetap sinkron dengan tema aktif.",
+    "states": "Status dan umpan balik",
+    "clickMe": "Klik saya",
+    "clicked": "Diklik {count} kali",
+    "switchLabel": "Notifikasi"
   }
 }

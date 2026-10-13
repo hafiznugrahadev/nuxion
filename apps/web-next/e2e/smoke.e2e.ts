@@ -142,3 +142,8 @@ test('editor demo route is guarded like the rest of /admin', async ({ page }) =>
   await page.goto('/admin/demo/editor');
   await expect(page).toHaveURL(/\/login\?redirect=%2Fadmin%2Fdemo%2Feditor$/);
 });
+
+test('astryx demo route is guarded like the rest of /admin', async ({ page }) => {
+  await page.goto('/admin/demo/astryx');
+  await expect(page).toHaveURL(/\/login\?redirect=%2Fadmin%2Fdemo%2Fastryx$/);
+});

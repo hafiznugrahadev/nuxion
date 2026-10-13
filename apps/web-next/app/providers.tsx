@@ -2,8 +2,9 @@
 
 import { XhrProgressBar } from '@/components/common/xhr-progress-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Theme as AstryxTheme, type ThemeMode } from '@astryxdesign/core';
+import { LinkProvider, Theme as AstryxTheme, type ThemeMode } from '@astryxdesign/core';
 import { ThemeProvider, useTheme } from 'next-themes';
+import Link from 'next/link';
 import { Toaster } from 'sonner';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { ConfirmProvider } from '@/lib/use-confirm';
@@ -84,17 +85,21 @@ export function Providers({
         storageKey="theme-mode"
         enableSystem
       >
-        <AstryxThemeProvider>
-          <BrandingProvider initial={initialBranding}>
-            <ConfirmProvider>
-              {children}
-              {/* One shared top bar for every instrumented XHR (see lib/xhr-progress). */}
-              <XhrProgressBar />
-              {/* Global toast outlet, themed as an MD3 snackbar (see globals.css). */}
-              <Toaster position="bottom-right" toastOptions={{ className: 'md3-snackbar' }} />
-            </ConfirmProvider>
-          </BrandingProvider>
-        </AstryxThemeProvider>
+        {/* Next Link for every Astryx href (client-side routing without the
+            callers passing the Link function across the RSC boundary). */}
+        <LinkProvider component={Link}>
+          <AstryxThemeProvider>
+            <BrandingProvider initial={initialBranding}>
+              <ConfirmProvider>
+                {children}
+                {/* One shared top bar for every instrumented XHR (see lib/xhr-progress). */}
+                <XhrProgressBar />
+                {/* Global toast outlet, themed as an MD3 snackbar (see globals.css). */}
+                <Toaster position="bottom-right" toastOptions={{ className: 'md3-snackbar' }} />
+              </ConfirmProvider>
+            </BrandingProvider>
+          </AstryxThemeProvider>
+        </LinkProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

@@ -1,8 +1,7 @@
 'use client';
 
 import { Field } from '@/components/common/field';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import { TextInput } from '@astryxdesign/core';
 import { Eye, EyeOff, type LucideIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
@@ -10,8 +9,10 @@ import { useController, type Control, type FieldValues, type Path } from 'react-
 
 /**
  * Password input with the show/hide eye, RHF-integrated (port of the Nuxt
- * variant's PasswordField). `autocomplete` is passed through for password
- * managers ('current-password' | 'new-password').
+ * variant's PasswordField), rendered by the Astryx TextInput. The eye toggle
+ * overlays the control end via containerClassName (the system input has no
+ * suffix slot; no authored StyleX needed). `autocomplete` is passed through
+ * for password managers ('current-password' | 'new-password').
  */
 export interface PasswordFieldProps<T extends FieldValues> {
   name: Path<T>;
@@ -30,7 +31,7 @@ export function PasswordField<T extends FieldValues>({
   label,
   placeholder,
   required,
-  prefixIcon,
+  prefixIcon: PrefixIcon,
   hint,
   autocomplete,
 }: PasswordFieldProps<T>) {
@@ -43,27 +44,27 @@ export function PasswordField<T extends FieldValues>({
     <Field label={label} error={error} hint={hint} required={required}>
       {({ id, describedBy, invalid }) => (
         <div className="relative">
-          <Input
+          <TextInput
+            label=""
+            isLabelHidden
             id={id}
             ref={field.ref}
-            name={field.name}
+            htmlName={field.name}
             value={field.value ?? ''}
-            onChange={field.onChange}
+            onChange={(value: string) => field.onChange(value)}
             onBlur={field.onBlur}
             type={show ? 'text' : 'password'}
             placeholder={placeholder}
-            prefixIcon={prefixIcon}
             autoComplete={autocomplete}
+            startIcon={PrefixIcon ? <PrefixIcon size={16} aria-hidden="true" /> : undefined}
+            status={invalid ? { type: 'error' } : undefined}
             aria-describedby={describedBy}
             aria-invalid={invalid}
-            className={cn(
-              'pr-12',
-              error && 'border-destructive focus:border-destructive focus:ring-destructive',
-            )}
+            controlClassName="pr-12"
           />
           <button
             type="button"
-            className="touch-target absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-on-surface-variant/10 hover:text-foreground [--touch-slop:-6px]"
+            className="absolute right-2 top-[calc(50%-0.25rem)] flex h-8 w-8 translate-y-[-50%] items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-on-surface-variant/10 hover:text-foreground"
             aria-label={show ? t('hidePassword') : t('showPassword')}
             aria-pressed={show}
             onClick={() => setShow((value) => !value)}

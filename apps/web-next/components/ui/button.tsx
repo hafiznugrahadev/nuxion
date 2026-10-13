@@ -1,47 +1,93 @@
-import { Slot } from '@radix-ui/react-slot';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '@/lib/utils';
-import type { ComponentProps } from 'react';
+import { Button as AstryxButton, IconButton } from '@astryxdesign/core';
+import { isValidElement, type ComponentProps, type ElementType, type ReactNode } from 'react';
 
-// `relative` anchors the state-layer pseudo-element (the utility itself
-// must not set position — see globals.css).
-const buttonVariants = cva(
-  'relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50',
-  {
-    variants: {
-      variant: {
-        // MD3 filled: primary surface; hover/press state layer (on-color
-        // overlay) comes from .state-layer in globals.css.
-        default: 'state-layer bg-primary text-primary-foreground',
-        // MD3 filled error.
-        destructive: 'state-layer bg-destructive text-destructive-foreground',
-        // MD3 outlined: hairline outline, primary label.
-        outline: 'state-layer border border-outline bg-transparent text-primary',
-        // MD3 filled tonal: secondary-container pair.
-        secondary: 'state-layer bg-secondary text-secondary-foreground',
-        // MD3 text button.
-        ghost: 'state-layer text-primary',
-        link: 'text-primary underline-offset-4 hover:underline',
-      },
-      size: {
-        // MD3 heights: 32 / 40 / 48 dp.
-        default: 'h-10 px-6',
-        sm: 'h-8 px-4',
-        lg: 'h-12 px-8',
-        icon: 'h-10 w-10',
-      },
-    },
-    defaultVariants: { variant: 'default', size: 'default' },
-  },
-);
+/*
+ * Thin adaptor over the Astryx Button (the design system renders structure,
+ * states, focus and motion). The MD3-era surface keeps working: variant and
+ * size names, native button props, className, and the icon size. The former
+ * asChild pattern is replaced by the Astryx link mode (href / as / target /
+ * rel) — see the call sites migrated with this change.
+ */
 
-export interface ButtonProps extends ComponentProps<'button'>, VariantProps<typeof buttonVariants> {
-  asChild?: boolean;
+type ButtonVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+type ButtonSize = 'default' | 'sm' | 'lg' | 'icon';
+
+/** MD3 emphasis names mapped onto the system variants. */
+const VARIANT: Record<ButtonVariant, 'primary' | 'secondary' | 'ghost' | 'destructive'> = {
+  default: 'primary',
+  destructive: 'destructive',
+  // The MD3 outlined button is the low-emphasis tier; the system's secondary
+  // (tonal) fills that role. `link` was never used and collapses onto ghost.
+  outline: 'secondary',
+  secondary: 'secondary',
+  ghost: 'ghost',
+  link: 'ghost',
+};
+
+const SIZE = { default: 'md', sm: 'sm', lg: 'lg' } as const;
+
+/** Visible text of a children tree, so JSX children still yield a label. */
+function childText(node: ReactNode): string {
+  if (node == null || typeof node === 'boolean') return '';
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (Array.isArray(node)) return node.map(childText).join('');
+  if (isValidElement(node)) return childText((node.props as { children?: ReactNode }).children);
+  return '';
 }
 
-export function Button({ className, variant, size, asChild = false, ...props }: ButtonProps) {
-  const Comp = asChild ? Slot : 'button';
-  return <Comp className={cn(buttonVariants({ variant, size }), className)} {...props} />;
+export interface ButtonProps extends Omit<ComponentProps<'button'>, 'children'> {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  children?: ReactNode;
+  /** Link mode (replaces the former asChild + Link/anchor pattern). */
+  href?: string;
+  as?: ElementType;
+  target?: string;
+  rel?: string;
 }
 
-export { buttonVariants };
+export function Button({
+  className,
+  variant = 'default',
+  size = 'default',
+  children,
+  disabled,
+  href,
+  as,
+  target,
+  rel,
+  ...props
+}: ButtonProps) {
+  const astryxVariant = VARIANT[variant];
+  const label = (props['aria-label'] as string | undefined) ?? childText(children).trim();
+  const rest = props as Record<string, unknown>;
+  const linkProps = { href, as, target, rel };
+
+  if (size === 'icon') {
+    return (
+      <IconButton
+        icon={children}
+        label={label}
+        variant={astryxVariant}
+        className={className}
+        isDisabled={disabled}
+        {...linkProps}
+        {...rest}
+      />
+    );
+  }
+
+  return (
+    <AstryxButton
+      label={label}
+      variant={astryxVariant}
+      size={SIZE[size]}
+      className={className}
+      isDisabled={disabled}
+      {...linkProps}
+      {...rest}
+    >
+      {children}
+    </AstryxButton>
+  );
+}

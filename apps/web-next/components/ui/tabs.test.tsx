@@ -55,22 +55,24 @@ describe('Tabs', () => {
 
   it('ArrowRight/ArrowLeft move the selection with roving tabindex', async () => {
     const { host, unmount } = mount();
-    const list = host.querySelector('[role="tablist"]') as HTMLElement;
     const tabs = [...host.querySelectorAll('[role="tab"]')] as HTMLButtonElement[];
 
+    // The Astryx roving hook works from the focused stop: focus the active
+    // tab, then dispatch arrows on it (they bubble to the list handler).
+    tabs[0]!.focus();
     await act(async () => {
-      list.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+      tabs[0]!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
     });
     expect(tabs[1]!.getAttribute('aria-selected')).toBe('true');
 
     await act(async () => {
-      list.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+      tabs[1]!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
     });
     expect(tabs[0]!.getAttribute('aria-selected')).toBe('true');
 
     // wrapping: ArrowLeft from the first tab lands on the last
     await act(async () => {
-      list.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+      tabs[0]!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
     });
     expect(tabs[2]!.getAttribute('aria-selected')).toBe('true');
     expect(tabs[0]!.tabIndex).toBe(-1);

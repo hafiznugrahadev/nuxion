@@ -79,14 +79,12 @@ export default async function NotFound() {
             <div className="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
               <Button
                 size="lg"
-                asChild
+                href="/"
                 className="bg-brand-navy text-white hover:bg-brand-blue dark:bg-brand-mint/15 dark:text-brand-mint"
                 data-testid="error-cta-primary"
               >
-                <Link href="/">
-                  <House size={20} aria-hidden="true" />
-                  {t('error.backHome')}
-                </Link>
+                <House size={20} aria-hidden="true" />
+                {t('error.backHome')}
               </Button>
             </div>
 

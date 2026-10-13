@@ -5,7 +5,6 @@ import { ensureSession } from '@/lib/auth-api';
 import { getAuthState, isAuthenticated, subscribeAuth } from '@/lib/auth-store';
 import { LayoutDashboard, LogIn } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
 import { useEffect, useSyncExternalStore } from 'react';
 
 /**
@@ -31,23 +30,21 @@ export function AuthCta({ variant = 'button' }: { variant?: 'button' | 'hero' })
     <Button
       variant="secondary"
       size={size}
-      asChild
+      href={authed ? '/admin/dashboard' : '/login'}
       className={className}
       data-testid={authed ? 'cta-dashboard' : 'cta-login'}
     >
-      <Link href={authed ? '/admin/dashboard' : '/login'}>
-        {authed ? (
-          <>
-            <LayoutDashboard size={variant === 'hero' ? 18 : 16} aria-hidden="true" />
-            {t('nav.dashboard')}
-          </>
-        ) : (
-          <>
-            <LogIn size={variant === 'hero' ? 18 : 16} aria-hidden="true" />
-            {t('auth.signIn')}
-          </>
-        )}
-      </Link>
+      {authed ? (
+        <>
+          <LayoutDashboard size={variant === 'hero' ? 18 : 16} aria-hidden="true" />
+          {t('nav.dashboard')}
+        </>
+      ) : (
+        <>
+          <LogIn size={variant === 'hero' ? 18 : 16} aria-hidden="true" />
+          {t('auth.signIn')}
+        </>
+      )}
     </Button>
   );
 }

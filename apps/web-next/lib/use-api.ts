@@ -1,7 +1,7 @@
 import { ApiError } from './api-errors';
 import { createApiClient, unwrap, unwrapPaginated } from './api-client';
 import { getAuthState } from './auth-store';
-import { refreshSession } from './auth-api';
+import { ensureSession } from './auth-api';
 import { xhrProgressEnd, xhrProgressStart } from './xhr-progress';
 import type { Paginated } from '@nuxion/shared-types';
 import type { RequestOptions } from './api-client';
@@ -43,7 +43,11 @@ async function withRefreshRetry<T>(
       err instanceof ApiError ? (err as ApiError & { status?: number }).status : undefined;
     const noRetry = NO_RETRY_AUTH_ROUTES.some((route) => url.startsWith(route));
     if (status === 401 && !noRetry) {
-      const refreshed = await refreshSession();
+      // Single-flight: a hard reload races this retry against the guards'
+      // ensureSession restore, and the refresh cookie is single-use — two
+      // parallel refreshes would rotate under each other and log the session
+      // out. Sharing the in-flight restore keeps exactly one /auth/refresh.
+      const refreshed = await ensureSession();
       if (refreshed) return await run();
     }
     throw err;

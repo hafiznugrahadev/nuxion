@@ -1,15 +1,17 @@
-import { cn } from '@/lib/utils';
+import { Card as AstryxCard } from '@astryxdesign/core';
 import type { HTMLAttributes } from 'react';
 
-/** MD3 outlined card: tonal surface-container-low, hairline border, 12dp corners. */
+/*
+ * Thin adaptor over the Astryx Card. Padding stays under call-site control
+ * (the system default is zeroed here, matching the previous contract where
+ * consumers add their own p-* utilities).
+ */
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div
-      className={cn(
-        'rounded-xl border border-outline-variant/40 bg-surface-container-low',
-        className,
-      )}
-      {...props}
+    <AstryxCard
+      padding={0}
+      className={className}
+      {...(props as Record<string, unknown>)}
     />
   );
 }

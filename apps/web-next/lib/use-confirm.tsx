@@ -1,12 +1,12 @@
 'use client';
 
+import { AlertDialog } from '@astryxdesign/core';
 import { useTranslations } from 'next-intl';
 import {
   createContext,
   useCallback,
   useContext,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -63,7 +63,8 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   );
 }
 
-/** The dialog piece, kept next to its host so escape/scrim live with the UI. */
+/** The dialog piece, kept next to its host: the Astryx AlertDialog carries
+ *  the alertdialog role, focus handling, and the destructive action styling. */
 function ConfirmDialog({
   pending,
   onClose,
@@ -73,56 +74,20 @@ function ConfirmDialog({
 }) {
   const { options } = pending;
   const t = useTranslations('confirm');
-  const cancelRef = useRef<HTMLButtonElement>(null);
 
   return (
-    <div className="fixed inset-0 z-[70] grid place-items-center p-4">
-      <div
-        className="absolute inset-0 bg-scrim"
-        onClick={() => onClose(false)}
-        aria-hidden="true"
-      />
-      <div
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby="confirm-title"
-        className="relative w-full max-w-sm rounded-2xl bg-surface-container-low p-6 shadow-theme-lg"
-        onKeyDown={(event) => {
-          if (event.key === 'Escape') onClose(false);
-        }}
-      >
-        <h2 id="confirm-title" className="text-lg font-semibold text-on-surface">
-          {options.title}
-        </h2>
-        {options.description && (
-          <p className="mt-2 text-sm leading-relaxed text-on-surface-variant">
-            {options.description}
-          </p>
-        )}
-        <div className="mt-6 flex justify-end gap-2">
-          <button
-            ref={cancelRef}
-            type="button"
-            autoFocus
-            className="state-layer relative h-10 rounded-full bg-secondary px-6 text-sm font-medium text-secondary-foreground"
-            onClick={() => onClose(false)}
-          >
-            {options.cancelText ?? t('cancel')}
-          </button>
-          <button
-            type="button"
-            className={`state-layer relative h-10 rounded-full px-6 text-sm font-medium ${
-              options.destructive
-                ? 'bg-destructive text-destructive-foreground'
-                : 'bg-primary text-primary-foreground'
-            }`}
-            onClick={() => onClose(true)}
-          >
-            {options.confirmText ?? t('ok')}
-          </button>
-        </div>
-      </div>
-    </div>
+    <AlertDialog
+      isOpen
+      onOpenChange={(open: boolean) => {
+        if (!open) onClose(false);
+      }}
+      title={options.title}
+      description={options.description ?? ''}
+      cancelLabel={options.cancelText ?? t('cancel')}
+      actionLabel={options.confirmText ?? t('ok')}
+      actionVariant={options.destructive ? 'destructive' : 'primary'}
+      onAction={() => onClose(true)}
+    />
   );
 }
 

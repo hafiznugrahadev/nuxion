@@ -145,11 +145,14 @@ export function AdminGuard({ children }: { children: ReactNode }) {
                 <LayoutDashboard size={20} aria-hidden="true" />
                 {t('error.forbidden.backToDashboard')}
               </Button>
-              <Button variant="outline" size="lg" asChild data-testid="error-cta-secondary">
-                <Link href="/">
-                  <House size={20} aria-hidden="true" />
-                  {t('error.forbidden.home')}
-                </Link>
+              <Button
+                variant="outline"
+                size="lg"
+                href="/"
+                data-testid="error-cta-secondary"
+              >
+                <House size={20} aria-hidden="true" />
+                {t('error.forbidden.home')}
               </Button>
             </div>
 

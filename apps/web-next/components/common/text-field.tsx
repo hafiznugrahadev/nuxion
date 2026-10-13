@@ -1,15 +1,17 @@
 'use client';
 
 import { Field } from '@/components/common/field';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import { TextInput } from '@astryxdesign/core';
 import type { LucideIcon } from 'lucide-react';
 import { useController, type Control, type FieldValues, type Path } from 'react-hook-form';
 
 /**
  * Label + input + error, integrated with React Hook Form via useController —
- * the port of the Nuxt variant's VeeValidate TextField. Validation lives in
- * the form's zod schema; this component only renders the result.
+ * the port of the Nuxt variant's VeeValidate TextField, rendered by the
+ * Astryx TextInput (structure, focus and invalid styling from the system).
+ * Validation lives in the form's zod schema; this component only renders the
+ * result — the error message itself stays owned by Field (single alert, wired
+ * through aria-describedby), so the system status is passed type-only.
  */
 export interface TextFieldProps<T extends FieldValues> {
   name: Path<T>;
@@ -34,7 +36,7 @@ export function TextField<T extends FieldValues>({
   type = 'text',
   placeholder,
   required,
-  prefixIcon,
+  prefixIcon: PrefixIcon,
   hint,
   inputmode,
   maxLength,
@@ -47,25 +49,26 @@ export function TextField<T extends FieldValues>({
   return (
     <Field label={label} error={error} hint={hint} required={required}>
       {({ id, describedBy, invalid }) => (
-        <Input
+        <TextInput
+          label=""
+          isLabelHidden
           id={id}
           ref={field.ref}
-          name={field.name}
+          htmlName={field.name}
           value={field.value ?? ''}
-          onChange={field.onChange}
+          onChange={(value: string) => field.onChange(value)}
           onBlur={field.onBlur}
-          type={type}
+          type={type === 'email' ? 'email' : type === 'password' ? 'password' : 'text'}
           placeholder={placeholder}
-          prefixIcon={prefixIcon}
-          inputMode={inputmode}
-          maxLength={maxLength}
           autoComplete={autocomplete}
-          disabled={disabled}
+          // Native attrs the TextInput types do not declare; they reach the
+          // <input> through its rest-props passthrough.
+          {...({ inputMode: inputmode, maxLength } as Record<string, unknown>)}
+          isDisabled={disabled}
+          startIcon={PrefixIcon ? <PrefixIcon size={16} aria-hidden="true" /> : undefined}
+          status={invalid ? { type: 'error' } : undefined}
           aria-describedby={describedBy}
           aria-invalid={invalid}
-          className={cn(
-            error && 'border-destructive focus:border-destructive focus:ring-destructive',
-          )}
         />
       )}
     </Field>

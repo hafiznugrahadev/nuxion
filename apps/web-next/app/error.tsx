@@ -204,11 +204,14 @@ export default function ErrorPage({
                 <RefreshCw size={20} aria-hidden="true" />
                 {t('error.serverError.reload')}
               </Button>
-              <Button variant="secondary" size="lg" asChild data-testid="error-cta-secondary">
-                <Link href="/">
-                  <House size={20} aria-hidden="true" />
-                  {t('error.backHome')}
-                </Link>
+              <Button
+                variant="secondary"
+                size="lg"
+                href="/"
+                data-testid="error-cta-secondary"
+              >
+                <House size={20} aria-hidden="true" />
+                {t('error.backHome')}
               </Button>
             </div>
           </div>

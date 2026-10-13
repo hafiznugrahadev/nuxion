@@ -900,13 +900,13 @@ export default async function Home() {
                 <Button
                   variant="outline"
                   size="lg"
-                  asChild
+                  href={`${REPO_URL}#readme`}
+                  target="_blank"
+                  rel="noopener"
                   className="border-white/40 bg-brand-navy/40 text-white hover:bg-brand-navy/60 hover:text-white active:scale-[0.98]"
                 >
-                  <a href={`${REPO_URL}#readme`} target="_blank" rel="noopener">
-                    <BookOpen size={18} aria-hidden="true" />
-                    {t('home.cta.docs')}
-                  </a>
+                  <BookOpen size={18} aria-hidden="true" />
+                  {t('home.cta.docs')}
                 </Button>
               </div>
               <div

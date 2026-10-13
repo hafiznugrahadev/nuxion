@@ -362,7 +362,7 @@ export default async function Home() {
                 >
                   NestJS + Next
                   <br className="hidden sm:inline" />{' '}
-                  <span className="bg-gradient-to-r from-brand-navy via-brand-blue to-brand-teal bg-clip-text text-transparent dark:from-brand-mint dark:via-brand-teal dark:to-brand-mint">
+                  <span className="bg-gradient-to-r from-brand-navy via-brand-blue to-brand-teal-deep bg-clip-text text-transparent dark:from-brand-mint dark:via-brand-teal dark:to-brand-mint">
                     <BrandName />
                   </span>
                 </h1>

@@ -52,7 +52,13 @@
   --color-destructive: var(--color-error);
   --color-destructive-foreground: var(--color-on-error);
   --color-ring: var(--color-accent);
-  --color-input: var(--color-border-emphasized);
+  /*
+   * Visible outlines (inputs, outline buttons) must clear WCAG 1.4.11
+   * (3:1 against their surface): the system's border-emphasized stops at
+   * 1.3:1 light and 2.2:1 dark. text-secondary clears 4.5:1 on both ramps,
+   * so input affordances stay identifiable in every mode.
+   */
+  --color-input: var(--color-text-secondary);
   --color-card-foreground: var(--color-text-primary);
   --color-popover-foreground: var(--color-text-primary);
 
@@ -84,7 +90,7 @@
   --color-inverse-surface: var(--color-accent);
   --color-inverse-on-surface: var(--color-on-accent);
   --color-inverse-primary: var(--color-on-accent);
-  --color-outline: var(--color-border-emphasized);
+  --color-outline: var(--color-text-secondary);
   --color-outline-variant: var(--color-border);
   --color-scrim: var(--color-overlay);
 
@@ -173,6 +179,18 @@
 @layer base {
   * {
     border-color: var(--color-border);
+  }
+
+  /*
+   * The neutral theme assigns text-primary to bare h1-h6, p, and small via
+   * scoped :where() rules (in its reset layer), which overrides colors
+   * INHERITED from wrappers on invariant surfaces — the scrimmed auth photo
+   * panel and the gradient CTA banner both lost their white copy in light
+   * mode. Restore normal inheritance; body already carries text-primary, so
+   * standard surfaces render exactly as before.
+   */
+  :where(h1, h2, h3, h4, h5, h6, p, small) {
+    color: inherit;
   }
 }
 

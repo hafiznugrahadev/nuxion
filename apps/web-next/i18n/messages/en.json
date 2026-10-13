@@ -14,7 +14,8 @@
     "signOut": "Sign out",
     "login": "Login",
     "settings": "Settings",
-    "editorDemo": "Editor demo"
+    "editorDemo": "Editor demo",
+    "astryxDemo": "Astryx demo"
   },
   "state": {
     "loading": "Loading…",
@@ -542,5 +543,19 @@
     "title": "Editor demo",
     "subtitle": "The tiptap WYSIWYG editor over the shared storage API.",
     "output": "HTML output"
+  },
+  "astryxDemo": {
+    "title": "Astryx demo",
+    "subtitle": "Core components from the Astryx design system on the neutral theme, beside token-backed Tailwind utilities.",
+    "variants": "Button variants",
+    "sizes": "Sizes",
+    "layout": "Layout primitives",
+    "layoutHint": "VStack and HStack own the spacing; no wrapper divs needed.",
+    "bridge": "Tailwind bridge",
+    "bridgeHint": "Token-backed utilities stay in sync with the active theme.",
+    "states": "States and feedback",
+    "clickMe": "Click me",
+    "clicked": "Clicked {count} times",
+    "switchLabel": "Notifications"
   }
 }

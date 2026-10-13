@@ -7,6 +7,7 @@ import { closeMobile, getSidebarState, subscribeSidebar } from '@/lib/use-sideba
 import {
   CircleUserRound,
   LayoutDashboard,
+  Palette,
   PenLine,
   Settings,
   ShieldCheck,
@@ -44,6 +45,7 @@ export function AppSidebar() {
     { label: t('nav.profile'), href: '/admin/profile', icon: CircleUserRound },
     { label: t('nav.settings'), href: '/admin/settings', icon: Settings },
     { label: t('nav.editorDemo'), href: '/admin/demo/editor', icon: PenLine },
+    { label: t('nav.astryxDemo'), href: '/admin/demo/astryx', icon: Palette },
   ];
 
   function isActive(href: string) {

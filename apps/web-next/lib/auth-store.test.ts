@@ -7,11 +7,20 @@ import {
   isAuthenticated,
   setSession,
   subscribeAuth,
+  type SessionPayload,
 } from './auth-store';
 
-const SESSION = {
+const SESSION: SessionPayload = {
   accessToken: 'tok',
-  user: { id: 'u1', name: 'A B', email: 'a@b.c', roles: [UserRole.ADMIN], createdAt: '' } as never,
+  user: {
+    id: 'u1',
+    name: 'A B',
+    email: 'a@b.c',
+    roles: [UserRole.ADMIN],
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-01T00:00:00Z',
+    twoFactorEnabled: false,
+  },
 };
 
 describe('auth store', () => {
@@ -46,5 +55,21 @@ describe('auth store', () => {
     setSession(SESSION);
     clearSession();
     expect(events).toHaveLength(2);
+  });
+
+  it('uses the server enrollment decision independently of registered TOTP', () => {
+    setSession({
+      ...SESSION,
+      user: { ...SESSION.user, twoFactorEnabled: false },
+      enrollmentRequired: true,
+    });
+    expect(getAuthState().enrollmentRequired).toBe(true);
+    setSession({
+      ...SESSION,
+      user: { ...SESSION.user, twoFactorEnabled: false },
+      enrollmentRequired: false,
+    });
+    expect(getAuthState().enrollmentRequired).toBe(false);
+    clearSession();
   });
 });

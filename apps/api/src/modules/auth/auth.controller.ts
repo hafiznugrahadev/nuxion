@@ -14,6 +14,7 @@ import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
+import { AllowEnrollment } from '@common/decorators/allow-enrollment.decorator';
 import { Public } from '@common/decorators/public.decorator';
 import { CurrentUser, type AuthUser } from '@common/decorators/current-user.decorator';
 import { AuthService, type AuthTokens } from './auth.service';
@@ -115,6 +116,7 @@ export class AuthController {
     return { message: 'Password has been reset. You can now sign in.' };
   }
 
+  @AllowEnrollment()
   @Get('me')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get the currently authenticated user' })
@@ -125,21 +127,33 @@ export class AuthController {
   // ── Two-factor auth (TOTP) ──────────────────────────────────────────────────
 
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @AllowEnrollment()
   @Post('2fa/setup')
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Begin TOTP setup — returns otpauth URL, QR code and secret' })
   beginTwoFactorSetup(@CurrentUser() user: AuthUser) {
-    return this.twoFactor.beginSetup({ id: user.id, email: user.email });
+    return this.twoFactor.beginSetup({
+      id: user.id,
+      email: user.email,
+      securityVersion: user.securityVersion,
+    });
   }
 
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @AllowEnrollment()
   @Post('2fa/activate')
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Confirm TOTP setup with a live code; returns recovery codes' })
-  async activateTwoFactor(@CurrentUser() user: AuthUser, @Body() dto: ActivateTwoFactorDto) {
-    return this.twoFactor.activate({ id: user.id }, dto.code);
+  async activateTwoFactor(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: ActivateTwoFactorDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const activated = await this.twoFactor.activate(user, dto.code);
+    const tokens = await this.authService.issueSession(activated.user, 'mfa');
+    return { ...this.respondWithTokens(tokens, res), recoveryCodes: activated.recoveryCodes };
   }
 
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
@@ -174,7 +188,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Passkey registration options (authenticated)' })
   passkeyRegisterOptions(@CurrentUser() user: AuthUser) {
-    return this.webAuthn.registrationOptions(user.id);
+    return this.webAuthn.registrationOptions(user.id, user.securityVersion);
   }
 
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
@@ -183,7 +197,7 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Verify a passkey registration and store the credential' })
   passkeyRegisterVerify(@CurrentUser() user: AuthUser, @Body() dto: VerifyPasskeyRegistrationDto) {
-    return this.webAuthn.verifyRegistration(user.id, dto.response, dto.name);
+    return this.webAuthn.verifyRegistration(user.id, dto.response, dto.name, user.securityVersion);
   }
 
   @Public()
@@ -212,10 +226,10 @@ export class AuthController {
       user.twoFactorEnabled &&
       !userVerified
     ) {
-      const challengeId = await this.twoFactor.issueLoginChallenge(user.id);
+      const challengeId = await this.twoFactor.issueLoginChallenge(user.id, user.securityVersion);
       return { twoFactorRequired: true as const, challengeId };
     }
-    const tokens = await this.authService.issueSession(user);
+    const tokens = await this.authService.issueSession(user, userVerified ? 'passkey' : 'password');
     return this.respondWithTokens(tokens, res);
   }
 
@@ -245,6 +259,10 @@ export class AuthController {
       path: this.cookiePath,
       maxAge: this.authService.refreshTtlDays * 24 * 60 * 60 * 1000,
     });
-    return { accessToken: tokens.accessToken, user: tokens.user };
+    return {
+      accessToken: tokens.accessToken,
+      user: tokens.user,
+      enrollmentRequired: tokens.enrollmentRequired,
+    };
   }
 }

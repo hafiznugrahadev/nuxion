@@ -14,15 +14,33 @@ import { UserRole, type User } from '@nuxion/shared-types';
 export interface SessionPayload {
   accessToken: string;
   user: User;
+  enrollmentRequired?: boolean;
 }
 
 export interface AuthState {
   user: User | null;
   accessToken: string | null;
+  enrollmentRequired?: boolean;
 }
 
 let state: AuthState = { user: null, accessToken: null };
 const listeners = new Set<() => void>();
+const boundaryListeners = new Set<() => void>();
+let generation = 0;
+
+export const getSessionGeneration = () => generation;
+
+export function subscribeSessionBoundary(listener: () => void): () => void {
+  boundaryListeners.add(listener);
+  return () => {
+    boundaryListeners.delete(listener);
+  };
+}
+
+function resetPrivateState() {
+  generation++;
+  for (const listener of boundaryListeners) listener();
+}
 
 function emit() {
   for (const listener of listeners) listener();
@@ -39,12 +57,24 @@ export function getAuthState(): AuthState {
   return state;
 }
 
-export function setSession(payload: SessionPayload): void {
-  state = { user: payload.user, accessToken: payload.accessToken };
+export function setSession(payload: SessionPayload, expectedGeneration = generation): boolean {
+  if (expectedGeneration !== generation) return false;
+  if (
+    state.user?.id !== payload.user.id ||
+    state.enrollmentRequired !== (payload.enrollmentRequired ?? false)
+  )
+    resetPrivateState();
+  state = {
+    user: payload.user,
+    accessToken: payload.accessToken,
+    enrollmentRequired: payload.enrollmentRequired ?? false,
+  };
   emit();
+  return true;
 }
 
 export function clearSession(): void {
+  resetPrivateState();
   state = { user: null, accessToken: null };
   emit();
 }

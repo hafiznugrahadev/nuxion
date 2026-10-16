@@ -12,6 +12,7 @@ const JWT_SECRET = 'unit-test-secret-at-least-16-chars';
 /** Database user shape as the service consumes it (roles attached by the service). */
 const dbUser = (overrides: Record<string, unknown> = {}) => ({
   id: USER_ID,
+  securityVersion: 0,
   email: 'admin@nuxion.test',
   name: 'Admin',
   avatarUrl: null,
@@ -31,6 +32,7 @@ const updatedUser = {
   name: 'Admin',
   avatarUrl: null,
   twoFactorEnabled: true,
+  securityVersion: 1,
 };
 
 function makeService(options: { update?: unknown[] } = {}) {
@@ -40,6 +42,27 @@ function makeService(options: { update?: unknown[] } = {}) {
     get: vi.fn(async (key: string) => store.get(key) ?? null),
     set: vi.fn(async (key: string, value: unknown) => {
       store.set(key, value);
+    }),
+    claim: vi.fn(async (key: string) => {
+      if (store.has(key)) return false;
+      store.set(key, true);
+      return true;
+    }),
+    consume: vi.fn(async (key: string) => {
+      const value = store.get(key) ?? null;
+      store.delete(key);
+      return value;
+    }),
+    consumeMatching: vi.fn(async (key: string, expected: unknown) => {
+      if (JSON.stringify(store.get(key)) !== JSON.stringify(expected)) return false;
+      store.delete(key);
+      return true;
+    }),
+    reserveChallenge: vi.fn(async (key: string, maximum: number) => {
+      const value = store.get(key) as { attempts: number } | undefined;
+      if (!value || value.attempts >= maximum) return null;
+      value.attempts++;
+      return { ...value };
     }),
     del: vi.fn(async (key: string) => {
       store.delete(key);
@@ -70,18 +93,25 @@ describe('TwoFactorService', () => {
   describe('beginSetup', () => {
     it('parks the pending secret in Redis and returns QR material', async () => {
       ctx.setSelectRows([{ twoFactorEnabled: false }]);
-      const result = await ctx.service.beginSetup({ id: USER_ID, email: 'admin@nuxion.test' });
+      const result = await ctx.service.beginSetup({
+        id: USER_ID,
+        email: 'admin@nuxion.test',
+        securityVersion: 0,
+      });
 
       expect(result.secret).toMatch(/^[A-Z2-7]+$/);
       expect(result.otpauthUrl).toContain('otpauth://totp/');
       expect(result.qrDataUrl).toMatch(/^data:image\/png;base64,/);
-      expect(ctx.store.get(`2fa:setup:${USER_ID}`)).toEqual({ secret: result.secret });
+      expect(ctx.store.get(`2fa:setup:${USER_ID}`)).toEqual({
+        secret: result.secret,
+        securityVersion: 0,
+      });
     });
 
     it('refuses to restart setup when already enabled', async () => {
       ctx.setSelectRows([{ twoFactorEnabled: true }]);
       await expect(
-        ctx.service.beginSetup({ id: USER_ID, email: 'admin@nuxion.test' }),
+        ctx.service.beginSetup({ id: USER_ID, email: 'admin@nuxion.test', securityVersion: 0 }),
       ).rejects.toMatchObject({ status: 409 });
     });
   });
@@ -90,10 +120,12 @@ describe('TwoFactorService', () => {
     it('persists the secret encrypted and returns 8 single-use recovery codes', async () => {
       const secret = generateSecret();
       ctx = makeService({ update: [updatedUser] });
-      ctx.store.set(`2fa:setup:${USER_ID}`, { secret });
+      ctx.store.set(`2fa:setup:${USER_ID}`, { secret, securityVersion: 0 });
+      ctx.setSelectRows([dbUser()]);
+      ctx.thenSelectRows([{ name: 'ADMIN' }]);
       const code = await generate({ secret });
 
-      const result = await ctx.service.activate({ id: USER_ID }, code);
+      const result = await ctx.service.activate({ id: USER_ID, securityVersion: 0 }, code);
 
       expect(result.recoveryCodes).toHaveLength(8);
       expect(result.recoveryCodes.every((c) => /^[A-Z2-9]{5}-[A-Z2-9]{5}$/.test(c))).toBe(true);
@@ -114,14 +146,18 @@ describe('TwoFactorService', () => {
 
     it('rejects a wrong confirmation code', async () => {
       ctx.store.set(`2fa:setup:${USER_ID}`, { secret: generateSecret() });
-      await expect(ctx.service.activate({ id: USER_ID }, '000000')).rejects.toMatchObject({
+      await expect(
+        ctx.service.activate({ id: USER_ID, securityVersion: 0 }, '000000'),
+      ).rejects.toMatchObject({
         status: 401,
         response: { fieldErrors: { code: ['Invalid verification code'] } },
       });
     });
 
     it('rejects activation without a pending setup (expired)', async () => {
-      await expect(ctx.service.activate({ id: USER_ID }, '123456')).rejects.toMatchObject({
+      await expect(
+        ctx.service.activate({ id: USER_ID, securityVersion: 0 }, '123456'),
+      ).rejects.toMatchObject({
         status: 400,
       });
     });
@@ -132,6 +168,7 @@ describe('TwoFactorService', () => {
       const secret = generateSecret();
       ctx.store.set('2fa:challenge:c1', {
         userId: USER_ID,
+        securityVersion: 0,
         attempts: 0,
         expiresAt: Date.now() + 60_000,
       });
@@ -152,6 +189,7 @@ describe('TwoFactorService', () => {
       const remaining = ['FFFFF-GGGGH', 'HHHHH-JJJJK'];
       ctx.store.set('2fa:challenge:c2', {
         userId: USER_ID,
+        securityVersion: 0,
         attempts: 0,
         expiresAt: Date.now() + 60_000,
       });
@@ -171,9 +209,60 @@ describe('TwoFactorService', () => {
       expect(ctx.store.has('2fa:challenge:c2')).toBe(false);
     });
 
+    it('rejects a TOTP reused across challenges and accepts a new time-step code', async () => {
+      vi.useFakeTimers();
+      try {
+        vi.setSystemTime(new Date('2026-10-17T00:00:00Z'));
+        const secret = generateSecret();
+        ctx.setSelectRows([
+          dbUser({ twoFactorEnabled: true, twoFactorSecret: encryptFor(ctx.service, secret) }),
+        ]);
+        for (const id of ['first', 'second']) {
+          ctx.store.set(`2fa:challenge:${id}`, {
+            userId: USER_ID,
+            securityVersion: 0,
+            attempts: 0,
+            expiresAt: Date.now() + 60_000,
+          });
+        }
+        const code = await generate({ secret });
+        await ctx.service.verifyLoginChallenge('first', code);
+        await expect(ctx.service.verifyLoginChallenge('second', code)).rejects.toMatchObject({
+          status: 401,
+        });
+        vi.setSystemTime(new Date('2026-10-17T00:00:30Z'));
+        await expect(
+          ctx.service.verifyLoginChallenge('second', await generate({ secret })),
+        ).resolves.toMatchObject({ id: USER_ID });
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('allows only one successful concurrent consumption of the same challenge', async () => {
+      const secret = generateSecret();
+      ctx.setSelectRows([
+        dbUser({ twoFactorEnabled: true, twoFactorSecret: encryptFor(ctx.service, secret) }),
+      ]);
+      ctx.store.set('2fa:challenge:shared', {
+        userId: USER_ID,
+        securityVersion: 0,
+        attempts: 0,
+        expiresAt: Date.now() + 60_000,
+      });
+      const code = await generate({ secret });
+      const results = await Promise.allSettled([
+        ctx.service.verifyLoginChallenge('shared', code),
+        ctx.service.verifyLoginChallenge('shared', code),
+      ]);
+      expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+      expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
+    });
+
     it('burns the challenge after 5 failed attempts', async () => {
       ctx.store.set('2fa:challenge:c3', {
         userId: USER_ID,
+        securityVersion: 0,
         attempts: 0,
         expiresAt: Date.now() + 60_000,
       });
@@ -190,7 +279,7 @@ describe('TwoFactorService', () => {
           status: 401,
         });
       }
-      expect(ctx.store.has('2fa:challenge:c3')).toBe(false);
+      expect((ctx.store.get('2fa:challenge:c3') as { attempts: number }).attempts).toBe(5);
       await expect(ctx.service.verifyLoginChallenge('c3', '000000')).rejects.toMatchObject({
         status: 400, // unknown/expired — the challenge is gone
       });

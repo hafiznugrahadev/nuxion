@@ -1,5 +1,6 @@
 import type { Passkey, TwoFactorActivatePayload, TwoFactorSetupPayload } from './types';
 import { apiFetch } from '@/lib/use-api';
+import { getSessionGeneration, setSession } from '@/lib/auth-store';
 import type { PublicKeyCredentialCreationOptionsJSON } from '@simplewebauthn/browser';
 
 /**
@@ -13,9 +14,13 @@ export const securityApi = {
     return apiFetch<TwoFactorSetupPayload>('/auth/2fa/setup', { method: 'POST' });
   },
   twoFactorActivate(code: string): Promise<TwoFactorActivatePayload> {
+    const generation = getSessionGeneration();
     return apiFetch<TwoFactorActivatePayload>('/auth/2fa/activate', {
       method: 'POST',
       body: { code },
+    }).then((result) => {
+      if (!setSession(result, generation)) throw new Error('Session changed');
+      return result;
     });
   },
   regenerateRecoveryCodes(password: string): Promise<string[]> {

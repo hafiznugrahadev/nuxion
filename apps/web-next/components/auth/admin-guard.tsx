@@ -3,7 +3,7 @@
 import { BrandLogo } from '@/components/common/brand-logo';
 import { BrandName } from '@/components/common/brand-name';
 import { Button } from '@/components/ui/button';
-import { ensureSession, TWO_FACTOR_ENABLED } from '@/lib/auth-api';
+import { ensureSession } from '@/lib/auth-api';
 import { getAuthState, hasRole, isAuthenticated, subscribeAuth } from '@/lib/auth-store';
 import { logout } from '@/lib/auth-api';
 import { Badge } from '@/components/ui/badge';
@@ -29,7 +29,7 @@ export function AdminGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
   const t = useTranslations();
   // Subscribe so a logout mid-session re-runs the guard's decision.
-  useSyncExternalStore(subscribeAuth, getAuthState, getAuthState);
+  const authState = useSyncExternalStore(subscribeAuth, getAuthState, getAuthState);
   const [status, setStatus] = useState<'checking' | 'denied' | 'forbidden' | 'ok'>('checking');
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export function AdminGuard({ children }: { children: ReactNode }) {
       if (!isAuthenticated(state)) {
         setStatus('denied');
         router.replace(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
-      } else if (TWO_FACTOR_ENABLED && state.user && !state.user.twoFactorEnabled) {
+      } else if (state.enrollmentRequired) {
         // The "hook": every admin route keeps un-activated users on the setup
         // page (the one exempt route) until an authenticator is registered.
         // Ordered BEFORE the role check — the Nuxt variant's auth middleware
@@ -68,7 +68,13 @@ export function AdminGuard({ children }: { children: ReactNode }) {
     };
   }, [router]);
 
-  if (status === 'ok') return <>{children}</>;
+  useEffect(() => {
+    if (status === 'ok' && !authState.accessToken) {
+      router.replace(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+    }
+  }, [authState, router, status]);
+
+  if (status === 'ok' && authState.accessToken) return <>{children}</>;
 
   if (status === 'forbidden') {
     // The Nuxt variant's error.vue forbidden screen: the session card answers
@@ -145,12 +151,7 @@ export function AdminGuard({ children }: { children: ReactNode }) {
                 <LayoutDashboard size={20} aria-hidden="true" />
                 {t('error.forbidden.backToDashboard')}
               </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                href="/"
-                data-testid="error-cta-secondary"
-              >
+              <Button variant="outline" size="lg" href="/" data-testid="error-cta-secondary">
                 <House size={20} aria-hidden="true" />
                 {t('error.forbidden.home')}
               </Button>

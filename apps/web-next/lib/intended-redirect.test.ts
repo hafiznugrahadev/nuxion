@@ -17,3 +17,21 @@ describe('intendedRedirect', () => {
     expect(intendedRedirect(new URLSearchParams('redirect=//evil.test'))).toBe('/admin/dashboard');
   });
 });
+
+describe('redirect normalization', () => {
+  it.each([
+    '/\\evil.invalid',
+    '/\t/evil.invalid',
+    '/\n/evil.invalid',
+    '//evil.invalid',
+    'https://evil.invalid',
+  ])('rejects browser-normalized external input %j', (redirect) => {
+    expect(intendedRedirect(new URLSearchParams({ redirect }))).toBe('/admin/dashboard');
+  });
+  it('preserves a normalized local path, query and fragment', () => {
+    const redirect = '/admin/users/../profile?tab=security#passkeys';
+    expect(intendedRedirect(new URLSearchParams({ redirect }))).toBe(
+      '/admin/profile?tab=security#passkeys',
+    );
+  });
+});

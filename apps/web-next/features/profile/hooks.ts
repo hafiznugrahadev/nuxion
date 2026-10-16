@@ -31,7 +31,11 @@ export function useUpdateProfile() {
       // Keep the header/menu name + avatar in sync with the in-memory session.
       const state = getAuthState();
       if (state.user && state.accessToken) {
-        setSession({ accessToken: state.accessToken, user: { ...state.user, ...user } });
+        setSession({
+          accessToken: state.accessToken,
+          user: { ...state.user, ...user },
+          enrollmentRequired: state.enrollmentRequired,
+        });
       }
     },
   });

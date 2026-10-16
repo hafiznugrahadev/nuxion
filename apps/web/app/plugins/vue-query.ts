@@ -5,6 +5,9 @@ import {
   dehydrate,
   type DehydratedState,
 } from '@tanstack/vue-query';
+import { bindSessionCache } from '~/lib/session-cache';
+import { useAuthStore } from '~/stores/auth';
+import { useNotificationsStore } from '~/stores/notifications';
 
 /** TanStack Query wired for Nuxt SSR (state transfers via Nuxt payload). */
 export default defineNuxtPlugin((nuxt) => {
@@ -15,6 +18,9 @@ export default defineNuxtPlugin((nuxt) => {
   });
 
   nuxt.vueApp.use(VueQueryPlugin, { queryClient });
+  const auth = useAuthStore();
+  const notifications = useNotificationsStore();
+  bindSessionCache(auth, queryClient, notifications);
 
   const vueQueryState = useState<DehydratedState | null>('vue-query');
 

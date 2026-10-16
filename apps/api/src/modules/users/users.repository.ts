@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectDrizzle } from '@nestjs/drizzle';
 import { and, asc, desc, eq, ilike, inArray, or, sql, type SQL } from 'drizzle-orm';
 import type { Database } from '@db/relations';
-import { roles, userRoles, users } from '@db/schema';
+import { roles, userRoles, users, refreshTokens, passwordResetTokens } from '@db/schema';
 import { roleNamesByUser, syncUserRoles } from '@db/user-roles';
 import type { BaseQueryDto } from '@common/dto/base-query.dto';
 import {
@@ -133,15 +133,33 @@ export class UsersRepository {
     id: string,
     data: { name?: string; password?: string; avatarUrl?: string | null },
     roleNames?: string[],
+    expectedPassword?: string,
   ): Promise<UserWithRoles> {
     const updated = await this.db.transaction(async (tx) => {
+      const [current] = await tx
+        .select({ id: users.id, password: users.password })
+        .from(users)
+        .where(eq(users.id, id))
+        .for('update');
+      if (!current) throw new NotFoundException('Record not found');
+      if (expectedPassword !== undefined && current.password !== expectedPassword) {
+        throw new UnauthorizedException('Password changed; sign in again');
+      }
+      const securityChange = data.password !== undefined || roleNames !== undefined;
       const [row] = await tx
         .update(users)
-        .set(data) // undefined fields are ignored — partial updates come free
+        .set({
+          ...data,
+          ...(securityChange ? { securityVersion: sql`${users.securityVersion} + 1` } : {}),
+        })
         .where(eq(users.id, id))
         .returning(PUBLIC_COLUMNS);
       if (!row) throw new NotFoundException('Record not found');
       if (roleNames) await syncUserRoles(tx, id, roleNames);
+      if (securityChange) {
+        await tx.delete(refreshTokens).where(eq(refreshTokens.userId, id));
+        await tx.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, id));
+      }
       return row;
     });
     const roleMap = await roleNamesByUser(this.db, [id]);

@@ -1,7 +1,7 @@
 import { ApiError } from './api-errors';
 import { createApiClient, unwrap, unwrapPaginated } from './api-client';
-import { getAuthState } from './auth-store';
-import { ensureSession } from './auth-api';
+import { getAuthState, getSessionGeneration } from './auth-store';
+import { ensureSession, runSessionRequest } from './auth-api';
 import { xhrProgressEnd, xhrProgressStart } from './xhr-progress';
 import type { Paginated } from '@nuxion/shared-types';
 import type { RequestOptions } from './api-client';
@@ -34,11 +34,24 @@ const client = createApiClient({
 async function withRefreshRetry<T>(
   url: string,
   options: RequestOptions | undefined,
-  run: () => Promise<T>,
+  run: (signal?: AbortSignal) => Promise<T>,
 ): Promise<T> {
+  const generation = getSessionGeneration();
+  const guardedRun = async () => {
+    const started = getSessionGeneration();
+    const request = (signal?: AbortSignal) => {
+      if (started !== getSessionGeneration()) throw new Error('Session changed');
+      return run(signal);
+    };
+    const result =
+      url === '/auth/2fa/activate' ? await runSessionRequest(request) : await request();
+    if (started !== getSessionGeneration()) throw new Error('Session changed');
+    return result;
+  };
   try {
-    return await run();
+    return await guardedRun();
   } catch (err) {
+    if (generation !== getSessionGeneration()) throw new Error('Session changed', { cause: err });
     const status =
       err instanceof ApiError ? (err as ApiError & { status?: number }).status : undefined;
     const noRetry = NO_RETRY_AUTH_ROUTES.some((route) => url.startsWith(route));
@@ -48,7 +61,11 @@ async function withRefreshRetry<T>(
       // parallel refreshes would rotate under each other and log the session
       // out. Sharing the in-flight restore keeps exactly one /auth/refresh.
       const refreshed = await ensureSession();
-      if (refreshed) return await run();
+      if (refreshed) {
+        if (generation !== getSessionGeneration())
+          throw new Error('Session changed', { cause: err });
+        return await guardedRun();
+      }
     }
     throw err;
   }
@@ -56,7 +73,9 @@ async function withRefreshRetry<T>(
 
 /** API fetch returning the envelope's `data` (throws ApiError on failure). */
 export async function apiFetch<T>(url: string, options?: RequestOptions): Promise<T> {
-  return withRefreshRetry(url, options, async () => unwrap<T>(await client<T>(url, options ?? {})));
+  return withRefreshRetry(url, options, async (signal) =>
+    unwrap<T>(await client<T>(url, { ...options, ...(signal ? { signal } : {}) })),
+  );
 }
 
 /** API fetch returning `{ data, meta }` from a paginated envelope. */

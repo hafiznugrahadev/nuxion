@@ -30,3 +30,19 @@ describe('intendedRedirect', () => {
     expect(intendedRedirect({ redirect: 'admin/users' })).toBe(DASHBOARD);
   });
 });
+
+describe('redirect normalization', () => {
+  it.each([
+    '/\\evil.invalid',
+    '/\t/evil.invalid',
+    '/\n/evil.invalid',
+    '//evil.invalid',
+    'https://evil.invalid',
+  ])('rejects browser-normalized external input %j', (redirect) => {
+    expect(intendedRedirect({ redirect })).toBe('/admin/dashboard');
+  });
+  it('preserves a normalized local path, query and fragment', () => {
+    const redirect = '/admin/users/../profile?tab=security#passkeys';
+    expect(intendedRedirect({ redirect })).toBe('/admin/profile?tab=security#passkeys');
+  });
+});

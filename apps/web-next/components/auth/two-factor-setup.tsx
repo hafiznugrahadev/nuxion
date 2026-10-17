@@ -4,8 +4,8 @@ import { LoadingState } from '@/components/blocks/states';
 import { TextField } from '@/components/common/text-field';
 import { Button } from '@/components/ui/button';
 import { applyApiFieldErrors } from '@/lib/api-errors';
-import { ensureSession, logout, TWO_FACTOR_ENABLED } from '@/lib/auth-api';
-import { getAuthState, isAuthenticated, setSession, subscribeAuth } from '@/lib/auth-store';
+import { ensureSession, logout } from '@/lib/auth-api';
+import { getAuthState, isAuthenticated, subscribeAuth } from '@/lib/auth-store';
 import { intendedRedirect } from '@/lib/intended-redirect';
 import { securityApi, type TwoFactorSetupPayload } from '@/features/security';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -43,13 +43,12 @@ export function TwoFactorSetup() {
     let cancelled = false;
     void ensureSession().then(async () => {
       if (cancelled) return;
-      // Unauthenticated (or 2FA globally off): nothing to set up here.
-      if (!isAuthenticated(getAuthState()) || !TWO_FACTOR_ENABLED) {
+      if (!isAuthenticated(getAuthState())) {
         router.replace('/login');
         return;
       }
       // Already activated (e.g. this URL was revisited) — nothing to do here.
-      if (getAuthState().user?.twoFactorEnabled) {
+      if (!getAuthState().enrollmentRequired) {
         router.replace(intendedRedirect(searchParams));
         return;
       }
@@ -78,14 +77,6 @@ export function TwoFactorSetup() {
     try {
       const result = await securityApi.twoFactorActivate(values.code);
       setRecoveryCodes(result.recoveryCodes);
-      // Mirror the activation into the in-memory session (guards re-read it).
-      const state = getAuthState();
-      if (state.user) {
-        setSession({
-          accessToken: state.accessToken!,
-          user: { ...state.user, twoFactorEnabled: true },
-        });
-      }
       toast.success(t('auth.twoFactor.activated'));
     } catch (err) {
       applyApiFieldErrors(

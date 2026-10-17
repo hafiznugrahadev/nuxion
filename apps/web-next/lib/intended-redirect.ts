@@ -6,8 +6,23 @@
  */
 export function intendedRedirect(searchParams: URLSearchParams): string {
   const redirect = searchParams.get('redirect');
-  if (typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//')) {
-    return redirect;
+  if (
+    typeof redirect !== 'string' ||
+    !redirect.startsWith('/') ||
+    redirect.includes('\\') ||
+    Array.from(redirect).some((character) => {
+      const code = character.charCodeAt(0);
+      return code <= 0x20 || code === 0x7f;
+    })
+  ) {
+    return '/admin/dashboard';
+  }
+  try {
+    const origin = 'https://nuxion.invalid';
+    const target = new URL(redirect, origin);
+    if (target.origin === origin) return `${target.pathname}${target.search}${target.hash}`;
+  } catch {
+    // Invalid URLs fall back to the authenticated landing page.
   }
   return '/admin/dashboard';
 }

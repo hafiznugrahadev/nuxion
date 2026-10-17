@@ -84,11 +84,77 @@ describe('refreshSession', () => {
 });
 
 describe('logout', () => {
+  it('dispatches login B only after refresh A has consumed its response cookie', async () => {
+    setSession({ accessToken: 'A', user: { id: 'A' } as never });
+    let respond!: (response: Response) => void;
+    fetchMock.mockImplementationOnce(
+      () =>
+        new Promise<Response>((resolve) => {
+          respond = resolve;
+        }),
+    );
+    const refreshA = refreshSession();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    fetchMock.mockResolvedValueOnce(
+      jsonRes(200, { success: true, data: { accessToken: 'B', user: { id: 'B' } } }),
+    );
+    const loginB = login('b@nuxion.test', 'dummy-password');
+    await Promise.resolve();
+    expect(fetchMock).toHaveBeenCalledOnce();
+    respond(jsonRes(200, SESSION_BODY));
+    await expect(refreshA).resolves.toBe(false);
+    await loginB;
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      '/api/auth/refresh',
+      '/api/auth/login',
+    ]);
+    expect(getAuthState().user?.id).toBe('B');
+  });
+
   it('clears the session even when the API call fails', async () => {
     setSession({ accessToken: 't', user: {} as never });
     fetchMock.mockRejectedValue(new Error('boom'));
     await expect(logout()).resolves.toBeUndefined();
     expect(isAuthenticated(getAuthState())).toBe(false);
+  });
+
+  it('ignores late login sessions and revokes only after their response cookies arrive', async () => {
+    let respond!: (response: Response) => void;
+    fetchMock.mockImplementationOnce(
+      () =>
+        new Promise<Response>((resolve) => {
+          respond = resolve;
+        }),
+    );
+    const pendingLogin = login('a@b.c', 'pass');
+    const rejected = expect(pendingLogin).rejects.toThrow('Session changed');
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    fetchMock.mockResolvedValueOnce(jsonRes(200, { success: true, data: {} }));
+    const pendingLogout = logout();
+    expect(isAuthenticated(getAuthState())).toBe(false);
+    await expect(refreshSession()).resolves.toBe(false);
+    expect(fetchMock).toHaveBeenCalledOnce();
+    respond(jsonRes(200, SESSION_BODY));
+    await rejected;
+    await pendingLogout;
+    expect(fetchMock.mock.calls[1]![0]).toBe('/api/auth/logout');
+    expect(isAuthenticated(getAuthState())).toBe(false);
+  });
+
+  it('ignores a late refresh without clearing a newer account', async () => {
+    let respond!: (response: Response) => void;
+    fetchMock.mockImplementationOnce(
+      () =>
+        new Promise<Response>((resolve) => {
+          respond = resolve;
+        }),
+    );
+    const pendingRefresh = refreshSession();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    setSession({ accessToken: 'B', user: { id: 'B' } as never });
+    respond(jsonRes(200, SESSION_BODY));
+    await expect(pendingRefresh).resolves.toBe(false);
+    expect(getAuthState().user?.id).toBe('B');
   });
 });
 

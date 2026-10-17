@@ -4,13 +4,20 @@ import request from 'supertest';
 import { eq } from 'drizzle-orm';
 import { generate } from 'otplib';
 import { users } from '../src/db/schema';
-import { createTestApp, extractAccessToken, getDb, SEED_USERS } from './helpers/app.helper';
+import {
+  createTestApp,
+  extractAccessToken,
+  extractRefreshCookie,
+  getDb,
+  SEED_USERS,
+} from './helpers/app.helper';
 
 // This suite exercises the mandatory-2FA mode; existing suites run with it off.
 // Vitest isolates each spec file in its own worker, so these process.env writes
 // cannot leak into auth.e2e-spec.ts. Throttling is off: the flow logs in a lot.
 // PASSKEY is pinned off explicitly — the root .env may set it true (dev setup).
 process.env.AUTH_2FA_ENABLED = 'true';
+process.env.AUTH_REGISTRATION_ENABLED = 'true';
 process.env.AUTH_PASSKEY_ENABLED = 'false';
 process.env.THROTTLE_DISABLED = 'true';
 
@@ -54,10 +61,54 @@ describe('Two-factor auth (e2e)', () => {
   });
 
   describe('while 2FA is not yet activated', () => {
-    it('issues a full session right after password (middleware drives setup)', async () => {
+    it('issues an enrollment-only session and blocks protected API access', async () => {
       const res = await login(server).expect(200);
       expect(res.body.data.accessToken).toBeTruthy();
       expect(res.body.data.user.twoFactorEnabled).toBe(false);
+      expect(res.body.data.enrollmentRequired).toBe(true);
+      const pending = extractAccessToken(res.body);
+      await request(server).get('/api/users').set('Authorization', `Bearer ${pending}`).expect(403);
+      await request(server)
+        .get('/api/users/me')
+        .set('Authorization', `Bearer ${pending}`)
+        .expect(200);
+      const rotated = await request(server)
+        .post('/api/auth/refresh')
+        .set('Cookie', extractRefreshCookie(res.headers))
+        .expect(200);
+      expect(rotated.body.data.enrollmentRequired).toBe(true);
+      await request(server)
+        .get('/api/users')
+        .set('Authorization', `Bearer ${extractAccessToken(rotated.body)}`)
+        .expect(403);
+    });
+
+    it('restricts a newly registered account to enrollment', async () => {
+      const email = `e2e-mfa-register-${Date.now()}@example.test`;
+      try {
+        const created = await request(server)
+          .post('/api/auth/register')
+          .send({ email, name: 'Enrollment fixture', password: 'Dummy-registration-password!' })
+          .expect(201);
+        expect(created.body.data.enrollmentRequired).toBe(true);
+        const token = extractAccessToken(created.body);
+        await request(server)
+          .get('/api/users/me')
+          .set('Authorization', `Bearer ${token}`)
+          .expect(200);
+        await request(server)
+          .post('/api/auth/webauthn/register/options')
+          .set('Authorization', `Bearer ${token}`)
+          .expect(403);
+        await request(server)
+          .patch('/api/users/me')
+          .set('Authorization', `Bearer ${token}`)
+          .send({ name: 'Changed before enrollment' })
+          .expect(403);
+      } finally {
+        const db = await getDb(app);
+        await db.delete(users).where(eq(users.email, email));
+      }
     });
 
     it('guards the setup endpoints behind authentication', async () => {
@@ -92,6 +143,22 @@ describe('Two-factor auth (e2e)', () => {
       const recoveryCodes = activate.body.data.recoveryCodes;
       expect(recoveryCodes).toHaveLength(8);
       expect(activate.body.data.user.twoFactorEnabled).toBe(true);
+      expect(activate.body.data.enrollmentRequired).toBe(false);
+      await request(server)
+        .get('/api/users')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(401);
+      accessToken = extractAccessToken(activate.body);
+      await request(server)
+        .get('/api/users')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200);
+
+      const replay = await login(server).expect(200);
+      await request(server)
+        .post('/api/auth/2fa/verify')
+        .send({ challengeId: replay.body.data.challengeId, code: await generate({ secret }) })
+        .expect(401);
 
       // 3. Login now stops at the challenge — no token, no cookie.
       const challenged = await login(server).expect(200);
@@ -121,7 +188,7 @@ describe('Two-factor auth (e2e)', () => {
         .post('/api/auth/2fa/verify')
         .send({
           challengeId: rechallenge.body.data.challengeId,
-          code: await generate({ secret }),
+          code: recoveryCodes[0],
         })
         .expect(200);
       expect(verified.body.data.accessToken).toBeTruthy();
@@ -163,16 +230,55 @@ describe('Two-factor auth (e2e)', () => {
         .expect(200);
     });
 
+    it('consumes recovery codes once across concurrent challenges and counts failed attempts atomically', async () => {
+      const setup = await request(server)
+        .post('/api/auth/2fa/setup')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200);
+      const activated = await request(server)
+        .post('/api/auth/2fa/activate')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ code: await generate({ secret: setup.body.data.secret }) })
+        .expect(200);
+      const [firstCode, secondCode] = activated.body.data.recoveryCodes;
+      const challenges = await Promise.all([login(server).expect(200), login(server).expect(200)]);
+      const responses = await Promise.all(
+        challenges.map((challenge) =>
+          request(server)
+            .post('/api/auth/2fa/verify')
+            .send({ challengeId: challenge.body.data.challengeId, code: firstCode }),
+        ),
+      );
+      expect(responses.map((response) => response.status).sort()).toEqual([200, 401]);
+      const failedIndex = responses.findIndex((response) => response.status === 401);
+      await request(server)
+        .post('/api/auth/2fa/verify')
+        .send({ challengeId: challenges[failedIndex]!.body.data.challengeId, code: secondCode })
+        .expect(200);
+
+      const limited = await login(server).expect(200);
+      const failures = await Promise.all(
+        Array.from({ length: 12 }, () =>
+          request(server)
+            .post('/api/auth/2fa/verify')
+            .send({ challengeId: limited.body.data.challengeId, code: 'BAD-CODE' }),
+        ),
+      );
+      expect(failures.filter((response) => response.status === 401)).toHaveLength(5);
+      expect(failures.filter((response) => response.status === 400)).toHaveLength(7);
+    });
+
     it('regenerates recovery codes only with the correct password', async () => {
       const setup = await request(server)
         .post('/api/auth/2fa/setup')
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(200);
-      await request(server)
+      const activated = await request(server)
         .post('/api/auth/2fa/activate')
         .set('Authorization', `Bearer ${accessToken}`)
         .send({ code: await generate({ secret: setup.body.data.secret }) })
         .expect(200);
+      accessToken = extractAccessToken(activated.body);
 
       await request(server)
         .post('/api/auth/2fa/recovery/regenerate')

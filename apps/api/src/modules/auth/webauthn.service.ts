@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectDrizzle } from '@nestjs/drizzle';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import {
   generateAuthenticationOptions,
   generateRegistrationOptions,
@@ -45,7 +45,10 @@ export class WebAuthnService {
     private readonly config: ConfigService,
   ) {}
 
-  async registrationOptions(userId: string): Promise<PublicKeyCredentialCreationOptionsJSON> {
+  async registrationOptions(
+    userId: string,
+    securityVersion: number,
+  ): Promise<PublicKeyCredentialCreationOptionsJSON> {
     this.assertEnabled();
     const [user] = await this.db
       .select({ id: users.id, email: users.email, name: users.name })
@@ -67,7 +70,11 @@ export class WebAuthnService {
       excludeCredentials: existing,
       authenticatorSelection: { residentKey: 'preferred', userVerification: 'preferred' },
     });
-    await this.redis.set(REGISTER_KEY(user.id), options.challenge, CHALLENGE_TTL_SECONDS);
+    await this.redis.set(
+      REGISTER_KEY(user.id),
+      { challenge: options.challenge, securityVersion },
+      CHALLENGE_TTL_SECONDS,
+    );
     return options;
   }
 
@@ -75,9 +82,13 @@ export class WebAuthnService {
     userId: string,
     response: RegistrationResponseJSON,
     name?: string,
+    securityVersion?: number,
   ): Promise<PasskeyEntity> {
     this.assertEnabled();
-    const challenge = await this.redis.get<string>(REGISTER_KEY(userId));
+    const pending = await this.redis.consume<{ challenge: string; securityVersion: number }>(
+      REGISTER_KEY(userId),
+    );
+    const challenge = pending?.challenge;
     if (!challenge) throw new BadRequestException('Passkey registration expired — try again');
 
     // userVerification is "preferred" at generation; UV is enforced in the
@@ -89,27 +100,40 @@ export class WebAuthnService {
       expectedRPID: this.rpId,
       requireUserVerification: false,
     });
-    await this.redis.del(REGISTER_KEY(userId));
 
     if (!verified || !registrationInfo) {
       throw new UnauthorizedException('Passkey registration could not be verified');
     }
     const { credential, credentialDeviceType, credentialBackedUp } = registrationInfo;
 
-    const [created] = await this.db
-      .insert(passkeys)
-      .values({
-        id: credential.id,
-        userId,
-        publicKey: isoBase64URL.fromBuffer(credential.publicKey),
-        counter: BigInt(credential.counter),
-        transports: credential.transports ?? [],
-        deviceType: credentialDeviceType,
-        backedUp: credentialBackedUp,
-        name: name?.trim() || null,
-      })
-      .returning();
-    return this.toEntity(created);
+    return this.db.transaction(async (tx) => {
+      const [user] = await tx
+        .select({ securityVersion: users.securityVersion })
+        .from(users)
+        .where(eq(users.id, userId))
+        .for('update');
+      if (
+        !user ||
+        user.securityVersion !== pending?.securityVersion ||
+        user.securityVersion !== securityVersion
+      ) {
+        throw new UnauthorizedException('Authentication changed; start registration again');
+      }
+      const [created] = await tx
+        .insert(passkeys)
+        .values({
+          id: credential.id,
+          userId,
+          publicKey: isoBase64URL.fromBuffer(credential.publicKey),
+          counter: BigInt(credential.counter),
+          transports: credential.transports ?? [],
+          deviceType: credentialDeviceType,
+          backedUp: credentialBackedUp,
+          name: name?.trim() || null,
+        })
+        .returning();
+      return this.toEntity(created);
+    });
   }
 
   async loginOptions(): Promise<{
@@ -136,7 +160,7 @@ export class WebAuthnService {
     response: AuthenticationResponseJSON,
   ): Promise<{ user: UserWithRoles; userVerified: boolean }> {
     this.assertEnabled();
-    const challenge = await this.redis.get<string>(LOGIN_KEY(challengeId));
+    const challenge = await this.redis.consume<string>(LOGIN_KEY(challengeId));
     if (!challenge) throw new BadRequestException('Passkey challenge expired — try again');
 
     const [passkey] = await this.db
@@ -146,49 +170,49 @@ export class WebAuthnService {
       .limit(1);
     if (!passkey) throw new UnauthorizedException('Unknown passkey');
 
-    const { verified, authenticationInfo } = await verifyAuthenticationResponse({
-      response,
-      expectedChallenge: challenge,
-      expectedOrigin: this.origins,
-      expectedRPID: this.rpId,
-      credential: {
-        id: passkey.id,
-        publicKey: isoBase64URL.toBuffer(passkey.publicKey),
-        counter: Number(passkey.counter),
-        transports: passkey.transports,
-      },
-      requireUserVerification: false,
+    return this.db.transaction(async (tx) => {
+      const [user] = await tx
+        .select()
+        .from(users)
+        .where(eq(users.id, passkey.userId))
+        .for('update');
+      if (!user) throw new UnauthorizedException('Unknown passkey');
+      const [current] = await tx
+        .select()
+        .from(passkeys)
+        .where(eq(passkeys.id, response.id))
+        .for('update');
+      if (!current) throw new UnauthorizedException('Unknown passkey');
+      const { verified, authenticationInfo } = await verifyAuthenticationResponse({
+        response,
+        expectedChallenge: challenge,
+        expectedOrigin: this.origins,
+        expectedRPID: this.rpId,
+        credential: {
+          id: current.id,
+          publicKey: isoBase64URL.toBuffer(current.publicKey),
+          counter: Number(current.counter),
+          transports: current.transports,
+        },
+        requireUserVerification: false,
+      });
+      if (!verified) throw new UnauthorizedException('Passkey verification failed');
+      const [updated] = await tx
+        .update(passkeys)
+        .set({
+          counter: BigInt(authenticationInfo.newCounter),
+          deviceType: authenticationInfo.credentialDeviceType,
+          backedUp: authenticationInfo.credentialBackedUp,
+          lastUsedAt: new Date(),
+        })
+        .where(and(eq(passkeys.id, current.id), eq(passkeys.counter, current.counter)))
+        .returning({ id: passkeys.id });
+      if (!updated) throw new UnauthorizedException('Passkey assertion already used');
+      return {
+        user: { ...user, roles: await roleNamesFor(tx, user.id) },
+        userVerified: authenticationInfo.userVerified,
+      };
     });
-    await this.redis.del(LOGIN_KEY(challengeId));
-    if (!verified) throw new UnauthorizedException('Passkey verification failed');
-
-    await this.db
-      .update(passkeys)
-      .set({
-        counter: BigInt(authenticationInfo.newCounter),
-        deviceType: authenticationInfo.credentialDeviceType,
-        backedUp: authenticationInfo.credentialBackedUp,
-        lastUsedAt: new Date(),
-      })
-      .where(eq(passkeys.id, passkey.id));
-
-    const [userRow] = await this.db
-      .select({
-        id: users.id,
-        email: users.email,
-        name: users.name,
-        avatarUrl: users.avatarUrl,
-        twoFactorEnabled: users.twoFactorEnabled,
-      })
-      .from(users)
-      .where(eq(users.id, passkey.userId))
-      .limit(1);
-    if (!userRow) throw new UnauthorizedException('Unknown passkey');
-
-    return {
-      user: { ...userRow, roles: await roleNamesFor(this.db, passkey.userId) },
-      userVerified: authenticationInfo.userVerified,
-    };
   }
 
   async listPasskeys(userId: string): Promise<PasskeyEntity[]> {

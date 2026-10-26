@@ -5,7 +5,7 @@
 # ─────────────────────────────── deps ────────────────────────────────────────
 # --ignore-scripts keeps the install hermetic (no postinstall chain); Next has
 # none, and shared-types isn't built yet at this stage.
-FROM oven/bun:1.4.3 AS deps
+FROM oven/bun:1.4.4 AS deps
 WORKDIR /app
 COPY package.json bun.lock turbo.json tsconfig.base.json ./
 COPY packages/shared-types/package.json ./packages/shared-types/
@@ -32,7 +32,7 @@ RUN bun run --filter @nuxion/shared-types build \
 # Next's standalone output is self-contained (server.js + vendored
 # node_modules). In this monorepo the standalone tree keeps the workspace
 # layout, so static/ and public/ are copied back to their mirrored paths.
-FROM oven/bun:1.4.3-slim AS runtime
+FROM oven/bun:1.4.4-slim AS runtime
 ENV NODE_ENV=production
 ENV PORT=8080
 ENV HOSTNAME=0.0.0.0

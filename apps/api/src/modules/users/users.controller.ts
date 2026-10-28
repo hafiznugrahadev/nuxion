@@ -14,6 +14,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserRole } from '@nuxion/shared-types';
+import { AllowEnrollment } from '@common/decorators/allow-enrollment.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { ApiPaginatedResponse } from '@common/decorators/api-paginated.decorator';
@@ -33,6 +34,7 @@ export class UsersController {
 
   // ── Self-service ("me") routes — any authenticated user. Declared BEFORE the
   // `:id` routes so "me" is never captured as a UUID param. ───────────────────
+  @AllowEnrollment()
   @Get('me')
   @ApiOperation({ summary: 'Get the current user’s full profile' })
   findMe(@CurrentUser('id') id: string) {

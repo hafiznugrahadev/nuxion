@@ -109,9 +109,14 @@ export class UsersService {
         'currentPassword',
       ]);
 
-    await this.usersRepository.updateWithRoles(id, {
-      password: await hashPassword(dto.newPassword),
-    });
+    await this.usersRepository.updateWithRoles(
+      id,
+      {
+        password: await hashPassword(dto.newPassword),
+      },
+      undefined,
+      user.password,
+    );
   }
 
   /** Flatten a user's Role[] into a string[] of role names for the response. */

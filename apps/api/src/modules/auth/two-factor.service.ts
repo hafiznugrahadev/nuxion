@@ -9,16 +9,16 @@ import { ConfigService } from '@nestjs/config';
 import { withFieldErrors } from '@common/validation/field-exception';
 import { InjectDrizzle } from '@nestjs/drizzle';
 import { createCipheriv, createDecipheriv, randomInt, randomBytes, scryptSync } from 'node:crypto';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { generateSecret, generateURI, verify } from 'otplib';
 import QRCode from 'qrcode';
 import type { Database } from '@db/relations';
 import { roleNamesFor } from '@db/user-roles';
-import { users } from '@db/schema';
+import { users, refreshTokens } from '@db/schema';
 import { RedisService } from '@infrastructure/redis/redis.service';
 import { verifyPassword } from '@common/utils/password';
 import { generateOpaqueToken, hashToken } from '@common/utils/token.util';
-import { toSessionUser, type SessionUser, type UserWithRoles } from './session-user';
+import type { UserWithRoles } from './session-user';
 
 /** Pending TOTP secret lives in Redis until activation is confirmed. */
 const SETUP_KEY = (userId: string) => `2fa:setup:${userId}`;
@@ -36,6 +36,7 @@ const RECOVERY_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
 interface PendingChallenge {
   userId: string;
+  securityVersion: number;
   attempts: number;
   /** Epoch ms — kept so failed attempts don't silently extend the TTL. */
   expiresAt: number;
@@ -60,7 +61,7 @@ export class TwoFactorService {
    * Step 1 of setup: mint a TOTP secret. It is parked in Redis — the DB is only
    * touched once the user proves the authenticator works (activate).
    */
-  async beginSetup(user: { id: string; email: string }): Promise<{
+  async beginSetup(user: { id: string; email: string; securityVersion: number }): Promise<{
     otpauthUrl: string;
     qrDataUrl: string;
     secret: string;
@@ -77,7 +78,11 @@ export class TwoFactorService {
 
     const secret = generateSecret();
     const otpauthUrl = generateURI({ issuer: 'Nuxion', label: user.email, secret });
-    await this.redis.set(SETUP_KEY(user.id), { secret }, SETUP_TTL_SECONDS);
+    await this.redis.set(
+      SETUP_KEY(user.id),
+      { secret, securityVersion: user.securityVersion },
+      SETUP_TTL_SECONDS,
+    );
 
     return { otpauthUrl, qrDataUrl: await QRCode.toDataURL(otpauthUrl), secret };
   }
@@ -88,11 +93,13 @@ export class TwoFactorService {
    * exactly once — only their SHA-256 hashes are stored.
    */
   async activate(
-    user: { id: string },
+    user: { id: string; securityVersion: number },
     code: string,
-  ): Promise<{ user: SessionUser; recoveryCodes: string[] }> {
+  ): Promise<{ user: UserWithRoles; recoveryCodes: string[] }> {
     this.assertEnabled();
-    const pending = await this.redis.get<{ secret: string }>(SETUP_KEY(user.id));
+    const pending = await this.redis.get<{ secret: string; securityVersion: number }>(
+      SETUP_KEY(user.id),
+    );
     if (!pending) throw new BadRequestException('Setup expired — restart the setup process');
 
     if (!(await this.isValidTotp(pending.secret, code))) {
@@ -100,34 +107,45 @@ export class TwoFactorService {
     }
 
     const recoveryCodes = this.generateRecoveryCodes();
-    const [updated] = await this.db
-      .update(users)
-      .set({
-        twoFactorEnabled: true,
-        twoFactorSecret: this.encrypt(pending.secret),
-        recoveryCodes: JSON.stringify(recoveryCodes.map((c) => hashToken(c))),
-      })
-      .where(eq(users.id, user.id))
-      .returning({
-        id: users.id,
-        email: users.email,
-        name: users.name,
-        avatarUrl: users.avatarUrl,
-        twoFactorEnabled: users.twoFactorEnabled,
-      });
-    await this.redis.del(SETUP_KEY(user.id));
-
-    return {
-      user: toSessionUser({ ...updated, roles: await roleNamesFor(this.db, user.id) }),
-      recoveryCodes,
-    };
+    return this.db.transaction(async (tx) => {
+      const [current] = await tx.select().from(users).where(eq(users.id, user.id)).for('update');
+      if (
+        !current ||
+        current.securityVersion !== user.securityVersion ||
+        pending.securityVersion !== current.securityVersion ||
+        current.twoFactorEnabled
+      ) {
+        throw new UnauthorizedException('Authentication changed; restart setup');
+      }
+      if (!(await this.redis.consumeMatching(SETUP_KEY(user.id), pending))) {
+        throw new BadRequestException('Setup expired — restart the setup process');
+      }
+      if (!(await this.claimTotp(user.id, pending.secret, code))) {
+        throw withFieldErrors(new UnauthorizedException('Verification code already used'), [
+          'code',
+        ]);
+      }
+      const [updated] = await tx
+        .update(users)
+        .set({
+          twoFactorEnabled: true,
+          twoFactorSecret: this.encrypt(pending.secret),
+          recoveryCodes: JSON.stringify(recoveryCodes.map((c) => hashToken(c))),
+          securityVersion: sql`${users.securityVersion} + 1`,
+        })
+        .where(eq(users.id, user.id))
+        .returning();
+      await tx.delete(refreshTokens).where(eq(refreshTokens.userId, user.id));
+      return { user: { ...updated, roles: await roleNamesFor(tx, user.id) }, recoveryCodes };
+    });
   }
 
   /** A challenge is only issued after the password step already succeeded. */
-  async issueLoginChallenge(userId: string): Promise<string> {
+  async issueLoginChallenge(userId: string, securityVersion: number): Promise<string> {
     const challengeId = generateOpaqueToken();
     const payload: PendingChallenge = {
       userId,
+      securityVersion,
       attempts: 0,
       expiresAt: Date.now() + CHALLENGE_TTL_SECONDS * 1000,
     };
@@ -142,84 +160,70 @@ export class TwoFactorService {
    */
   async verifyLoginChallenge(challengeId: string, code: string): Promise<UserWithRoles> {
     this.assertEnabled();
-    const challenge = await this.redis.get<PendingChallenge>(CHALLENGE_KEY(challengeId));
-    if (!challenge) throw new BadRequestException('Two-factor challenge expired or unknown');
-
-    const fail = async (): Promise<never> => {
-      challenge.attempts += 1;
-      if (challenge.attempts >= MAX_CHALLENGE_ATTEMPTS) {
-        await this.redis.del(CHALLENGE_KEY(challengeId));
-      } else {
-        const ttl = Math.ceil((challenge.expiresAt - Date.now()) / 1000);
-        if (ttl > 0) await this.redis.set(CHALLENGE_KEY(challengeId), challenge, ttl);
+    const challenge = await this.redis.reserveChallenge<PendingChallenge>(
+      CHALLENGE_KEY(challengeId),
+      MAX_CHALLENGE_ATTEMPTS,
+    );
+    if (!challenge) throw new BadRequestException('Two-factor challenge expired or exhausted');
+    return this.db.transaction(async (tx) => {
+      const [user] = await tx
+        .select()
+        .from(users)
+        .where(eq(users.id, challenge.userId))
+        .for('update');
+      if (
+        !user?.twoFactorEnabled ||
+        !user.twoFactorSecret ||
+        user.securityVersion !== challenge.securityVersion
+      ) {
+        throw new UnauthorizedException('Authentication changed; sign in again');
       }
-      throw withFieldErrors(new UnauthorizedException('Invalid verification code'), ['code']);
-    };
-
-    // Internal read: the secret + recovery hashes are needed for verification.
-    // They never leave this method — the result flows through toSessionUser.
-    const [user] = await this.db
-      .select({
-        id: users.id,
-        email: users.email,
-        name: users.name,
-        avatarUrl: users.avatarUrl,
-        twoFactorEnabled: users.twoFactorEnabled,
-        twoFactorSecret: users.twoFactorSecret,
-        recoveryCodes: users.recoveryCodes,
-      })
-      .from(users)
-      .where(eq(users.id, challenge.userId))
-      .limit(1);
-    if (!user?.twoFactorEnabled || !user.twoFactorSecret) {
-      await this.redis.del(CHALLENGE_KEY(challengeId));
-      throw new BadRequestException('Two-factor is not enabled for this account');
-    }
-
-    const secret = this.decrypt(user.twoFactorSecret);
-    if (await this.isValidTotp(secret, code)) {
-      await this.redis.del(CHALLENGE_KEY(challengeId));
-      return { ...user, roles: await roleNamesFor(this.db, user.id) };
-    }
-
-    // Fall back to recovery codes (normalized: trimmed + uppercased).
-    const normalized = code.trim().toUpperCase();
-    const hashes: string[] = user.recoveryCodes ? JSON.parse(user.recoveryCodes) : [];
-    const match = hashToken(normalized);
-    const index = hashes.indexOf(match);
-    if (index !== -1) {
-      hashes.splice(index, 1); // single-use: consume it
-      await this.db
-        .update(users)
-        .set({ recoveryCodes: JSON.stringify(hashes) })
-        .where(eq(users.id, user.id));
-      await this.redis.del(CHALLENGE_KEY(challengeId));
-      return { ...user, roles: await roleNamesFor(this.db, user.id) };
-    }
-
-    return fail();
+      const secret = this.decrypt(user.twoFactorSecret);
+      const validTotp = await this.isValidTotp(secret, code);
+      const hashes: string[] = user.recoveryCodes ? JSON.parse(user.recoveryCodes) : [];
+      const index = hashes.indexOf(hashToken(code.trim().toUpperCase()));
+      if (!validTotp && index === -1) {
+        throw withFieldErrors(new UnauthorizedException('Invalid verification code'), ['code']);
+      }
+      if (validTotp && !(await this.claimTotp(user.id, secret, code))) {
+        throw withFieldErrors(new UnauthorizedException('Verification code already used'), [
+          'code',
+        ]);
+      }
+      if (!(await this.redis.consume(CHALLENGE_KEY(challengeId)))) {
+        throw new BadRequestException('Two-factor challenge already consumed');
+      }
+      if (!validTotp) {
+        hashes.splice(index, 1);
+        await tx
+          .update(users)
+          .set({ recoveryCodes: JSON.stringify(hashes) })
+          .where(eq(users.id, user.id));
+      }
+      return { ...user, roles: await roleNamesFor(tx, user.id) };
+    });
   }
 
   /** Re-mint recovery codes after re-verifying the account password. */
   async regenerateRecoveryCodes(userId: string, password: string): Promise<string[]> {
     this.assertEnabled();
-    const [user] = await this.db.select().from(users).where(eq(users.id, userId)).limit(1);
-    if (!user) throw new UnauthorizedException();
-    if (!user.twoFactorEnabled) {
-      throw new BadRequestException('Two-factor is not enabled for this account');
-    }
-    if (!(await verifyPassword(password, user.password))) {
-      throw withFieldErrors(new UnauthorizedException('Current password is incorrect'), [
-        'password',
-      ]);
-    }
-
-    const recoveryCodes = this.generateRecoveryCodes();
-    await this.db
-      .update(users)
-      .set({ recoveryCodes: JSON.stringify(recoveryCodes.map((c) => hashToken(c))) })
-      .where(eq(users.id, userId));
-    return recoveryCodes;
+    return this.db.transaction(async (tx) => {
+      const [user] = await tx.select().from(users).where(eq(users.id, userId)).for('update');
+      if (!user) throw new UnauthorizedException();
+      if (!user.twoFactorEnabled)
+        throw new BadRequestException('Two-factor is not enabled for this account');
+      if (!(await verifyPassword(password, user.password))) {
+        throw withFieldErrors(new UnauthorizedException('Current password is incorrect'), [
+          'password',
+        ]);
+      }
+      const recoveryCodes = this.generateRecoveryCodes();
+      await tx
+        .update(users)
+        .set({ recoveryCodes: JSON.stringify(recoveryCodes.map((c) => hashToken(c))) })
+        .where(eq(users.id, userId));
+      return recoveryCodes;
+    });
   }
 
   /** All endpoints are dormant unless the feature flag is on. */
@@ -227,6 +231,13 @@ export class TwoFactorService {
     if (!this.config.get<boolean>('app.twoFactor.enabled')) {
       throw new ForbiddenException('Two-factor auth is disabled');
     }
+  }
+
+  private claimTotp(userId: string, secret: string, code: string): Promise<boolean> {
+    return this.redis.claim(
+      `2fa:used:${userId}:${hashToken(`${secret}:${code.replace(/\s+/g, '')}`)}`,
+      90,
+    );
   }
 
   private async isValidTotp(secret: string, token: string): Promise<boolean> {

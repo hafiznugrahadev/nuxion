@@ -10,6 +10,7 @@ export interface UserWithRoles {
   name: string;
   avatarUrl: string | null;
   twoFactorEnabled: boolean;
+  securityVersion: number;
   roles: { name: string }[];
 }
 

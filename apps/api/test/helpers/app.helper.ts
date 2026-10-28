@@ -34,7 +34,8 @@ export async function createTestApp(): Promise<INestApplication> {
   app.useGlobalFilters(new AllExceptionsFilter());
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
-  await app.init();
+  // Keep one listener open so concurrent Supertest requests cannot close each other's sockets.
+  await app.listen(0, '127.0.0.1');
   return app;
 }
 

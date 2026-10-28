@@ -42,7 +42,7 @@
     "express-basic-auth": "^1.2.1",
     "ioredis": "^6.0.0",
     "nestjs-pino": "^5.1.0",
-    "nodemailer": "^10.0.0",
+    "nodemailer": "^10.1.2",
     "otplib": "^13.5.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",

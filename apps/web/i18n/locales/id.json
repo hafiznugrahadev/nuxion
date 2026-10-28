@@ -438,6 +438,10 @@
     "search": "Cari",
     "select": "Pilih opsi",
     "noResults": "Tidak ada hasil.",
+    "loadError": "Opsi tidak dapat dimuat.",
+    "retry": "Coba lagi",
+    "searchMinLength": "Ketik minimal {count} karakter untuk mencari.",
+    "removeOption": "Hapus {label}",
     "confirm": "Konfirmasi"
   },
   "security": {

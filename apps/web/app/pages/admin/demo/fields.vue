@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { toast } from 'vue-sonner';
 import { useUpload } from '~/composables/useUpload';
 import { useBranding } from '~/composables/useBranding';
+import type { ComboboxSearchParams } from '~/composables/useComboboxQuery';
 
 definePageMeta({ layout: 'admin', middleware: ['auth'] });
 const branding = useBranding();
@@ -25,6 +26,8 @@ const schema = toTypedSchema(
     digest: z.string().optional(),
     permissions: z.array(z.string()).optional(),
     confidence: z.number().optional(),
+    amount: z.number().nullable().optional(),
+    customerId: z.string().optional(),
     skills: z.array(z.string()).optional(),
     avatar: z.any().optional(),
     agreed: z.boolean().refine((v) => v === true, 'You must agree to the terms'),
@@ -107,6 +110,29 @@ const digestOptions = [
 
 // Status memakai segmented (ToggleGroup) — tetap terikat form via useField.
 const { value: statusValue } = useField<string>('status');
+
+// Demo callback shaped like a paginated endpoint. Production features should
+// pass their API fetcher here so filtering and pagination happen server-side.
+const demoCustomers = Array.from({ length: 1200 }, (_, index) => ({
+  value: `demo-customer-${index + 1}`,
+  label: `Demo customer ${String(index + 1).padStart(4, '0')}`,
+}));
+async function loadDemoCustomers({ search, page, limit, signal }: ComboboxSearchParams) {
+  if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+  const matches = demoCustomers.filter((option) =>
+    option.label.toLowerCase().includes(search.toLowerCase()),
+  );
+  const start = (page - 1) * limit;
+  return {
+    data: matches.slice(start, start + limit),
+    meta: {
+      page,
+      limit,
+      total: matches.length,
+      totalPages: Math.ceil(matches.length / limit),
+    },
+  };
+}
 </script>
 
 <template>
@@ -212,6 +238,34 @@ const { value: statusValue } = useField<string>('status');
               label="Notification digest"
               :options="digestOptions"
               hint="How often we batch non-urgent notifications."
+            />
+          </div>
+        </div>
+
+        <div class="rounded-lg border border-outline-variant bg-card p-5 sm:p-6">
+          <h2 class="mb-2 text-sm font-semibold text-muted-foreground">Money & remote search</h2>
+          <p class="mb-4 text-sm text-on-surface-variant">
+            Example only: the customer callback uses generated local data to demonstrate paging.
+            Production callbacks should call the API and filter on the server.
+          </p>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <MoneyField
+              name="amount"
+              label="Amount"
+              currency="IDR"
+              locale="id-ID"
+              hint="Value is a number; the input formats it as Indonesian rupiah."
+            />
+            <RemoteComboboxField
+              name="customerId"
+              label="Customer (remote search demo)"
+              :options-key="['demo-customers']"
+              :load-options="loadDemoCustomers"
+              placeholder="Search 1,200 demo customers"
+              :page-size="25"
+              :debounce-ms="300"
+              :min-search-length="2"
+              hint="Search is debounced and options load in pages."
             />
           </div>
         </div>

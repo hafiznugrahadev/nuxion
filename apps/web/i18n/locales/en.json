@@ -438,6 +438,10 @@
     "search": "Search",
     "select": "Select an option",
     "noResults": "No results found.",
+    "loadError": "Options could not be loaded.",
+    "retry": "Retry",
+    "searchMinLength": "Type at least {count} characters to search.",
+    "removeOption": "Remove {label}",
     "confirm": "Confirm"
   },
   "security": {

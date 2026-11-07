@@ -145,6 +145,12 @@ the root directory. Each app includes its own `vercel.json`; the API build runs
 `db:deploy` to apply migrations and create only the three built-in roles.
 It never creates demo users or default passwords.
 
+The API uses the compiled `dist` entrypoint so TypeScript aliases are resolved.
+Set `NODE_OPTIONS=--experimental-require-module` on the API project: Vercel
+disables Node's `require(ESM)` support by default, while NestJS 12 and its
+CommonJS adapters need that compatibility setting. See the
+[Vercel runtime documentation](https://vercel.com/docs/functions/runtimes/node-js/advanced-node-configuration#experimental-nodejs-require-of-es-module).
+
 Connect PostgreSQL and Redis to the API using `DATABASE_URL` and `REDIS_URL`.
 Choose a region close to both services. Connect a private Vercel Blob store,
 set `STORAGE_DRIVER=vercel-blob`, and provide `BLOB_READ_WRITE_TOKEN` through the

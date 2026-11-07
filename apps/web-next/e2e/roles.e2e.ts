@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import {
   API_BASE,
   SUPER_ADMIN,
-  apiToken,
+  apiLogin,
   deleteRoleByName,
   login,
   waitForHydration,
@@ -72,9 +72,8 @@ test.describe('roles (super admin)', () => {
   });
 
   test('custom role is assignable from the user edit modal', async ({ page, request }) => {
-    const token = await apiToken(request, SUPER_ADMIN.email, SUPER_ADMIN.password);
+    await apiLogin(request, SUPER_ADMIN.email, SUPER_ADMIN.password);
     await request.post(`${API_BASE}/roles`, {
-      headers: { Authorization: `Bearer ${token}` },
       data: { name: roleName },
     });
 

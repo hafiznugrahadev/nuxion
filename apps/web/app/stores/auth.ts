@@ -5,7 +5,6 @@ import { UserRole, type ApiResponse, type User } from '@nuxion/shared-types';
 import { xhrProgressEnd, xhrProgressStart } from '~/lib/xhr-progress';
 
 interface SessionPayload {
-  accessToken: string;
   user: User;
 }
 
@@ -20,6 +19,8 @@ export interface TwoFactorChallenge {
 
 export type LoginResult = SessionPayload | TwoFactorChallenge;
 
+const sessionRequests = new WeakMap<object, Promise<boolean>>();
+
 /** Options JSON produced by the API for navigator.credentials.get(). */
 export interface PasskeyLoginOptions {
   challengeId: string;
@@ -28,8 +29,8 @@ export interface PasskeyLoginOptions {
 
 /**
  * Bare $fetch with the YouTube-style top progress bar — for the auth store's
- * user-visible calls that deliberately bypass useApi (see login below).
- * `refresh()` stays untracked: it runs silently on load / token expiry.
+ * user-visible calls that deliberately bypass session invalidation.
+ * Session restoration stays untracked.
  */
 async function trackedFetch<T>(
   apiBase: string,
@@ -47,23 +48,13 @@ async function trackedFetch<T>(
   }
 }
 
-/**
- * Client auth state (SPEC: Pinia for client state).
- *
- * Best practice with a NestJS JWT backend: the short-lived **access token lives in
- * memory only** (never localStorage — XSS-safe), and the long-lived refresh token
- * is an httpOnly cookie the browser sends automatically to `/auth/*`. On a hard
- * reload the in-memory token is gone, so `refresh()` silently restores the session
- * from the cookie (see `plugins/auth.client.ts`). The 401-retry in `useApi` calls
- * `refresh()` transparently when an access token expires mid-session.
- */
+/** Only the public user projection lives in Pinia; the session cookie is HttpOnly. */
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null as User | null,
-    accessToken: null as string | null,
   }),
   getters: {
-    isAuthenticated: (state) => !!state.accessToken,
+    isAuthenticated: (state) => state.user !== null,
     isAdmin: (state) => state.user?.roles?.includes(UserRole.ADMIN) ?? false,
     isSuperAdmin: (state) => state.user?.roles?.includes(UserRole.SUPER_ADMIN) ?? false,
   },
@@ -74,12 +65,10 @@ export const useAuthStore = defineStore('auth', {
     },
 
     setSession(payload: SessionPayload) {
-      this.accessToken = payload.accessToken;
       this.user = payload.user;
     },
 
     clear() {
-      this.accessToken = null;
       this.user = null;
     },
 
@@ -89,7 +78,6 @@ export const useAuthStore = defineStore('auth', {
      * and call verifyTwoFactor() to finish.
      */
     async login(email: string, password: string): Promise<LoginResult> {
-      // trackedFetch (bare $fetch) so login never recurses through the 401 retry.
       const res = await trackedFetch<ApiResponse<LoginResult>>(this.apiBase(), '/auth/login', {
         method: 'POST',
         body: { email, password },
@@ -152,23 +140,31 @@ export const useAuthStore = defineStore('auth', {
       this.setSession(data);
     },
 
-    /** Exchange the refresh cookie for a new access token. Returns success. */
-    async refresh(): Promise<boolean> {
-      try {
-        const res = await $fetch<ApiResponse<SessionPayload>>('/auth/refresh', {
-          baseURL: this.apiBase(),
-          method: 'POST',
-          credentials: 'include',
-        });
-        if (res.success) {
-          this.setSession(res.data);
-          return true;
+    /** Restore the public user projection from the HttpOnly session cookie. */
+    restoreSession(): Promise<boolean> {
+      const pending = sessionRequests.get(this);
+      if (pending) return pending;
+      const request = (async () => {
+        try {
+          const res = await $fetch<ApiResponse<SessionPayload>>('/auth/session', {
+            baseURL: this.apiBase(),
+            method: 'GET',
+            credentials: 'include',
+            cache: 'no-store',
+            retry: 0,
+          });
+          if (res.success) {
+            this.setSession(res.data);
+            return true;
+          }
+        } catch {
+          // An unavailable or expired session cannot authenticate the UI.
         }
-      } catch {
-        // No / expired / reused refresh cookie — treat as logged out.
-      }
-      this.clear();
-      return false;
+        this.clear();
+        return false;
+      })().finally(() => sessionRequests.delete(this));
+      sessionRequests.set(this, request);
+      return request;
     },
 
     async logout() {

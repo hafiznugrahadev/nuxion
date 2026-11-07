@@ -11,7 +11,7 @@ import { useEffect, useSyncExternalStore } from 'react';
  * Auth-aware sign-in/dashboard CTA (the landing's hero secondary button and
  * nav button, replacing the Nuxt ClientOnly pair). Renders the sign-in
  * variant during SSR and until the client has restored the session from the
- * refresh cookie, then flips to the dashboard link when one exists — same
+ * session cookie, then flips to the dashboard link when one exists — same
  * fallback-first contract as the Nuxt version, without hydration mismatch.
  */
 export function AuthCta({ variant = 'button' }: { variant?: 'button' | 'hero' }) {

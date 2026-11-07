@@ -942,7 +942,7 @@ async function copy(textToCopy: string) {
                 ><code>APP_URL=https://app.example.com
 DATABASE_URL=postgresql://user:pass@nuxion-db:5432/nuxion
 REDIS_URL=redis://nuxion-redis:6379
-JWT_SECRET=change-me-min-16-chars</code></pre>
+BETTER_AUTH_SECRET=replace-with-a-random-secret-at-least-32-characters</code></pre>
               </div>
             </template>
             <template #tab-turbo>

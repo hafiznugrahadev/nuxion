@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useApi } from './useApi';
 
-const { client, refresh } = vi.hoisted(() => ({ client: vi.fn(), refresh: vi.fn() }));
+const { client, clear } = vi.hoisted(() => ({ client: vi.fn(), clear: vi.fn() }));
 vi.mock('~/lib/api-client', () => ({ createApiClient: () => client }));
 vi.mock('~/lib/xhr-progress', () => ({ xhrProgressStart: vi.fn(), xhrProgressEnd: vi.fn() }));
-vi.mock('~/stores/auth', () => ({ useAuthStore: () => ({ accessToken: 'token', refresh }) }));
+vi.mock('~/stores/auth', () => ({ useAuthStore: () => ({ clear }) }));
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -20,19 +20,23 @@ describe('API unauthorized responses', () => {
     };
     client.mockRejectedValueOnce(error);
     await expect(useApi()('/users/me/password', { method: 'PATCH' })).rejects.toBe(error);
-    expect(refresh).not.toHaveBeenCalled();
+    expect(clear).not.toHaveBeenCalled();
     expect(client).toHaveBeenCalledTimes(1);
   });
 
-  it('refreshes and replays an expired access token response without field attribution', async () => {
-    client.mockRejectedValueOnce({ response: { status: 401 }, data: { success: false } });
-    client.mockResolvedValueOnce({ success: true, data: { saved: true } });
-    refresh.mockResolvedValueOnce(true);
-    await expect(useApi()('/users/me/password', { method: 'PATCH' })).resolves.toEqual({
-      success: true,
-      data: { saved: true },
-    });
-    expect(refresh).toHaveBeenCalledTimes(1);
-    expect(client).toHaveBeenCalledTimes(2);
+  it('clears an expired session without replaying a mutation', async () => {
+    const error = { response: { status: 401 }, data: { success: false } };
+    client.mockRejectedValueOnce(error);
+    await expect(useApi()('/users/me/password', { method: 'PATCH' })).rejects.toBe(error);
+    expect(clear).toHaveBeenCalledTimes(1);
+    expect(client).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves the session when public login credentials are rejected', async () => {
+    const error = { response: { status: 401 }, data: { success: false } };
+    client.mockRejectedValueOnce(error);
+    await expect(useApi()('/auth/login', { method: 'POST' })).rejects.toBe(error);
+    expect(clear).not.toHaveBeenCalled();
+    expect(client).toHaveBeenCalledTimes(1);
   });
 });

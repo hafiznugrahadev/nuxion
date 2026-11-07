@@ -24,9 +24,8 @@ export const PASSKEY_ENABLED = process.env.NEXT_PUBLIC_PASSKEY_ENABLED === 'true
 
 /**
  * Bare fetch with the YouTube-style top progress bar — for the user-visible
- * auth calls that deliberately bypass useApi (login must never recurse
- * through the 401 retry). `refresh()` stays untracked: it runs silently on
- * load / token expiry.
+ * auth calls that bypass useApi so rejected credentials stay form feedback.
+ * Session restoration stays untracked.
  */
 async function trackedFetch<T>(
   url: string,
@@ -113,12 +112,13 @@ export async function register(name: string, email: string, password: string): P
   setSession(data);
 }
 
-/** Exchange the refresh cookie for a new access token. Returns success. */
-export async function refreshSession(): Promise<boolean> {
+/** Restore the public user projection from the HttpOnly session cookie. */
+export async function restoreSession(): Promise<boolean> {
   try {
-    const res = await fetch(`${API_BASE}/auth/refresh`, {
-      method: 'POST',
+    const res = await fetch(`${API_BASE}/auth/session`, {
+      method: 'GET',
       credentials: 'include',
+      cache: 'no-store',
     });
     const body = (await res.json().catch(() => undefined)) as
       ApiResponse<SessionPayload> | undefined;
@@ -160,13 +160,13 @@ export async function resetPassword(token: string, newPassword: string): Promise
 
 /**
  * Single-flight session restore: the app bootstrap and every guard share one
- * refresh call, so a hard reload triggers exactly one /auth/refresh even when
+ * session call, so a hard reload triggers exactly one /auth/session even when
  * several guarded components mount together.
  */
 let sessionPromise: Promise<boolean> | null = null;
 
 export function ensureSession(): Promise<boolean> {
-  sessionPromise ??= refreshSession().finally(() => {
+  sessionPromise ??= restoreSession().finally(() => {
     sessionPromise = null;
   });
   return sessionPromise;

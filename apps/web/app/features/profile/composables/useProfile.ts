@@ -39,7 +39,14 @@ export function useUpdateProfile() {
 /** Change the current user's password. */
 export function useChangePassword() {
   const profileApi = useProfileApi();
+  const auth = useAuthStore();
+  const queryClient = useQueryClient();
   return useApiMutation(profileApi.changePassword, {
     successMessage: 'Password changed',
+    async onSuccess() {
+      auth.clear();
+      queryClient.clear();
+      await navigateTo('/login');
+    },
   });
 }

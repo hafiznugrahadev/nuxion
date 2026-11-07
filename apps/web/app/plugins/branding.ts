@@ -8,7 +8,7 @@ import { useBranding } from '~/composables/useBranding';
  * payload, so the client never refetches on hydration.
  *
  * Bare $fetch (not useApi): this is a public pre-auth read and must not go
- * through the Bearer/401-retry machinery.
+ * depend on client session state.
  */
 export default defineNuxtPlugin(async () => {
   const branding = useBranding();

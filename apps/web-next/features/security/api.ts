@@ -4,8 +4,7 @@ import type { PublicKeyCredentialCreationOptionsJSON } from '@simplewebauthn/bro
 
 /**
  * Account security fetchers (TOTP setup, recovery codes, passkeys) — all
- * authenticated `/auth/*` routes reached through the shared client so a
- * mid-session token expiry is transparently refreshed and retried. Port of
+ * authenticated `/auth/*` routes reached through the shared cookie session client. Port of
  * the Nuxt variant's features/security/api.
  */
 export const securityApi = {

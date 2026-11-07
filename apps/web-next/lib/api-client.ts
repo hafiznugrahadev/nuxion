@@ -3,8 +3,6 @@ import { ApiError } from './api-errors';
 
 export interface ApiClientOptions {
   baseURL: string;
-  /** Returns the current in-memory access token (attached as a Bearer header). */
-  getToken?: () => string | null | undefined;
   /** Called when a request starts / settles (success or error) — wired by the
    * auth layer to the top progress bar. */
   onStart?: () => void;
@@ -23,12 +21,10 @@ export interface RequestOptions {
 
 /**
  * Fetch-based port of the Nuxt variant's ofetch client: same `{ success,
- * data }` envelope handling and `credentials: 'include'` (the httpOnly
- * refresh cookie rides /auth/* calls), kept as a factory so `lib/` stays free
- * of React/providers at import time. The 401 → refresh → retry behaviour
- * lands with the auth feature; the getToken hook is already honoured.
+ * data }` envelope handling and credentialed session cookies, kept as a
+ * factory so `lib/` stays free of React/providers at import time.
  */
-export function createApiClient({ baseURL, getToken, onStart, onEnd }: ApiClientOptions) {
+export function createApiClient({ baseURL, onStart, onEnd }: ApiClientOptions) {
   return async function request<T>(
     path: string,
     options: RequestOptions = {},
@@ -45,8 +41,6 @@ export function createApiClient({ baseURL, getToken, onStart, onEnd }: ApiClient
       const qs = search.size > 0 ? `?${search.toString()}` : '';
 
       const headers = new Headers(options.headers);
-      const token = getToken?.();
-      if (token) headers.set('Authorization', `Bearer ${token}`);
       const hasBody = options.body !== undefined;
       // FormData bodies keep their browser-set multipart boundary header;
       // everything else is JSON.

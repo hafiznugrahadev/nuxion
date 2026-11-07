@@ -25,7 +25,7 @@
   },
   "home": {
     "metaTitle": "{app} · NestJS + Next.js starter kit",
-    "metaDescription": "Production-ready NestJS + Next.js monorepo starter kit: JWT authentication, role-based access, a users datatable, and reusable components. Clone, configure, ship.",
+    "metaDescription": "NestJS + Next.js monorepo starter kit with Better Auth, role-based access, a users datatable, and reusable components. Clone, configure, ship.",
     "description": "A NestJS + Next.js monorepo starter kit, authentication, role-based access, a users datatable, and reusable components to build on.",
     "goToDashboard": "Go to dashboard",
     "signIn": "Sign in",
@@ -37,7 +37,7 @@
       "stack": "Tech Stack"
     },
     "pills": {
-      "access": "15m JWT access + 7d refresh rotation",
+      "access": "Better Auth with HttpOnly cookie sessions",
       "roles": "Role guards on admin routes",
       "docker": "Docker dev stack included"
     },
@@ -47,7 +47,7 @@
     "install": {
       "eyebrow": "Fast-track CLI",
       "title": "Start your project in one command",
-      "lead": "The scaffolder clones the kit, renames it to your project, writes .env with a generated JWT secret, installs dependencies, and commits fresh git history. Bun all the way down.",
+      "lead": "The scaffolder clones the kit, renames it to your project, writes .env with a generated Better Auth secret, installs dependencies, and commits fresh git history. Bun all the way down.",
       "cloneTitle": "Working inside a clone instead?",
       "cloneLead": "The same stack, driven by hand:",
       "scaffolderLabel": "Recommended scaffolder",
@@ -75,8 +75,8 @@
       "title": "What's inside",
       "lead": "Everything below is in this repository right now, wired and working.",
       "authTag": "Security spec",
-      "authF1": "15m access token",
-      "authF2": "7d refresh rotation",
+      "authF1": "HttpOnly session cookies",
+      "authF2": "Server-side session revocation",
       "authF3": "RBAC guards",
       "datatableTag": "TanStack Query 5",
       "datatableF": "Server pagination + search",
@@ -88,7 +88,7 @@
       "dockerF": "Mailpit local SMTP inbox",
       "dockerF2": "Plug and play",
       "authTitle": "Auth & RBAC",
-      "authText": "Email/password login, short-lived JWT access, rotating refresh cookie with reuse detection, role guards on every admin route.",
+      "authText": "Email/password login, Better Auth sessions in HttpOnly cookies, and role guards on every admin route.",
       "datatableTitle": "Users datatable",
       "datatableText": "Paginated, searchable, server-filtered user management over a typed API client. The password never leaves the API.",
       "uiTitle": "Reusable UI",
@@ -228,6 +228,7 @@
     "sendResetLink": "Send reset link",
     "sending": "Sending…",
     "resetLinkSent": "If an account exists for that email, a reset link is on its way. Check your inbox.",
+    "passwordResetUnavailable": "Password reset is unavailable. Contact your administrator.",
     "somethingWrong": "Something went wrong. Please try again.",
     "resetTitle": "Reset password",
     "resetSubtitle": "Choose a new password for your account.",
@@ -481,7 +482,7 @@
       "update": "Update password",
       "updating": "Updating…",
       "confirmTitle": "Replace your password?",
-      "confirmDescription": "Your current password will stop working. Use the new password the next time you sign in."
+      "confirmDescription": "This signs you out on every device. Sign in again with your new password."
     },
     "avatar": {
       "change": "Change photo",

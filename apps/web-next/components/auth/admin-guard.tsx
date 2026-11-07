@@ -17,7 +17,7 @@ import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react
 
 /**
  * Guard for the admin area — the port of the Nuxt auth + admin middleware.
- * The token lives in memory, so the check is client-side: restore the session
+ * The public user lives in memory, so the check is client-side: restore the session
  * first (single-flight), then send unauthenticated visitors to /login with a
  * redirect back, and render the dedicated 403 screen for authenticated
  * non-admins (mirroring the Nuxt admin middleware's fatal 403).
@@ -145,12 +145,7 @@ export function AdminGuard({ children }: { children: ReactNode }) {
                 <LayoutDashboard size={20} aria-hidden="true" />
                 {t('error.forbidden.backToDashboard')}
               </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                href="/"
-                data-testid="error-cta-secondary"
-              >
+              <Button variant="outline" size="lg" href="/" data-testid="error-cta-secondary">
                 <House size={20} aria-hidden="true" />
                 {t('error.forbidden.home')}
               </Button>

@@ -38,8 +38,8 @@ apps/api (NestJS + Drizzle + PostgreSQL)         apps/web (Nuxt 4 admin SPA)
 packages/shared-types  ← User, UserRole, ApiResponse, Paginated — the shared contract
 ```
 
-Request path: `UserTable` → `useUsers` → `userApi.list` → `useApi()` (adds Bearer
-token, transparent 401→refresh→replay) → NestJS controller → service
+Request path: `UserTable` → `useUsers` → `userApi.list` → `useApi()` (sends the
+HttpOnly session cookie, clears expired sessions without replay) → NestJS controller → service
 → repository (`@InjectDrizzle()` query builder). Response envelope `{ success, data, meta }`
 is unwrapped by `unwrapPaginated` into `{ data, meta }`.
 
@@ -177,7 +177,7 @@ class of bug this project has actually hit:
 - [ ] Web: attributed API failures (DTO validation, duplicate email/name,
       wrong password/code) appear in the matching Fieldset with invalid and
       description attributes; correcting/retrying clears the stale error.
-      A structured domain 401 must not trigger token refresh/replay.
+      A structured domain 401 must not clear the current session or replay the request.
 - [ ] Any color/token change: contrast probed in both themes (≥ 4.5:1).
 - [ ] Skill itself still matches the code — if the pattern changed, update this
       skill in the same PR.
@@ -210,7 +210,7 @@ These have all appeared in this repo and been reverted — do not reintroduce:
 - **Shadow-based elevation on dialogs/sheets** — MD3 uses surface-container
   tiers here.
 - **Per-feature `$fetch` setups** — always go through `useApi()` /
-  `lib/api-client.ts` (auth header, envelope unwrap, 401 refresh-replay).
+  `lib/api-client.ts` (credentialed cookies, envelope unwrap, session-expiry handling).
 
 ## Known Environment Notes
 

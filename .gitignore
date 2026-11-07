@@ -69,3 +69,5 @@ playwright/.cache/
 .aider*
 .windsurf/
 .codeium/
+.omo/
+.vercel/

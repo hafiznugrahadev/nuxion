@@ -104,9 +104,12 @@ services:
       # REDIS_URL di root .env (untuk tooling host) akan menang dan memutus
       # container dari nuxion-redis internal. String kosong dianggap unset oleh API.
       REDIS_URL: ''
-      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-min-16-chars}
-      JWT_EXPIRES_IN: 15m
-      JWT_REFRESH_EXPIRES_DAYS: 7
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-only-change-this-secret-min-32-characters}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-${APP_URL:-http://localhost:${WEB_PORT:-3000}}}
+      AUTH_SESSION_EXPIRES_DAYS: ${AUTH_SESSION_EXPIRES_DAYS:-7}
+      # Preserve the old key for existing encrypted TOTP enrollments.
+      JWT_SECRET: ${JWT_SECRET:-}
+      TWO_FACTOR_ENCRYPTION_KEY: ${TWO_FACTOR_ENCRYPTION_KEY:-}
       # Base URL of the frontend — single source of truth (like Laravel APP_URL).
       # Set APP_URL in .env to override (e.g. https://web.nuxion-dev.orb.local).
       # Also feeds CORS/CSRF trusted origins in code (app.config) — app traffic

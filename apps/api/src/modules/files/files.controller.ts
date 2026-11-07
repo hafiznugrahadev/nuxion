@@ -26,7 +26,7 @@ import type { StoredFile } from '@infrastructure/storage/storage.types';
 const MAX_UPLOAD_CEILING = 15 * 1024 * 1024;
 
 /**
- * Generic authenticated upload endpoint. Protected by the global JwtAuthGuard.
+ * Generic authenticated upload endpoint. Protected by the global SessionAuthGuard.
  * Returns the stored file's URL for callers to persist (e.g. avatarUrl).
  *
  * With a signed driver (s3, private bucket) the returned `url` is a STABLE proxy

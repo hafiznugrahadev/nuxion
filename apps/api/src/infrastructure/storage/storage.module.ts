@@ -10,7 +10,7 @@ import {
 } from './drivers/vercel-blob.driver';
 
 /**
- * Global object-storage module. The driver (local | s3) is selected from config
+ * Global object-storage module. The driver (local | s3 | vercel-blob) is selected from config
  * at startup; both honour the same StorageDriver contract so call-sites are
  * storage-agnostic. Mirrors the RedisModule wiring (SPEC DRY #10).
  */

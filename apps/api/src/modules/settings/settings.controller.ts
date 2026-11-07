@@ -1,5 +1,5 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Put } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserRole } from '@nuxion/shared-types';
 import { Roles } from '@common/decorators/roles.decorator';
 import { Public } from '@common/decorators/public.decorator';
@@ -22,7 +22,7 @@ export class SettingsController {
 
   @Put('branding')
   @Roles(UserRole.SUPER_ADMIN)
-  @ApiBearerAuth()
+  @ApiCookieAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Update the 'branding' settings group (Super Admin)" })
   updateBranding(@Body() dto: UpdateBrandingDto) {

@@ -1,0 +1,4 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "cd ../.. && bun run --filter @nuxion/shared-types build && bun run --filter @nuxion/api db:deploy && bun run --filter @nuxion/api build"
+}

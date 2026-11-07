@@ -5,10 +5,36 @@ import { validateEnv } from './env.validation';
 // validateEnv is a pure function of the env record — no DB/app needed.
 const baseEnv = {
   DATABASE_URL: 'postgres://localhost:5432/nuxion',
-  JWT_SECRET: 'at-least-16-chars-secret',
+  BETTER_AUTH_SECRET: 'at-least-thirty-two-characters-secret',
 };
 
 describe('validateEnv', () => {
+  it('allows blank SMTP configuration when password reset delivery is disabled', () => {
+    const config = validateEnv({
+      ...baseEnv,
+      NODE_ENV: 'production',
+      MAIL_TRANSPORT: 'smtp',
+      MAIL_SMTP_HOST: '',
+      MAIL_SMTP_PASSWORD: '',
+      AUTH_PASSWORD_RESET_ENABLED: 'false',
+    });
+    expect(config.AUTH_PASSWORD_RESET_ENABLED).toBe(false);
+    expect(validateEnv(baseEnv).AUTH_PASSWORD_RESET_ENABLED).toBe(true);
+  });
+
+  it('requires the private Blob credential when that storage driver is selected', () => {
+    expect(() => validateEnv({ ...baseEnv, STORAGE_DRIVER: 'vercel-blob' })).toThrow(
+      /BLOB_READ_WRITE_TOKEN/,
+    );
+    expect(() =>
+      validateEnv({
+        ...baseEnv,
+        STORAGE_DRIVER: 'vercel-blob',
+        BLOB_READ_WRITE_TOKEN: 'server-only-token',
+      }),
+    ).not.toThrow();
+  });
+
   describe('CORS_ORIGIN wildcard (credentialed CORS hardening)', () => {
     it('accepts a wildcard outside production (dev reflect-all convenience)', () => {
       expect(() =>

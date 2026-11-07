@@ -8,6 +8,7 @@ import {
   IsString,
   IsUrl,
   MinLength,
+  Min,
   ValidateIf,
   validateSync,
 } from 'class-validator';
@@ -79,17 +80,36 @@ export class EnvironmentVariables {
   REDIS_PASSWORD = '';
 
   @IsString()
-  @MinLength(16, { message: 'JWT_SECRET must be at least 16 characters' })
-  JWT_SECRET!: string;
+  @MinLength(32)
+  BETTER_AUTH_SECRET!: string;
+
+  @IsOptional()
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true, require_tld: false })
+  @Transform(({ value }) => (value === '' ? undefined : value))
+  BETTER_AUTH_URL?: string;
 
   @IsString()
   @IsOptional()
-  JWT_EXPIRES_IN = '15m';
+  JWT_SECRET?: string;
+
+  @IsString()
+  @IsOptional()
+  TWO_FACTOR_ENCRYPTION_KEY?: string;
 
   @Type(() => Number)
   @IsInt()
+  @Min(1)
   @IsOptional()
-  JWT_REFRESH_EXPIRES_DAYS = 7;
+  AUTH_SESSION_EXPIRES_DAYS = 7;
+
+  @IsIn(['local', 's3', 'vercel-blob'])
+  @IsOptional()
+  STORAGE_DRIVER = 'local';
+
+  @ValidateIf((environment) => environment.STORAGE_DRIVER === 'vercel-blob')
+  @IsString()
+  @MinLength(1)
+  BLOB_READ_WRITE_TOKEN?: string;
 
   @IsString()
   @IsOptional()
@@ -196,6 +216,11 @@ export class EnvironmentVariables {
   @IsInt()
   @IsOptional()
   PASSWORD_RESET_TTL_MIN = 30;
+
+  @Transform(toBool)
+  @IsBoolean()
+  @IsOptional()
+  AUTH_PASSWORD_RESET_ENABLED = true;
 
   // ── Self-service registration (off by default; kit is admin-provisioned) ────
   @Transform(toBool)

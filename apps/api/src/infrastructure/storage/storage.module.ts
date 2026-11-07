@@ -4,6 +4,10 @@ import { STORAGE_DRIVER, type StorageDriver } from './storage.types';
 import { LocalStorageDriver, type LocalDriverOptions } from './drivers/local.driver';
 import { S3StorageDriver, type S3DriverOptions } from './drivers/s3.driver';
 import { StorageService } from './storage.service';
+import {
+  VercelBlobStorageDriver,
+  type VercelBlobDriverOptions,
+} from './drivers/vercel-blob.driver';
 
 /**
  * Global object-storage module. The driver (local | s3) is selected from config
@@ -20,6 +24,11 @@ import { StorageService } from './storage.service';
         const driver = config.get<string>('storage.driver') ?? 'local';
         if (driver === 's3') {
           return new S3StorageDriver(config.getOrThrow<S3DriverOptions>('storage.s3'));
+        }
+        if (driver === 'vercel-blob') {
+          return new VercelBlobStorageDriver(
+            config.getOrThrow<VercelBlobDriverOptions>('storage.blob'),
+          );
         }
         return new LocalStorageDriver(config.getOrThrow<LocalDriverOptions>('storage.local'));
       },

@@ -25,6 +25,10 @@ export const storageConfig = registerAs('storage', () => ({
     // Absolute base the static `/uploads` mount is reachable at (the API origin).
     publicBaseUrl: process.env.STORAGE_PUBLIC_BASE_URL ?? `http://localhost:${DEFAULT_PORT}`,
   },
+  blob: {
+    token: process.env.BLOB_READ_WRITE_TOKEN,
+    viewBaseUrl: `${(process.env.STORAGE_PUBLIC_BASE_URL || process.env.BETTER_AUTH_URL || `http://localhost:${DEFAULT_PORT}`).replace(/\/+$/, '')}/${process.env.API_PREFIX ?? 'api'}/files/view`,
+  },
   s3: {
     endpoint: process.env.S3_ENDPOINT,
     region: process.env.S3_REGION ?? 'us-east-1',

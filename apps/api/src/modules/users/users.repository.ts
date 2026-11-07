@@ -3,6 +3,7 @@ import { InjectDrizzle } from '@nestjs/drizzle';
 import { and, asc, desc, eq, ilike, inArray, or, sql, type SQL } from 'drizzle-orm';
 import type { Database } from '@db/relations';
 import { roles, userRoles, users } from '@db/schema';
+import { readCredential, writeCredential } from '@db/auth-credentials';
 import { roleNamesByUser, syncUserRoles } from '@db/user-roles';
 import type { BaseQueryDto } from '@common/dto/base-query.dto';
 import {
@@ -108,12 +109,8 @@ export class UsersRepository {
   /** The only path that reads the password hash — used to verify the current
    *  password before a self-service change. */
   async findWithPassword(id: string): Promise<{ id: string; password: string } | null> {
-    const [row] = await this.db
-      .select({ id: users.id, password: users.password })
-      .from(users)
-      .where(eq(users.id, id))
-      .limit(1);
-    return row ?? null;
+    const password = await readCredential(this.db, id);
+    return password ? { id, password } : null;
   }
 
   async createWithRoles(
@@ -122,6 +119,7 @@ export class UsersRepository {
   ): Promise<UserWithRoles> {
     const created = await this.db.transaction(async (tx) => {
       const [row] = await tx.insert(users).values(data).returning(PUBLIC_COLUMNS);
+      await writeCredential(tx, row.id, data.password);
       await syncUserRoles(tx, row.id, roleNames);
       return row;
     });
@@ -141,6 +139,7 @@ export class UsersRepository {
         .where(eq(users.id, id))
         .returning(PUBLIC_COLUMNS);
       if (!row) throw new NotFoundException('Record not found');
+      if (data.password) await writeCredential(tx, id, data.password);
       if (roleNames) await syncUserRoles(tx, id, roleNames);
       return row;
     });

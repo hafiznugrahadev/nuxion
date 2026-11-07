@@ -1,17 +1,19 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { ConfigService } from '@nestjs/config';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { createTestApp } from './helpers/app.helper';
 
 // Same default as app.config.ts when APP_URL is absent — the trusted origin
 // the CSRF check must accept in these tests.
-const trustedOrigin = process.env.APP_URL || 'http://localhost:3000';
+let trustedOrigin: string;
 
 describe('Security (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
     app = await createTestApp();
+    trustedOrigin = app.get(ConfigService).getOrThrow<string[]>('app.csrf.trustedOrigins')[0];
   });
 
   afterAll(async () => {

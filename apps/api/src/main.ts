@@ -54,7 +54,7 @@ async function bootstrap() {
 
   app.setGlobalPrefix(apiPrefix);
 
-  // Parse cookies so the auth controller can read the httpOnly refresh token.
+  // Preserve cookie parsing for application middleware; Better Auth reads request headers.
   app.use(cookieParser());
 
   // Serve locally-stored uploads as static assets (local storage driver only).
@@ -103,7 +103,7 @@ async function bootstrap() {
       .setVersion('0.1.0')
       // Clickable link in the UI to the raw OpenAPI JSON spec.
       .setExternalDoc('OpenAPI JSON', `/${docsPath}-json`)
-      .addBearerAuth()
+      .addCookieAuth('better-auth.session_token')
       .build();
     const document = SwaggerModule.createDocument(app, swaggerConfig);
     SwaggerModule.setup(docsPath, app, document);

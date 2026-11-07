@@ -10,7 +10,6 @@ vi.stubGlobal('fetch', fetchMock);
 beforeEach(() => {
   // The query is enabled only with a live session (the bell lives behind auth).
   setSession({
-    accessToken: 'tok',
     user: { id: 'u', name: 'U', roles: ['USER'], createdAt: '' } as never,
   });
 });

@@ -13,7 +13,7 @@ export interface UploadedFile {
 /**
  * Reusable file uploader → `POST /files` (multipart). Returns the stored file's
  * public URL for the caller to persist. Goes through the shared `useApi` client,
- * so the auth header + transparent 401→refresh→retry apply. Compose with a form
+ * which sends the session cookie without replaying failed uploads. Compose with a form
  * (e.g. FileField) or a direct file picker.
  */
 export function useUpload() {

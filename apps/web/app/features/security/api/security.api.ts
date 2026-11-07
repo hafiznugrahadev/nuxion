@@ -6,8 +6,7 @@ import type { Passkey, TwoFactorActivatePayload, TwoFactorSetupPayload } from '.
 
 /**
  * Account security fetchers (TOTP setup, recovery codes, passkeys) — all
- * authenticated `/auth/*` routes reached through the shared client so a
- * mid-session token expiry is transparently refreshed and retried.
+ * authenticated `/auth/*` routes reached through the shared cookie session client.
  */
 export function useSecurityApi() {
   const api = useApi();

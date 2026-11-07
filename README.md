@@ -8,7 +8,7 @@ authentication, a users datatable, and reusable components, built to the team
 ```
 nuxion/
 ├── apps/
-│   ├── api/            NestJS 11 + Drizzle backend (JWT auth, class-validator, Swagger, Pino)
+│   ├── api/            NestJS + Drizzle backend (Better Auth, class-validator, Swagger, Pino)
 │   ├── web/            Nuxt 4 (Vue 3) frontend — default variant (shadcn-vue, Pinia, TanStack Query)
 │   └── web-next/       Next.js 16 (React 19) frontend variant (shadcn/ui, TanStack Query, next-intl)
 ├── packages/
@@ -21,16 +21,17 @@ nuxion/
 
 | Layer              | Tech                                                                         |
 | ------------------ | ---------------------------------------------------------------------------- |
-| Backend            | Bun · NestJS 11 · Drizzle ORM · PostgreSQL · Redis · JWT                     |
+| Backend            | Bun · NestJS · Drizzle ORM · PostgreSQL · Redis · Better Auth                |
 | Frontend           | Nuxt 4 · Vue 3 · Tailwind v4 · shadcn-vue (Reka UI) · Pinia · TanStack Query |
 | Frontend (variant) | Next.js 16 · React 19 · Tailwind v4 · shadcn/ui · TanStack Query · next-intl |
 | Shared             | `@nuxion/shared-types` (UserRole + API contracts, compiled to CJS/ESM)       |
 
 ## What's included
 
-- **Auth** — email/password login, short-lived JWT access token + rotating refresh
-  token in an httpOnly cookie (with reuse detection), `/auth/refresh` + `/auth/logout`,
-  global JWT & role guards, login rate limiting.
+- **Auth** — Better Auth credential accounts, password reset, and database sessions
+  in HttpOnly cookies. `GET /auth/session` restores the signed-in user; logout
+  revokes the session. Global session and role guards protect the API, with login
+  rate limiting and current database roles on each protected request.
 - **Two-factor auth (TOTP)** — mandatory when `AUTH_2FA_ENABLED=true`: login splits
   into password → one-time code (or single-use recovery code), and the web keeps
   un-activated users on `/two-factor/setup` until they scan the QR. Fully dormant
@@ -57,7 +58,7 @@ bun create nuxion@latest my-app
 ```
 
 That clones the kit, renames its identity to yours, writes `.env` with a
-generated `JWT_SECRET`, installs dependencies, and commits — with fresh git
+generated `BETTER_AUTH_SECRET`, installs dependencies, and commits — with fresh git
 history and no remotes (nothing to accidentally push back to this repo). See
 [Starting a new project](#starting-a-new-project-bun-create--bun-run-init).
 
@@ -69,7 +70,7 @@ bun install
 
 # 2. Make it YOUR project (renames the package scope, containers, volumes, DB…)
 bun run init            # or: bun run init --name portal-desa --yes
-#    …this also writes .env from .env.example with a generated JWT_SECRET.
+#    …this also writes .env from .env.example with a generated BETTER_AUTH_SECRET.
 #    Skipping it? Then: cp .env.example .env
 
 # 3. Start backing services (Postgres + Redis)
@@ -107,6 +108,69 @@ bun run serve
 | Web (Nuxt) | `3000`  | `.env` → `WEB_PORT`                                                                                   |
 | Web (Next) | `8080`  | `.env` → `WEB_NEXT_PORT`                                                                              |
 | API        | `8000`  | `.env` → `API_PORT` (also update the proxy base: `NUXT_API_INTERNAL_BASE` / `NEXT_API_INTERNAL_BASE`) |
+
+### Upgrading existing authentication
+
+Set `BETTER_AUTH_SECRET` to a random secret of at least 32 characters and keep
+`APP_URL` pointed at the public web origin. `BETTER_AUTH_URL` can override that
+origin; `AUTH_SESSION_EXPIRES_DAYS` defaults to 7. Run the normal `db:migrate`
+release step before starting the updated API and deploy the matching frontend.
+
+The migration backfills Better Auth credential accounts from existing bcrypt
+hashes. User IDs, role assignments, TOTP enrollments, recovery codes, and passkeys
+remain intact. Existing JWT/refresh sessions and password-reset links are no
+longer accepted; users sign in again or request a new reset link.
+
+**Keep the original `JWT_SECRET` on existing installations.** It is still the
+fallback encryption key for enrolled TOTP secrets. Alternatively, set
+`TWO_FACTOR_ENCRYPTION_KEY` to that exact original value. Changing that value
+without re-encrypting stored secrets makes existing authenticators unreadable.
+For new installations the fallback is `BETTER_AUTH_SECRET`; use a dedicated
+TOTP key if session-signing secrets will be rotated independently.
+
+Better Auth owns credential accounts, reset verification, and sessions. The
+existing Nest endpoints preserve application validation and error envelopes;
+TOTP/recovery and WebAuthn proof verification remain application extensions so
+existing enrollments work. A server-only Better Auth plugin issues the session
+after the required proof succeeds. Native Better Auth HTTP routes are not
+mounted, so there is no alternative login route that skips these checks.
+The internal plugin schema uses Zod as required by Better Auth; public Nest
+request DTOs continue using class-validator.
+
+### Vercel deployment (Nuxt and API)
+
+Create two projects from this repository: `apps/api` with the NestJS preset and
+`apps/web` with the Nuxt preset. Use Node.js 24 and enable source files outside
+the root directory. Each app includes its own `vercel.json`; the API build runs
+`db:deploy` to apply migrations and create only the three built-in roles.
+It never creates demo users or default passwords.
+
+The API uses the compiled `dist` entrypoint so TypeScript aliases are resolved.
+Set `NODE_OPTIONS=--experimental-require-module` on the API project: Vercel
+disables Node's `require(ESM)` support by default, while NestJS 12 and its
+CommonJS adapters need that compatibility setting. See the
+[Vercel runtime documentation](https://vercel.com/docs/functions/runtimes/node-js/advanced-node-configuration#experimental-nodejs-require-of-es-module).
+
+Connect PostgreSQL and Redis to the API using `DATABASE_URL` and `REDIS_URL`.
+Choose a region close to both services. Connect a private Vercel Blob store,
+set `STORAGE_DRIVER=vercel-blob`, and provide `BLOB_READ_WRITE_TOKEN` through the
+integration. Set `STORAGE_MAX_FILE_SIZE_MB=4` for Vercel's buffered request limit.
+The existing file-view URL remains public for avatars and branding; private
+object storage does not add per-user access restrictions to that route.
+
+Set `APP_URL`, `BETTER_AUTH_URL`, `CORS_ORIGIN`, and `STORAGE_PUBLIC_BASE_URL` to
+the public Nuxt origin. Set `NUXT_API_INTERNAL_BASE` on the Nuxt project to the
+API's HTTPS origin. Generate a unique `BETTER_AUTH_SECRET` and disable public
+Swagger with `SWAGGER_ENABLED=false`. If registration is enabled, keep
+`AUTH_REGISTRATION_ENABLED` and `NUXT_PUBLIC_REGISTRATION_ENABLED` aligned.
+
+For email, configure `MAIL_TRANSPORT=smtp`, `MAIL_SMTP_HOST`, `MAIL_SMTP_PORT`,
+`MAIL_SMTP_SECURE`, `MAIL_SMTP_USER`, `MAIL_SMTP_PASSWORD`, and `MAIL_FROM` in the
+API's environment. If these are still placeholders, set
+`AUTH_PASSWORD_RESET_ENABLED=false`: reset requests return an explicit 503
+without issuing a token. Enable the flag only after verifying SMTP delivery.
+The `log` transport is intended for local development and must not be used to
+deliver production reset links.
 
 ### Serve commands
 
@@ -169,7 +233,7 @@ global `ValidationPipe`, `IsUnique` async validator, `ApiPaginatedResponse` deco
 `@InjectDrizzle()` database + Redis module (global).
 
 **Frontend** (`apps/web/app` Nuxt / `apps/web-next` React): the generic data table,
-typed field components, one api client with transparent 401→refresh→retry,
+typed field components, one API client with cookie sessions and centralized 401 handling,
 `usePaginatedQuery`/`useApiMutation`, and shared Error/Empty/Loading blocks —
 same contracts, idiomatically implemented per framework. `features/` is
 intentionally **not** auto-imported — explicit barrel imports enforce the
@@ -217,7 +281,7 @@ Renames the kit's identity to yours in one pass: the `@nuxion/*` package
 scope, the `nuxion` slug used by the Compose project name, container names,
 volume names, the Postgres database, the S3 buckets and the `*.orb.local` dev
 domains, plus the "Nuxion" display name. It then writes `.env` from
-`.env.example` with a freshly generated `JWT_SECRET`.
+`.env.example` with a freshly generated `BETTER_AUTH_SECRET`.
 
 ```bash
 bun run init                                   # interactive prompts

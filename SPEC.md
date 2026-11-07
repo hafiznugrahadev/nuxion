@@ -25,7 +25,7 @@ sebelum implementasi tech stack wajib tanya saya terlebih dahulu pada plan mode.
 | Database (NoSQL) | **MongoDB** (Mongoose)                      | Hanya jika benar-benar butuh document-store                                     |
 | Cache / Queue    | **Redis** + BullMQ                          | Cache, rate-limit, background jobs                                              |
 | Object Storage   | **MinIO** / **RustFS** / S3                 | File upload, asset storage                                                      |
-| Auth             | **OAuth2 Client Credentials** + JWT         | Service-to-service & user auth                                                  |
+| Auth             | **Better Auth**                             | User authentication dengan sesi database dan cookie HttpOnly                    |
 | **Validation**   | **class-validator** + **class-transformer** | **Standar NestJS. Jangan pakai Zod di BE — pecah pattern decorator-based.**     |
 | Mapped Types     | **@nestjs/mapped-types**                    | `PartialType`, `PickType`, `OmitType`, `IntersectionType` — kunci DRY untuk DTO |
 | Logging          | **Pino** (`nestjs-pino`)                    | Fast, structured JSON logs                                                      |
@@ -356,21 +356,21 @@ Sebelum commit, tanya:
 
 ### Backend (tetap NestJS)
 
-| Kategori         | Pilihan                                     | Catatan                                                   |
-| ---------------- | ------------------------------------------- | --------------------------------------------------------- |
-| Runtime          | **Bun** / Node.js LTS                       | Bun untuk greenfield, Node untuk legacy                   |
-| Framework        | **NestJS**                                  | Modular, DI, decorator-based                              |
-| ORM              | **Drizzle**                                 | Type-safe, SQL-first, tanpa codegen                       |
-| Database (SQL)   | **PostgreSQL**                              | Default untuk transactional                               |
-| Database (NoSQL) | **MongoDB** (Mongoose)                      | Hanya jika benar-benar butuh document-store               |
-| Cache / Queue    | **Redis** + BullMQ                          | Cache, rate-limit, background jobs                        |
-| Object Storage   | **MinIO** / **RustFS** / S3                 | File upload, asset storage                                |
-| Auth             | **OAuth2 Client Credentials** + JWT         | Service-to-service & user auth                            |
-| **Validation**   | **class-validator** + **class-transformer** | **Standar NestJS. Jangan pakai Zod di BE.**               |
-| Mapped Types     | **@nestjs/mapped-types**                    | `PartialType`, `PickType`, `OmitType`, `IntersectionType` |
-| Logging          | **Pino** (`nestjs-pino`)                    | Structured JSON logs                                      |
-| API Docs         | **Swagger** (`@nestjs/swagger`)             | Auto-generated dari decorator                             |
-| Testing          | **Jest** + Supertest                        | Unit + e2e                                                |
+| Kategori         | Pilihan                                     | Catatan                                                      |
+| ---------------- | ------------------------------------------- | ------------------------------------------------------------ |
+| Runtime          | **Bun** / Node.js LTS                       | Bun untuk greenfield, Node untuk legacy                      |
+| Framework        | **NestJS**                                  | Modular, DI, decorator-based                                 |
+| ORM              | **Drizzle**                                 | Type-safe, SQL-first, tanpa codegen                          |
+| Database (SQL)   | **PostgreSQL**                              | Default untuk transactional                                  |
+| Database (NoSQL) | **MongoDB** (Mongoose)                      | Hanya jika benar-benar butuh document-store                  |
+| Cache / Queue    | **Redis** + BullMQ                          | Cache, rate-limit, background jobs                           |
+| Object Storage   | **MinIO** / **RustFS** / S3                 | File upload, asset storage                                   |
+| Auth             | **Better Auth**                             | User authentication dengan sesi database dan cookie HttpOnly |
+| **Validation**   | **class-validator** + **class-transformer** | **Standar NestJS. Jangan pakai Zod di BE.**                  |
+| Mapped Types     | **@nestjs/mapped-types**                    | `PartialType`, `PickType`, `OmitType`, `IntersectionType`    |
+| Logging          | **Pino** (`nestjs-pino`)                    | Structured JSON logs                                         |
+| API Docs         | **Swagger** (`@nestjs/swagger`)             | Auto-generated dari decorator                                |
+| Testing          | **Jest** + Supertest                        | Unit + e2e                                                   |
 
 ### Frontend (Nuxt)
 
@@ -671,15 +671,13 @@ Schema primitif (`emailSchema`, `phoneSchema`, `paginationSchema`) di `lib/schem
 
 ### 4. API Client Factory
 
-1 instance di `lib/api-client.ts` berbasis **ofetch** (`$fetch.create`) dengan interceptor (`onRequest` inject token, `onResponseError` handle 401/refresh). Feature `api/` tinggal pakai instance ini, tidak setup ulang.
+1 instance di `lib/api-client.ts` berbasis **ofetch** (`$fetch.create`) dengan `credentials: 'include'` untuk cookie sesi Better Auth. Respons 401 karena sesi kedaluwarsa menghapus state login tanpa mengulang request; 401 dengan `fieldErrors` tetap menjadi error form. Feature `api/` tinggal pakai instance ini, tidak setup ulang.
 
 ```tsx
 // lib/api-client.ts
 export const apiClient = $fetch.create({
   baseURL: useRuntimeConfig().public.apiBase,
-  onRequest({ options }) {
-    /* inject auth header */
-  },
+  credentials: 'include',
   onResponseError({ response }) {
     /* central error handling */
   },

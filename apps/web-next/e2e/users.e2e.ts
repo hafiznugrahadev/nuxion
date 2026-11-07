@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import {
   API_BASE,
   SUPER_ADMIN,
-  apiToken,
+  apiLogin,
   deleteUserByEmail,
   login,
   waitForHydration,
@@ -53,9 +53,8 @@ test.describe('users (super admin)', () => {
 
   test('edits a user via the modal', async ({ page, request }) => {
     const email = `e2e-edit-${Date.now()}@nuxion.test`;
-    const token = await apiToken(request, SUPER_ADMIN.email, SUPER_ADMIN.password);
+    await apiLogin(request, SUPER_ADMIN.email, SUPER_ADMIN.password);
     await request.post(`${API_BASE}/users`, {
-      headers: { Authorization: `Bearer ${token}` },
       data: { email, name: 'Edit Target', password: 'e2e-pass-123', roles: ['USER'] },
     });
     try {

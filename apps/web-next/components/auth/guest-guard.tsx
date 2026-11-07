@@ -8,8 +8,8 @@ import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react
 
 /**
  * Route guard for guest-only pages (login, register) — the port of the Nuxt
- * guest middleware. The token lives in memory, so the check is client-side:
- * restore the session from the refresh cookie first (single-flight), then
+ * guest middleware. The public user lives in memory, so the check is client-side:
+ * restore the session from the session cookie first (single-flight), then
  * bounce an authenticated user to where they were originally heading
  * (`?redirect=`, set by the admin guard when it lands) or their dashboard.
  * Until the check resolves, the children stay mounted under a veil — the

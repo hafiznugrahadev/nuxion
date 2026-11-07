@@ -2,9 +2,30 @@ import { test, expect } from '@playwright/test';
 import { ADMIN, MAILPIT, gotoHydrated, latestResetToken, resetPasswordViaApi } from './helpers';
 
 test.describe('password reset', () => {
+  test('shows an honest unavailable state when password reset is disabled', async ({ page }) => {
+    await page.route('**/api/auth/forgot-password', (route) =>
+      route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: false,
+          message: 'Password reset is temporarily unavailable',
+        }),
+      }),
+    );
+    await gotoHydrated(page, '/forgot-password');
+    await page.getByRole('textbox', { name: /^Email(?:\s*\*)?$/ }).fill(ADMIN.email);
+    await page.getByRole('button', { name: /send reset link/i }).click();
+    await expect(
+      page.getByText('Password reset is unavailable. Contact your administrator.'),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: /send reset link/i })).toBeEnabled();
+    await expect(page.getByText(/reset link is on its way/i)).toHaveCount(0);
+  });
+
   test('forgot-password shows a confirmation message', async ({ page }) => {
     await gotoHydrated(page, '/forgot-password');
-    await page.getByLabel('Email').fill(ADMIN.email);
+    await page.getByRole('textbox', { name: /^Email(?:\s*\*)?$/ }).fill(ADMIN.email);
     await page.getByRole('button', { name: /send reset link/i }).click();
     await expect(page.getByText(/reset link is on its way/i)).toBeVisible();
   });
@@ -21,21 +42,30 @@ test.describe('password reset', () => {
 
       // 1. request a reset from the UI
       await gotoHydrated(page, '/forgot-password');
-      await page.getByLabel('Email').fill(ADMIN.email);
+      await page.getByRole('textbox', { name: /^Email(?:\s*\*)?$/ }).fill(ADMIN.email);
       await page.getByRole('button', { name: /send reset link/i }).click();
       await expect(page.getByText(/reset link is on its way/i)).toBeVisible();
 
       // 2. re-open the emailed token on THIS origin and choose a new password
       const token = await latestResetToken(request);
       await gotoHydrated(page, `/reset-password?token=${token}`);
-      await page.getByLabel('New password').fill(newPassword);
-      await page.getByLabel('Confirm password').fill(newPassword);
+      await page
+        .getByLabel(/^New password(?:\s*\*)?$/)
+        .and(page.locator('input'))
+        .fill(newPassword);
+      await page
+        .getByLabel(/^Confirm password(?:\s*\*)?$/)
+        .and(page.locator('input'))
+        .fill(newPassword);
       await page.getByRole('button', { name: /reset password/i }).click();
       await expect(page).toHaveURL(/\/login/);
 
       // 3. the new password actually works
-      await page.getByLabel('Email').fill(ADMIN.email);
-      await page.getByLabel('Password', { exact: true }).fill(newPassword);
+      await page.getByRole('textbox', { name: /^Email(?:\s*\*)?$/ }).fill(ADMIN.email);
+      await page
+        .getByLabel(/^Password(?:\s*\*)?$/)
+        .and(page.locator('input'))
+        .fill(newPassword);
       await page.getByRole('button', { name: /^sign in$/i }).click();
       await expect(page).toHaveURL(/\/dashboard/);
     } finally {

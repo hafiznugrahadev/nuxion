@@ -46,6 +46,7 @@
     "sendResetLink": "Kirim tautan reset",
     "sending": "Mengirim…",
     "resetLinkSent": "Jika akun dengan email tersebut ada, tautan reset sedang dikirim. Periksa kotak masuk Anda.",
+    "passwordResetUnavailable": "Reset kata sandi belum tersedia. Hubungi administrator Anda.",
     "somethingWrong": "Terjadi kesalahan. Silakan coba lagi.",
     "resetTitle": "Reset kata sandi",
     "resetSubtitle": "Pilih kata sandi baru untuk akun Anda.",
@@ -139,7 +140,7 @@
   },
   "home": {
     "metaTitle": "{app} · Starter kit NestJS + Nuxt",
-    "metaDescription": "Starter kit monorepo NestJS + Nuxt siap produksi: autentikasi JWT, akses berbasis peran, tabel data pengguna, dan komponen yang dapat dipakai ulang. Kloning, konfigurasi, rilis.",
+    "metaDescription": "Starter kit monorepo NestJS + Nuxt dengan Better Auth, akses berbasis peran, tabel data pengguna, dan komponen yang dapat dipakai ulang. Kloning, konfigurasi, rilis.",
     "eyebrow": "{app} NestJS + Nuxt",
     "description": "Starter kit monorepo NestJS + Nuxt, autentikasi, akses berbasis peran, tabel data pengguna, dan komponen yang siap dikembangkan.",
     "goToDashboard": "Ke dasbor",
@@ -152,7 +153,7 @@
       "stack": "Stack"
     },
     "pills": {
-      "access": "JWT access 15 mnt + rotasi refresh 7 hari",
+      "access": "Better Auth dengan sesi cookie HttpOnly",
       "roles": "Penjaga peran di route admin",
       "docker": "Docker dev stack disertakan"
     },
@@ -162,7 +163,7 @@
     "install": {
       "eyebrow": "CLI jalur cepat",
       "title": "Mulai proyek Anda dalam satu perintah",
-      "lead": "Scaffolder meng-clone kit ini, mengganti identitasnya menjadi proyek Anda, menulis .env dengan JWT secret yang digenerate, memasang dependensi, dan membuat commit dengan riwayat git yang bersih. Semua dengan Bun.",
+      "lead": "Scaffolder meng-clone kit ini, mengganti identitasnya menjadi proyek Anda, menulis .env dengan Better Auth secret yang digenerate, memasang dependensi, dan membuat commit dengan riwayat git yang bersih. Semua dengan Bun.",
       "cloneTitle": "Lebih suka bekerja di dalam clone?",
       "cloneLead": "Stack yang sama, dijalankan manual:",
       "scaffolderLabel": "Scaffolder rekomendasi",
@@ -190,8 +191,8 @@
       "title": "Apa saja di dalamnya",
       "lead": "Semua di bawah ini ada di repositori ini sekarang, terpasang dan berfungsi.",
       "authTag": "Spesifikasi keamanan",
-      "authF1": "Access token 15 mnt",
-      "authF2": "Rotasi refresh 7 hari",
+      "authF1": "Cookie sesi HttpOnly",
+      "authF2": "Pencabutan sesi di server",
       "authF3": "Penjaga RBAC",
       "datatableTag": "TanStack Query 5",
       "datatableF": "Paginasi + pencarian di server",
@@ -203,7 +204,7 @@
       "dockerF": "Inbox SMTP lokal Mailpit",
       "dockerF2": "Pasang dan jalankan",
       "authTitle": "Auth & RBAC",
-      "authText": "Login email/password, JWT access berumur pendek, cookie refresh berputar dengan deteksi reuse, penjaga peran di setiap route admin.",
+      "authText": "Login email/password, sesi Better Auth dalam cookie HttpOnly, dan penjaga peran di setiap route admin.",
       "datatableTitle": "Tabel pengguna",
       "datatableText": "Manajemen pengguna dengan paginasi, pencarian, dan filter di sisi server melalui klien API bertipe. Password tidak pernah dikirim ke klien.",
       "uiTitle": "UI Reusable",
@@ -410,7 +411,7 @@
       "update": "Perbarui kata sandi",
       "updating": "Memperbarui…",
       "confirmTitle": "Ganti kata sandi Anda?",
-      "confirmDescription": "Kata sandi Anda yang sekarang tidak akan berlaku lagi. Gunakan kata sandi baru saat masuk berikutnya."
+      "confirmDescription": "Anda akan keluar dari semua perangkat. Masuk kembali menggunakan kata sandi baru."
     },
     "avatar": {
       "change": "Ubah foto",

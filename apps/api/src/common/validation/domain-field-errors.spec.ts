@@ -17,10 +17,9 @@ describe('domain form field errors', () => {
       {} as never,
       {} as never,
       {} as never,
-      {} as never,
     );
     await expect(
-      service.login({ email: 'missing@example.test', password: 'bad-password' }),
+      service.login({ email: 'missing@example.test', password: 'bad-password' }, {}),
     ).rejects.toMatchObject({
       status: 401,
       response: {
@@ -35,7 +34,6 @@ describe('domain form field errors', () => {
     const { db } = mockDb({ select: [{ id: 'existing', email: 'taken@example.test' }] });
     const service = new AuthService(
       db,
-      {} as never,
       { get: () => true } as never,
       {} as never,
       {} as never,
@@ -43,7 +41,7 @@ describe('domain form field errors', () => {
       {} as never,
     );
     await expect(
-      service.register({ email: 'taken@example.test', name: 'Name', password: 'password' }),
+      service.register({ email: 'taken@example.test', name: 'Name', password: 'password' }, {}),
     ).rejects.toMatchObject({
       status: 409,
       response: { fieldErrors: { email: ['Email is already registered'] } },

@@ -1,4 +1,4 @@
-/** DI token for the active storage driver (local | s3). */
+/** DI token for the active storage driver (local | s3 | vercel-blob). */
 export const STORAGE_DRIVER = Symbol('STORAGE_DRIVER');
 
 export interface UploadInput {

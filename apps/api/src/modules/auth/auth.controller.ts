@@ -12,11 +12,11 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { Public } from '@common/decorators/public.decorator';
 import { CurrentUser, type AuthUser } from '@common/decorators/current-user.decorator';
-import { AuthService, type AuthTokens } from './auth.service';
+import { AuthService, type AuthSession } from './auth.service';
 import { TwoFactorService } from './two-factor.service';
 import { WebAuthnService } from './webauthn.service';
 import { LoginDto } from './dto/login.dto';
@@ -28,37 +28,33 @@ import { ActivateTwoFactorDto } from './dto/activate-two-factor.dto';
 import { RegenerateRecoveryDto } from './dto/regenerate-recovery.dto';
 import { VerifyPasskeyLoginDto, VerifyPasskeyRegistrationDto } from './dto/webauthn.dto';
 
-/** httpOnly cookie holding the opaque refresh token — never readable from JS. */
-const REFRESH_COOKIE = 'refresh_token';
-
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  private readonly cookiePath: string;
-
   constructor(
     private readonly authService: AuthService,
     private readonly twoFactor: TwoFactorService,
     private readonly webAuthn: WebAuthnService,
     private readonly config: ConfigService,
-  ) {
-    const prefix = this.config.get<string>('app.apiPrefix') ?? 'api';
-    this.cookiePath = `/${prefix}/auth`;
-  }
+  ) {}
 
   @Public()
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login; returns a session or a 2FA challenge' })
-  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
-    const result = await this.authService.login(dto);
+  async login(
+    @Body() dto: LoginDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.login(dto, req.headers);
     if ('twoFactorRequired' in result) {
       // Password OK, but TOTP is enabled — no tokens/cookie until the challenge
       // is verified. ResponseInterceptor still wraps this as usual.
       return result;
     }
-    return this.respondWithTokens(result, res);
+    return this.respondWithSession(result, res);
   }
 
   @Public()
@@ -66,31 +62,31 @@ export class AuthController {
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Self-service registration (when enabled); returns a session' })
-  async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
-    const tokens = await this.authService.register(dto);
-    return this.respondWithTokens(tokens, res);
+  async register(
+    @Body() dto: RegisterDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const session = await this.authService.register(dto, req.headers);
+    return this.respondWithSession(session, res);
   }
 
-  @Public()
-  @Throttle({ default: { limit: 10, ttl: 60_000 } })
-  @Post('refresh')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Exchange the refresh cookie for a new access token' })
-  async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const raw = req.cookies?.[REFRESH_COOKIE] as string | undefined;
-    const tokens = await this.authService.refresh(raw);
-    return this.respondWithTokens(tokens, res);
+  @Get('session')
+  @ApiOperation({ summary: 'Restore the current Better Auth cookie session' })
+  async session(@CurrentUser() user: AuthUser) {
+    return { user: await this.authService.currentUser(user.id) };
   }
 
   @Public()
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Revoke the refresh token and clear the cookie' })
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const raw = req.cookies?.[REFRESH_COOKIE] as string | undefined;
-    await this.authService.logout(raw);
-    res.clearCookie(REFRESH_COOKIE, { path: this.cookiePath });
+    for (const cookie of await this.authService.logout(req.headers))
+      res.append('Set-Cookie', cookie);
+    res.clearCookie('refresh_token', {
+      path: `/${this.config.get<string>('app.apiPrefix') ?? 'api'}/auth`,
+    });
     return { success: true };
   }
 
@@ -116,7 +112,7 @@ export class AuthController {
   }
 
   @Get('me')
-  @ApiBearerAuth()
+  @ApiCookieAuth()
   @ApiOperation({ summary: 'Get the currently authenticated user' })
   me(@CurrentUser() user: AuthUser) {
     return user;
@@ -126,7 +122,7 @@ export class AuthController {
 
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('2fa/setup')
-  @ApiBearerAuth()
+  @ApiCookieAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Begin TOTP setup — returns otpauth URL, QR code and secret' })
   beginTwoFactorSetup(@CurrentUser() user: AuthUser) {
@@ -135,7 +131,7 @@ export class AuthController {
 
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('2fa/activate')
-  @ApiBearerAuth()
+  @ApiCookieAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Confirm TOTP setup with a live code; returns recovery codes' })
   async activateTwoFactor(@CurrentUser() user: AuthUser, @Body() dto: ActivateTwoFactorDto) {
@@ -144,7 +140,7 @@ export class AuthController {
 
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('2fa/recovery/regenerate')
-  @ApiBearerAuth()
+  @ApiCookieAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Re-mint recovery codes after re-verifying the password' })
   async regenerateRecoveryCodes(@CurrentUser() user: AuthUser, @Body() dto: RegenerateRecoveryDto) {
@@ -159,18 +155,19 @@ export class AuthController {
   @ApiOperation({ summary: 'Complete login with a TOTP or recovery code' })
   async verifyTwoFactor(
     @Body() dto: VerifyTwoFactorDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
     const user = await this.twoFactor.verifyLoginChallenge(dto.challengeId, dto.code);
-    const tokens = await this.authService.issueSession(user);
-    return this.respondWithTokens(tokens, res);
+    const session = await this.authService.issueSession(user, req.headers);
+    return this.respondWithSession(session, res);
   }
 
   // ── Passkeys (WebAuthn) ─────────────────────────────────────────────────────
 
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('webauthn/register/options')
-  @ApiBearerAuth()
+  @ApiCookieAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Passkey registration options (authenticated)' })
   passkeyRegisterOptions(@CurrentUser() user: AuthUser) {
@@ -179,7 +176,7 @@ export class AuthController {
 
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('webauthn/register/verify')
-  @ApiBearerAuth()
+  @ApiCookieAuth()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Verify a passkey registration and store the credential' })
   passkeyRegisterVerify(@CurrentUser() user: AuthUser, @Body() dto: VerifyPasskeyRegistrationDto) {
@@ -202,6 +199,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Verify a passkey assertion; returns a session (or a 2FA challenge)' })
   async passkeyLoginVerify(
     @Body() dto: VerifyPasskeyLoginDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
     const { user, userVerified } = await this.webAuthn.verifyLogin(dto.challengeId, dto.response);
@@ -215,12 +213,12 @@ export class AuthController {
       const challengeId = await this.twoFactor.issueLoginChallenge(user.id);
       return { twoFactorRequired: true as const, challengeId };
     }
-    const tokens = await this.authService.issueSession(user);
-    return this.respondWithTokens(tokens, res);
+    const session = await this.authService.issueSession(user, req.headers);
+    return this.respondWithSession(session, res);
   }
 
   @Get('passkeys')
-  @ApiBearerAuth()
+  @ApiCookieAuth()
   @ApiOperation({ summary: "List the current user's registered passkeys" })
   listPasskeys(@CurrentUser() user: AuthUser) {
     return this.webAuthn.listPasskeys(user.id);
@@ -228,23 +226,15 @@ export class AuthController {
 
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Delete('passkeys/:id')
-  @ApiBearerAuth()
+  @ApiCookieAuth()
   @ApiOperation({ summary: "Remove one of the current user's passkeys" })
   async removePasskey(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     await this.webAuthn.removePasskey(user.id, id);
     return { success: true };
   }
 
-  /** Set the refresh cookie and return the access token + user in the body. */
-  private respondWithTokens(tokens: AuthTokens, res: Response) {
-    const secure = this.config.get<boolean>('app.cookie.secure') ?? false;
-    res.cookie(REFRESH_COOKIE, tokens.refreshToken, {
-      httpOnly: true,
-      secure,
-      sameSite: secure ? 'none' : 'lax',
-      path: this.cookiePath,
-      maxAge: this.authService.refreshTtlDays * 24 * 60 * 60 * 1000,
-    });
-    return { accessToken: tokens.accessToken, user: tokens.user };
+  private respondWithSession(session: AuthSession, res: Response) {
+    for (const cookie of session.cookies) res.append('Set-Cookie', cookie);
+    return { user: session.user };
   }
 }

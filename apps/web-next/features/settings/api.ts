@@ -9,8 +9,7 @@ export interface UpdateBrandingInput {
 
 /**
  * Settings fetchers (SUPER_ADMIN-writable groups). Reads could also use the
- * public endpoint, but going through the shared client keeps the Bearer +
- * transparent refresh and the react-query cache in one place.
+ * public endpoint, but the shared client keeps cookie credentials and errors consistent.
  */
 export const settingsApi = {
   getBranding(): Promise<BrandingSettings> {

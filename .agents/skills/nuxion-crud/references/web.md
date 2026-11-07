@@ -67,7 +67,7 @@ switch schemas by mode (see FormModal below) instead of one loose union.
 ## 2. api/<feature>.api.ts — fetchers
 
 A `use<Feature>Api()` composable returning plain methods; every call goes
-through `useApi()` (Bearer header + transparent 401→refresh→replay) and unwraps
+through `useApi()` (HttpOnly session cookie + centralized session-expiry handling) and unwraps
 the envelope (`unwrap` / `unwrapPaginated` from `lib/api-client.ts`):
 
 ```ts
@@ -92,7 +92,7 @@ export function useUserApi() {
 
 `unwrapPaginated` turns the envelope into `{ data, meta }` (`meta: total, page,
 limit, totalPages`). Never build a `$fetch` per feature — auth, error shape and
-refresh-replay live in the shared chain.
+session-expiry handling live in the shared chain. Failed mutations are never replayed.
 
 ## 3. composables — query + mutations
 

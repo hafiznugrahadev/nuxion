@@ -2,10 +2,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { clearSession, getAuthState, isAuthenticated, setSession } from './auth-store';
 import {
   forgotPassword,
+  ensureSession,
   login,
   logout,
   PASSKEY_ENABLED,
-  refreshSession,
+  passkeyLoginVerify,
+  register,
+  restoreSession,
   REGISTRATION_ENABLED,
   resetPassword,
   TWO_FACTOR_ENABLED,
@@ -23,7 +26,7 @@ afterEach(() => {
 
 const SESSION_BODY = {
   success: true,
-  data: { accessToken: 'tok', user: { id: 'u', name: 'U', roles: ['USER'], createdAt: '' } },
+  data: { user: { id: 'u', name: 'U', roles: ['USER'], createdAt: '' } },
 };
 
 describe('login', () => {
@@ -63,29 +66,69 @@ describe('verifyTwoFactor', () => {
   });
 });
 
-describe('refreshSession', () => {
+describe('registration and passkey sessions', () => {
+  it('sets a cookie-backed session after registration', async () => {
+    fetchMock.mockResolvedValue(jsonRes(201, SESSION_BODY));
+    await register('User', 'a@b.c', 'password');
+    expect(getAuthState().user).toEqual(SESSION_BODY.data.user);
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/auth/register',
+      expect.objectContaining({
+        method: 'POST',
+        credentials: 'include',
+        body: JSON.stringify({ name: 'User', email: 'a@b.c', password: 'password' }),
+      }),
+    );
+  });
+
+  it('sets the public user after passkey verification', async () => {
+    fetchMock.mockResolvedValue(jsonRes(200, SESSION_BODY));
+    await passkeyLoginVerify('passkey', {});
+    expect(getAuthState().user).toEqual(SESSION_BODY.data.user);
+  });
+
+  it('keeps a passkey MFA challenge unauthenticated', async () => {
+    const challenge = { twoFactorRequired: true, challengeId: 'challenge' };
+    fetchMock.mockResolvedValue(jsonRes(200, { success: true, data: challenge }));
+    await expect(passkeyLoginVerify('passkey', {})).resolves.toEqual(challenge);
+    expect(getAuthState().user).toBeNull();
+  });
+});
+
+describe('restoreSession', () => {
   it('restores the session on success', async () => {
     fetchMock.mockResolvedValue(jsonRes(200, SESSION_BODY));
-    await expect(refreshSession()).resolves.toBe(true);
+    await expect(restoreSession()).resolves.toBe(true);
     expect(isAuthenticated(getAuthState())).toBe(true);
+    expect(fetchMock).toHaveBeenCalledWith('/api/auth/session', {
+      method: 'GET',
+      credentials: 'include',
+      cache: 'no-store',
+    });
   });
 
   it('clears and returns false when the cookie is gone', async () => {
-    setSession({ accessToken: 'stale', user: {} as never });
+    setSession({ user: {} as never });
     fetchMock.mockResolvedValue(jsonRes(401, { success: false, message: 'nope' }));
-    await expect(refreshSession()).resolves.toBe(false);
+    await expect(restoreSession()).resolves.toBe(false);
     expect(isAuthenticated(getAuthState())).toBe(false);
   });
 
   it('treats a network failure as logged out (no throw)', async () => {
     fetchMock.mockRejectedValue(new Error('down'));
-    await expect(refreshSession()).resolves.toBe(false);
+    await expect(restoreSession()).resolves.toBe(false);
+  });
+
+  it('shares one in-flight restoration across concurrent guards', async () => {
+    fetchMock.mockResolvedValue(jsonRes(200, SESSION_BODY));
+    await expect(Promise.all([ensureSession(), ensureSession()])).resolves.toEqual([true, true]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
 
 describe('logout', () => {
   it('clears the session even when the API call fails', async () => {
-    setSession({ accessToken: 't', user: {} as never });
+    setSession({ user: {} as never });
     fetchMock.mockRejectedValue(new Error('boom'));
     await expect(logout()).resolves.toBeUndefined();
     expect(isAuthenticated(getAuthState())).toBe(false);

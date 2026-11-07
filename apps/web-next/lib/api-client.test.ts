@@ -30,14 +30,15 @@ describe('createApiClient', () => {
     expect(url).not.toContain('flag');
   });
 
-  it('attaches the Bearer token from getToken', async () => {
+  it('sends session cookies without exposing a Bearer token', async () => {
     fetchMock.mockImplementation(() =>
       Promise.resolve(jsonRes(200, { success: true, data: null })),
     );
-    const client = createApiClient({ baseURL: '/api', getToken: () => 'tok-123' });
+    const client = createApiClient({ baseURL: '/api' });
     await client('/me');
     const init = fetchMock.mock.calls[0]![1] as RequestInit;
-    expect(new Headers(init.headers).get('Authorization')).toBe('Bearer tok-123');
+    expect(init.credentials).toBe('include');
+    expect(new Headers(init.headers).has('Authorization')).toBe(false);
   });
 
   it('JSON-encodes plain bodies but passes FormData through untouched', async () => {

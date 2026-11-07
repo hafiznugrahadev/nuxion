@@ -10,8 +10,7 @@ export interface UpdateBrandingInput {
 
 /**
  * Settings fetchers (SUPER_ADMIN-writable groups). Reads could also use the
- * public endpoint, but going through useApi keeps the shared client (Bearer +
- * transparent refresh) and the vue-query cache in one place.
+ * public endpoint, but useApi keeps cookie credentials and error handling consistent.
  */
 export function useSettingsApi() {
   const api = useApi();

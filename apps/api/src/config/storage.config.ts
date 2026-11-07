@@ -2,15 +2,15 @@ import { registerAs } from '@nestjs/config';
 
 /**
  * Storage config namespace. Flow: .env → validateEnv → here → ConfigService.
- * Default driver is `local` (zero-infra); switch to `s3` for AWS S3 / MinIO.
+ * Default driver is `local` (zero-infra); use `s3` or `vercel-blob` for durable object storage.
  */
 const DEFAULT_PORT = process.env.PORT ?? process.env.API_PORT ?? '8000';
 
 export const storageConfig = registerAs('storage', () => ({
-  // 'local' (default) | 's3' (AWS S3 / MinIO / RustFS).
+  // 'local' (default) | 's3' | 'vercel-blob'.
   driver: process.env.STORAGE_DRIVER ?? 'local',
   maxFileSizeBytes: parseInt(process.env.STORAGE_MAX_FILE_SIZE_MB ?? '5', 10) * 1024 * 1024,
-  // TTL of the presigned GET URLs the s3 driver issues for private objects. The
+  // TTL of the signed GET URLs the remote drivers issue for private objects. The
   // URL is cached in Redis (keyed by object key) for slightly less than this, so
   // it's regenerated at most once per window — not on every read.
   signedUrlTtlSeconds: parseInt(process.env.STORAGE_SIGNED_URL_TTL_SECONDS ?? '3600', 10),
@@ -24,6 +24,10 @@ export const storageConfig = registerAs('storage', () => ({
     dir: process.env.STORAGE_LOCAL_DIR ?? './storage/uploads',
     // Absolute base the static `/uploads` mount is reachable at (the API origin).
     publicBaseUrl: process.env.STORAGE_PUBLIC_BASE_URL ?? `http://localhost:${DEFAULT_PORT}`,
+  },
+  blob: {
+    token: process.env.BLOB_READ_WRITE_TOKEN,
+    viewBaseUrl: `${(process.env.STORAGE_PUBLIC_BASE_URL || process.env.BETTER_AUTH_URL || `http://localhost:${DEFAULT_PORT}`).replace(/\/+$/, '')}/${process.env.API_PREFIX ?? 'api'}/files/view`,
   },
   s3: {
     endpoint: process.env.S3_ENDPOINT,

@@ -24,6 +24,7 @@ import {
   lowestLogLevel,
 } from '@infrastructure/logging/mattermost.transport';
 import { RequestIdMiddleware } from '@common/middleware/request-id.middleware';
+import { httpLogOptions } from '@infrastructure/logging/http-log-options';
 import { IsUniqueConstraint } from '@common/validators/is-unique.validator';
 import { relations } from '@db/relations';
 import { RedisModule } from '@infrastructure/redis/redis.module';
@@ -86,6 +87,7 @@ import { SettingsModule } from '@modules/settings/settings.module';
           ]);
           return {
             pinoHttp: {
+              ...httpLogOptions,
               level: lowestLogLevel(level as MattermostLogLevel, mattermost.level),
               stream,
               customProps,
@@ -95,6 +97,7 @@ import { SettingsModule } from '@modules/settings/settings.module';
 
         return {
           pinoHttp: {
+            ...httpLogOptions,
             level,
             transport: isProd
               ? undefined

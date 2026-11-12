@@ -66,11 +66,12 @@ vi.mock('@simplewebauthn/server/helpers', () => ({
 const USER_ID = 'user-1';
 
 /** User row as registrationOptions reads it. */
-const dbUser = { id: USER_ID, email: 'admin@nuxion.test', name: 'Admin' };
+const dbUser = { securityVersion: 0, id: USER_ID, email: 'admin@nuxion.test', name: 'Admin' };
 
 /** Session-shaped user row verifyLogin reads after verification. */
 const sessionUser = {
   id: USER_ID,
+  securityVersion: 0,
   email: 'admin@nuxion.test',
   name: 'Admin',
   avatarUrl: null,
@@ -91,12 +92,17 @@ const storedPasskey = {
 };
 
 function makeService(passkeyEnabled = true) {
-  const mock = mockDb({ insert: [storedPasskey] });
+  const mock = mockDb({ insert: [storedPasskey], update: [storedPasskey] });
   const store = new Map<string, unknown>();
   const redis = {
     get: vi.fn(async (key: string) => store.get(key) ?? null),
     set: vi.fn(async (key: string, value: unknown) => {
       store.set(key, value);
+    }),
+    consume: vi.fn(async (key: string) => {
+      const value = store.get(key) ?? null;
+      store.delete(key);
+      return value;
     }),
     del: vi.fn(async (key: string) => {
       store.delete(key);
@@ -132,21 +138,26 @@ describe('WebAuthnService', () => {
       const ctx = makeService();
       ctx.setSelectRows([dbUser]);
       ctx.thenSelectRows([]); // existing passkeys
-      const options = await ctx.service.registrationOptions(USER_ID);
+      const options = await ctx.service.registrationOptions(USER_ID, 0);
       expect(options.challenge).toBe('reg-challenge');
-      expect(ctx.store.get(`webauthn:reg:${USER_ID}`)).toBe('reg-challenge');
+      expect(ctx.store.get(`webauthn:reg:${USER_ID}`)).toEqual({
+        challenge: 'reg-challenge',
+        securityVersion: 0,
+      });
     });
   });
 
   describe('verifyRegistration', () => {
     it('stores the credential and clears the challenge', async () => {
       const ctx = makeService();
-      ctx.store.set(`webauthn:reg:${USER_ID}`, 'reg-challenge');
+      ctx.store.set(`webauthn:reg:${USER_ID}`, { challenge: 'reg-challenge', securityVersion: 0 });
+      ctx.setSelectRows([dbUser]);
 
       const passkey = await ctx.service.verifyRegistration(
         USER_ID,
         {} as RegistrationResponseJSON,
         'My key',
+        0,
       );
 
       expect(passkey.id).toBe('cred-id-1');
@@ -181,6 +192,7 @@ describe('WebAuthnService', () => {
       ctx.store.set('webauthn:auth:c9', 'auth-challenge');
       ctx.setSelectRows([storedPasskey]);
       ctx.thenSelectRows([sessionUser]);
+      ctx.thenSelectRows([storedPasskey]);
       ctx.thenSelectRows([{ name: 'ADMIN' }]);
 
       const result = await ctx.service.verifyLogin('c9', {
@@ -194,6 +206,22 @@ describe('WebAuthnService', () => {
       expect(data.counter).toBe(7n);
       expect(data.lastUsedAt).toBeInstanceOf(Date);
       expect(ctx.store.has('webauthn:auth:c9')).toBe(false);
+    });
+
+    it('accepts a challenge at most once under concurrent assertion replay', async () => {
+      const ctx = makeService();
+      ctx.store.set('webauthn:auth:replay', 'auth-challenge');
+      ctx.setSelectRows([storedPasskey]);
+      ctx.thenSelectRows([sessionUser]);
+      ctx.thenSelectRows([storedPasskey]);
+      ctx.thenSelectRows([{ name: 'ADMIN' }]);
+      const response = { id: storedPasskey.id } as AuthenticationResponseJSON;
+      const results = await Promise.allSettled([
+        ctx.service.verifyLogin('replay', response),
+        ctx.service.verifyLogin('replay', response),
+      ]);
+      expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+      expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
     });
 
     it('rejects an assertion for an unknown credential', async () => {

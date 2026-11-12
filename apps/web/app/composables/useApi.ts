@@ -1,7 +1,7 @@
 import { apiFieldErrors } from '~/lib/api-errors';
 import { createApiClient } from '~/lib/api-client';
 import { xhrProgressEnd, xhrProgressStart } from '~/lib/xhr-progress';
-import { useAuthStore } from '~/stores/auth';
+import { runSessionRequest, useAuthStore } from '~/stores/auth';
 
 interface ApiCallOptions extends Record<string, unknown> {
   method?: string;
@@ -39,14 +39,31 @@ export function useApi() {
   });
 
   return async function apiFetch<T>(url: string, options?: ApiCallOptions): Promise<T> {
+    const generation = auth.sessionGeneration;
+    const run = async () => {
+      const started = auth.sessionGeneration;
+      const request = (signal?: AbortSignal) => {
+        if (started !== auth.sessionGeneration) throw new Error('Session changed');
+        return client<T>(url, { ...options, ...(signal ? { signal } : {}) } as never);
+      };
+      const result =
+        url === '/auth/2fa/activate' ? await runSessionRequest(auth, request) : await request();
+      if (started !== auth.sessionGeneration) throw new Error('Session changed');
+      return result;
+    };
     try {
-      return await client<T>(url, options as never);
+      return await run();
     } catch (err) {
+      if (generation !== auth.sessionGeneration) throw new Error('Session changed', { cause: err });
       const status = (err as { response?: { status?: number } })?.response?.status;
       const noRetry = NO_RETRY_AUTH_ROUTES.some((route) => url.startsWith(route));
       if (status === 401 && !noRetry && !Object.keys(apiFieldErrors(err)).length) {
         const refreshed = await auth.refresh();
-        if (refreshed) return await client<T>(url, options as never);
+        if (refreshed) {
+          if (generation !== auth.sessionGeneration)
+            throw new Error('Session changed', { cause: err });
+          return await run();
+        }
       }
       throw err;
     }

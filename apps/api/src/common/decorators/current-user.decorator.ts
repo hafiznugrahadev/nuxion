@@ -2,6 +2,11 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 
 export interface AuthUser {
   id: string;
+  securityVersion: number;
+  familyId: string;
+  purpose: 'full' | 'enrollment';
+  assurance: 'password' | 'mfa' | 'passkey';
+  enrollmentRequired: boolean;
   email: string;
   /** Role names the user holds (e.g. ['ADMIN', 'USER']). */
   roles: string[];

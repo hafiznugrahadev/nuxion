@@ -11,6 +11,7 @@ import { ConfirmProvider } from '@/lib/use-confirm';
 import { BrandingProvider } from '@/components/common/branding-provider';
 import { themes, defaultThemeSlug } from '@/astryx-themes';
 import type { BrandingSettings } from '@nuxion/shared-types';
+import { bindSessionCache } from '@/lib/session-cache';
 
 const emptySubscribe = () => () => {};
 
@@ -76,6 +77,7 @@ export function Providers({
         },
       }),
   );
+  useEffect(() => bindSessionCache(queryClient), [queryClient]);
 
   return (
     <QueryClientProvider client={queryClient}>

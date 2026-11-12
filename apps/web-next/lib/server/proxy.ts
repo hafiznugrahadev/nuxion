@@ -1,3 +1,10 @@
+import {
+  MAX_PROXY_BYTES,
+  PROXY_TIMEOUT_MS,
+  ProxyBodyLimitError,
+  readBoundedBody,
+} from './proxy-body';
+
 // Hop-by-hop headers (RFC 7230 §6.1) must not be forwarded in either
 // direction; `accept-encoding`/`content-length` are dropped so the framing we
 // send is decided here, not inherited from the upstream.
@@ -43,37 +50,58 @@ export async function proxyToApi(req: Request, prefix: '/api' | '/uploads'): Pro
     if (!REQUEST_HOP_HEADERS.has(name)) headers.append(name, value);
   });
 
-  const hasBody = !['GET', 'HEAD', 'OPTIONS'].includes(req.method);
-  const raw = hasBody ? await req.arrayBuffer() : undefined;
-
-  let upstream: Response;
+  const controller = new AbortController();
+  const timer = setTimeout(
+    () => controller.abort(new Error('Proxy deadline exceeded')),
+    PROXY_TIMEOUT_MS,
+  );
+  let upstream: Response | undefined;
   try {
+    const hasBody = !['GET', 'HEAD', 'OPTIONS'].includes(req.method);
+    if (hasBody && Number(req.headers.get('content-length')) > MAX_PROXY_BYTES) {
+      return Response.json({ success: false, message: 'Payload Too Large' }, { status: 413 });
+    }
+    let raw: Uint8Array;
+    try {
+      raw = await readBoundedBody(hasBody ? req.body : null, controller.signal);
+    } catch (error) {
+      if (error instanceof ProxyBodyLimitError) {
+        return Response.json({ success: false, message: 'Payload Too Large' }, { status: 413 });
+      }
+      throw error;
+    }
     upstream = await fetch(target, {
       method: req.method,
       headers,
-      body: raw && raw.byteLength > 0 ? raw : undefined,
+      body: raw.byteLength ? (raw as BodyInit) : undefined,
       redirect: 'manual',
+      signal: controller.signal,
     });
-  } catch (cause) {
-    console.error(`[proxy] ${prefix} → ${target} failed`, cause);
-    return Response.json({ success: false, message: 'Bad Gateway' }, { status: 502 });
+    if (Number(upstream.headers.get('content-length')) > MAX_PROXY_BYTES) {
+      void upstream.body?.cancel().catch(() => undefined);
+      throw new ProxyBodyLimitError('Upstream body exceeds limit');
+    }
+    const body = await readBoundedBody(upstream.body, controller.signal);
+    const resHeaders = new Headers();
+    upstream.headers.forEach((value, name) => {
+      if (name === 'set-cookie' || RESPONSE_HOP_HEADERS.has(name)) return;
+      resHeaders.set(name, value);
+    });
+    for (const cookie of upstream.headers.getSetCookie()) resHeaders.append('set-cookie', cookie);
+    resHeaders.set('content-length', String(body.byteLength));
+    const empty = req.method === 'HEAD' || [204, 205, 304].includes(upstream.status);
+    return new Response(empty ? null : (body as BodyInit), {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: resHeaders,
+    });
+  } catch {
+    const status = controller.signal.aborted ? 504 : 502;
+    return Response.json(
+      { success: false, message: status === 504 ? 'Gateway Timeout' : 'Bad Gateway' },
+      { status },
+    );
+  } finally {
+    clearTimeout(timer);
   }
-
-  const resHeaders = new Headers();
-  upstream.headers.forEach((value, name) => {
-    if (name === 'set-cookie' || RESPONSE_HOP_HEADERS.has(name)) return;
-    resHeaders.set(name, value);
-  });
-  for (const cookie of upstream.headers.getSetCookie()) {
-    resHeaders.append('set-cookie', cookie);
-  }
-
-  const body = await upstream.arrayBuffer();
-  resHeaders.set('content-length', String(body.byteLength));
-
-  return new Response(body, {
-    status: upstream.status,
-    statusText: upstream.statusText,
-    headers: resHeaders,
-  });
 }

@@ -46,17 +46,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
       const pgError = extractPgError(exception);
       if (pgError) {
         ({ status, message, error, fieldErrors } = this.mapDatabaseError(pgError));
-      } else if (exception instanceof Error) {
-        message = exception.message;
-        error = exception.name;
       }
     }
 
     if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
-      this.logger.error(
-        `${request.method} ${request.url} → ${status}`,
-        exception instanceof Error ? exception.stack : String(exception),
-      );
+      message = 'Internal server error';
+      error = 'InternalServerError';
+      fieldErrors = undefined;
+      this.logger.error(`${request.method} ${request.path} → ${status}`);
     }
 
     const body: ApiErrorResponse = {
@@ -64,7 +61,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       statusCode: status,
       message,
       error,
-      path: request.url,
+      path: request.path,
       timestamp: new Date().toISOString(),
       ...(fieldErrors && { fieldErrors }),
     };

@@ -45,6 +45,9 @@ export function mockDb(
   };
 
   const db = {
+    transaction: vi.fn(async (callback: (tx: unknown) => unknown): Promise<unknown> =>
+      callback(db),
+    ),
     select: vi.fn(() =>
       make(() => (selectQueue.length > 1 ? selectQueue.shift() : selectQueue[0])),
     ),

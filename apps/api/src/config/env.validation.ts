@@ -320,5 +320,24 @@ export function validateEnv(config: Record<string, unknown>): EnvironmentVariabl
     );
   }
 
+  if (validated.NODE_ENV === NodeEnv.Production) {
+    if (validated.MAIL_TRANSPORT !== 'smtp') {
+      throw new Error(
+        'Invalid environment configuration: MAIL_TRANSPORT must be smtp in production',
+      );
+    }
+    if (
+      validated.SWAGGER_ENABLED &&
+      (!validated.SWAGGER_USER.trim() ||
+        validated.SWAGGER_PASSWORD.trim().length < 16 ||
+        ['admin', 'password', 'changeme'].includes(validated.SWAGGER_PASSWORD.toLowerCase()) ||
+        validated.SWAGGER_PASSWORD.toLowerCase() === validated.SWAGGER_USER.toLowerCase())
+    ) {
+      throw new Error(
+        'Invalid environment configuration: enabled production Swagger requires a non-default password of at least 16 characters',
+      );
+    }
+  }
+
   return validated;
 }

@@ -110,11 +110,15 @@ describe('Users (e2e)', () => {
     const tempPassword = `${E2E_PREFIX}newPass1!`;
 
     afterEach(async () => {
-      // Restore original password after each test so subsequent tests still work.
-      await request(server)
-        .patch('/api/users/me/password')
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({ currentPassword: tempPassword, newPassword: originalPassword });
+      const temporaryToken = await loginAs(server, SEED_USERS.user.email, tempPassword);
+      if (temporaryToken) {
+        await request(server)
+          .patch('/api/users/me/password')
+          .set('Authorization', `Bearer ${temporaryToken}`)
+          .send({ currentPassword: tempPassword, newPassword: originalPassword })
+          .expect(200);
+      }
+      userToken = await loginAs(server, SEED_USERS.user.email, originalPassword);
     });
 
     it('changes the password with correct current password', async () => {

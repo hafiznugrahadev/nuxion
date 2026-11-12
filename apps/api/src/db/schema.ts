@@ -4,6 +4,7 @@ import {
   bigint,
   boolean,
   index,
+  integer,
   jsonb,
   pgTable,
   primaryKey,
@@ -33,6 +34,7 @@ export const users = pgTable(
     email: text('email').notNull(),
     name: text('name').notNull(),
     password: text('password').notNull(),
+    securityVersion: integer('securityVersion').notNull().default(0),
     avatarUrl: text('avatarUrl'),
     // TOTP two-factor. The secret is AES-256-GCM encrypted at rest (two-factor.service.ts);
     // twoFactorEnabled only flips to true once activation is confirmed with a valid code.
@@ -86,6 +88,9 @@ export const refreshTokens = pgTable(
     userId: text('userId')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
+    securityVersion: integer('securityVersion').notNull(),
+    purpose: text('purpose').$type<'full' | 'enrollment'>().notNull(),
+    assurance: text('assurance').$type<'password' | 'mfa' | 'passkey'>().notNull(),
     familyId: text('familyId').notNull(), // tokens rotated from one login share a family (reuse detection)
     tokenHash: text('tokenHash').notNull(), // SHA-256 of the opaque token (raw value never stored)
     revokedAt: timestamp('revokedAt', { precision: 3 }), // set on rotation/logout; non-null means unusable

@@ -2,6 +2,7 @@ import type { ApiResponse } from '@nuxion/shared-types';
 import type { PublicKeyCredentialCreationOptionsJSON } from '@simplewebauthn/browser';
 import { unwrap } from '~/lib/api-client';
 import { useApi } from '~/composables/useApi';
+import { useAuthStore } from '~/stores/auth';
 import type { Passkey, TwoFactorActivatePayload, TwoFactorSetupPayload } from '../types';
 
 /**
@@ -20,10 +21,17 @@ export function useSecurityApi() {
     },
 
     twoFactorActivate(code: string): Promise<TwoFactorActivatePayload> {
+      const auth = useAuthStore();
+      const generation = auth.sessionGeneration;
       return api<ApiResponse<TwoFactorActivatePayload>>('/auth/2fa/activate', {
         method: 'POST',
         body: { code },
-      }).then(unwrap);
+      })
+        .then(unwrap)
+        .then((result) => {
+          if (!auth.setSession(result, generation)) throw new Error('Session changed');
+          return result;
+        });
     },
 
     regenerateRecoveryCodes(password: string): Promise<string[]> {

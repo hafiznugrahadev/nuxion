@@ -32,7 +32,7 @@ const loadError = ref<string | null>(null);
 
 onMounted(async () => {
   // Already activated (e.g. this URL was revisited) — nothing to do here.
-  if (auth.user?.twoFactorEnabled) {
+  if (!auth.enrollmentRequired) {
     await navigateTo(intendedRedirect(route.query), { replace: true });
     return;
   }
@@ -59,7 +59,6 @@ const onSubmit = handleSubmit(async (values) => {
   try {
     const result = await securityApi.twoFactorActivate(values.code);
     recoveryCodes.value = result.recoveryCodes;
-    if (auth.user) auth.user = { ...auth.user, twoFactorEnabled: true };
     toast.success(t('auth.twoFactor.activated'));
   } catch (err) {
     applyApiFieldErrors(err, setErrors, ['code']);

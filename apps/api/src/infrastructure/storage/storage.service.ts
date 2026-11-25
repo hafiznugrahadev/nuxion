@@ -21,7 +21,7 @@ export interface UploadedFile {
 
 /**
  * Public storage facade (mirrors RedisService). Enforces the configured size +
- * MIME guardrails, then delegates to the active driver (local | s3). Inject this
+ * MIME guardrails, then delegates to the active driver (local | s3 | vercel-blob). Inject this
  * anywhere; the StorageModule is @Global.
  */
 @Injectable()

@@ -26,7 +26,7 @@ apps/api/src/app.module.ts                       # 9. register
 apps/api/test/<feature>.e2e-spec.ts              # 10. e2e (optional per route)
 ```
 
-Everything global — response envelope, validation, pg error mapping, JWT +
+Everything global — response envelope, validation, pg error mapping, session +
 roles guards, throttling, logging — is inherited automatically. Never re-create
 it inside a feature.
 
@@ -229,7 +229,7 @@ registration bumps the users cache).
 ## 6. Controller — routes and roles
 
 ```ts
-@ApiTags('users') @ApiBearerAuth() @Controller('users')
+@ApiTags('users') @ApiCookieAuth() @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -324,7 +324,7 @@ Cover: happy path per route, 400 (validation + unknown sortBy), 401 (no token),
 | `{ success, data, meta? }` envelope                | `common/interceptors/response.interceptor.ts`     |
 | Error shape + pg 23505→409, 23503→400              | `common/filters/all-exceptions.filter.ts`         |
 | Validation (whitelist, forbid unknown, transform)  | `main.ts` global `ValidationPipe`                 |
-| JWT auth + role checks                             | global `APP_GUARD`s in `modules/auth`             |
+| Better Auth session + role checks                  | global `APP_GUARD`s in `modules/auth`             |
 | `IsUnique` async validator                         | `common/validators/is-unique.validator.ts`        |
 | Pagination meta (`total, page, limit, totalPages`) | `common/interfaces/paginated-result.interface.ts` |
 | Rate limiting / logging                            | global `ThrottlerGuard` / pino                    |
@@ -345,4 +345,4 @@ The frontend must preserve this envelope through ofetch and unwrap, then bind
 allowlisted fields with `applyApiFieldErrors(error, setErrors, fields)` to the
 existing Fieldset. Test an API rejection through a real rendered control and
 successful correction/retry, including domain 401 responses that must not
-trigger token refresh.
+clear the session or replay the request.

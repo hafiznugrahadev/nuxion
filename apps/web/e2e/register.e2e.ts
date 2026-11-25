@@ -6,8 +6,8 @@ test.describe('registration', () => {
     const email = `e2e-register-${Date.now()}@nuxion.test`;
     try {
       await gotoHydrated(page, '/register');
-      await page.getByLabel('Full name').fill('E2E Newcomer');
-      await page.getByLabel('Email').fill(email);
+      await page.getByRole('textbox', { name: /^Full name(?:\s*\*)?$/ }).fill('E2E Newcomer');
+      await page.getByRole('textbox', { name: /^Email(?:\s*\*)?$/ }).fill(email);
       await page.locator('#password').fill('e2e-pass-123');
       await page.getByRole('button', { name: /create account/i }).click();
       await expect(page).toHaveURL(/\/dashboard/);
@@ -18,11 +18,11 @@ test.describe('registration', () => {
 
   test('rejects a duplicate email', async ({ page }) => {
     await gotoHydrated(page, '/register');
-    await page.getByLabel('Full name').fill('Dupe');
-    await page.getByLabel('Email').fill(ADMIN.email);
+    await page.getByRole('textbox', { name: /^Full name(?:\s*\*)?$/ }).fill('Dupe');
+    await page.getByRole('textbox', { name: /^Email(?:\s*\*)?$/ }).fill(ADMIN.email);
     await page.locator('#password').fill('whatever-123');
     await page.getByRole('button', { name: /create account/i }).click();
-    await expect(page.getByText(/already registered/i)).toBeVisible();
+    await expect(page.getByRole('alert').filter({ hasText: /already registered/i })).toBeVisible();
     await expect(page).toHaveURL(/\/register/);
   });
 });

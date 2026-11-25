@@ -3,12 +3,6 @@ import { createPinia, setActivePinia } from 'pinia';
 import { UserRole, type User } from '@nuxion/shared-types';
 import { useAuthStore } from './auth';
 
-/**
- * Covers the state layer: session lifecycle and role getters. The network
- * actions (login / refresh / …) need the Nuxt runtime ($fetch,
- * useRuntimeConfig) and are exercised end-to-end by the Playwright suite.
- */
-
 function user(roles: string[]): User {
   return {
     id: 'u1',
@@ -33,30 +27,31 @@ describe('auth store', () => {
     expect(auth.isSuperAdmin).toBe(false);
   });
 
-  it('setSession stores the in-memory token and user', () => {
+  it('setSession stores the public user without a readable session token', () => {
     const auth = useAuthStore();
-    auth.setSession({ accessToken: 'jwt', user: user([UserRole.USER]) });
+    auth.setSession({ user: user([UserRole.USER]) });
     expect(auth.isAuthenticated).toBe(true);
     expect(auth.user?.email).toBe('demo@nuxion.test');
+    expect(auth.$state).not.toHaveProperty('accessToken');
   });
 
   it('role getters reflect the held roles, not just authentication', () => {
     const auth = useAuthStore();
 
-    auth.setSession({ accessToken: 'jwt', user: user([UserRole.ADMIN]) });
+    auth.setSession({ user: user([UserRole.ADMIN]) });
     expect(auth.isAdmin).toBe(true);
     expect(auth.isSuperAdmin).toBe(false);
 
-    auth.setSession({ accessToken: 'jwt', user: user([UserRole.SUPER_ADMIN]) });
+    auth.setSession({ user: user([UserRole.SUPER_ADMIN]) });
     expect(auth.isSuperAdmin).toBe(true);
 
-    auth.setSession({ accessToken: 'jwt', user: user([UserRole.USER]) });
+    auth.setSession({ user: user([UserRole.USER]) });
     expect(auth.isAdmin).toBe(false);
   });
 
-  it('clear() wipes the session (logout / failed refresh)', () => {
+  it('clear() wipes the session (logout / failed restoration)', () => {
     const auth = useAuthStore();
-    auth.setSession({ accessToken: 'jwt', user: user([UserRole.ADMIN]) });
+    auth.setSession({ user: user([UserRole.ADMIN]) });
     auth.clear();
     expect(auth.isAuthenticated).toBe(false);
     expect(auth.user).toBeNull();

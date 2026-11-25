@@ -2,7 +2,7 @@ import { config } from 'dotenv';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { eq } from 'drizzle-orm';
 import { hashPassword } from '../common/utils/password';
-import { roles, userRoles, users } from './schema';
+import { roles, userRoles, users, authAccounts } from './schema';
 
 // Single root .env (cwd = apps/api when run via `bun run --filter`). Env vars win.
 config({ path: ['../../.env', '.env'] });
@@ -174,6 +174,15 @@ async function main() {
     }));
     await db.insert(userRoles).values(links).onConflictDoNothing();
   }
+
+  const credentials = await db
+    .select({ userId: users.id, accountId: users.id, password: users.password })
+    .from(users);
+  if (credentials.length)
+    await db
+      .insert(authAccounts)
+      .values(credentials.map((row) => ({ ...row, providerId: 'credential' })))
+      .onConflictDoNothing();
 
   console.log('Seed complete:', {
     superAdmin: superAdmin.email,

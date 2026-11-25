@@ -3,8 +3,6 @@ import type { ApiResponse, Paginated, PaginationMeta } from '@nuxion/shared-type
 
 export interface ApiClientOptions {
   baseURL: string;
-  /** Returns the current in-memory access token (attached as a Bearer header). */
-  getToken?: () => string | null | undefined;
   /** Called when a request starts / settles (success or error) — wired by
    * `useApi()` to the YouTube-style top progress bar (see lib/xhr-progress.ts). */
   onStart?: () => void;
@@ -15,20 +13,15 @@ export interface ApiClientOptions {
  * SPEC DRY #4 (FE) — single ofetch instance with auth + central error handling.
  * Kept as a factory so `lib/` stays free of `useRuntimeConfig()` / Pinia at import
  * time; the `useApi()` composable wires in runtime config, the auth store, and the
- * transparent 401 → refresh → retry behaviour. `credentials: 'include'` lets the
- * browser send the httpOnly refresh cookie on `/auth/*` calls.
+ * session lifecycle. The browser sends the HttpOnly session cookie on API calls.
  */
-export function createApiClient({ baseURL, getToken, onStart, onEnd }: ApiClientOptions) {
+export function createApiClient({ baseURL, onStart, onEnd }: ApiClientOptions) {
   return $fetch.create({
     baseURL,
     credentials: 'include',
-    onRequest({ options }) {
+    retry: 0,
+    onRequest() {
       onStart?.();
-      const token = getToken?.();
-      if (token) {
-        options.headers = new Headers(options.headers);
-        options.headers.set('Authorization', `Bearer ${token}`);
-      }
     },
     onResponse() {
       onEnd?.();

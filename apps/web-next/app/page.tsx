@@ -240,7 +240,7 @@ export default async function Home() {
         <pre className="overflow-x-auto rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4 font-mono text-[13px] leading-relaxed text-on-surface">
           <code>
             {
-              'APP_URL=https://app.example.com\nDATABASE_URL=postgresql://user:pass@nuxion-db:5432/nuxion\nREDIS_URL=redis://nuxion-redis:6379\nJWT_SECRET=change-me-min-16-chars'
+              'APP_URL=https://app.example.com\nDATABASE_URL=postgresql://user:pass@nuxion-db:5432/nuxion\nREDIS_URL=redis://nuxion-redis:6379\nBETTER_AUTH_SECRET=replace-with-a-random-secret-at-least-32-characters'
             }
           </code>
         </pre>

@@ -4,7 +4,7 @@ import { apiFetch } from '@/lib/use-api';
 /**
  * Reusable file uploader → `POST /files` (multipart). Returns the stored
  * file's public URL for the caller to persist. Port of the Nuxt variant's
- * useUpload: auth header + transparent 401→refresh→retry via the shared
+ * useUpload: credentialed cookie requests via the shared
  * apiFetch plumbing (the api client leaves FormData bodies to the browser's
  * multipart writer).
  */

@@ -6,20 +6,20 @@ import { roles, users } from '../src/db/schema';
 import type { Database } from '../src/db/relations';
 import {
   createTestApp,
-  extractAccessToken,
+  extractSessionCookie,
   getDb,
   E2E_PREFIX,
   SEED_USERS,
 } from './helpers/app.helper';
 
-/** Login shorthand returning a Bearer token string. */
+/** Login shorthand returning the signed session cookie. */
 async function loginAs(
   server: ReturnType<INestApplication['getHttpServer']>,
   email: string,
   password: string,
 ): Promise<string> {
   const res = await request(server).post('/api/auth/login').send({ email, password });
-  return extractAccessToken(res.body as { data?: { accessToken?: string } });
+  return extractSessionCookie(res.headers);
 }
 
 /** UPPER_SNAKE_CASE name that satisfies the DTO pattern (E2E_PREFIX is lowercase). */
@@ -61,10 +61,7 @@ describe('Roles (e2e)', () => {
 
   describe('GET /api/roles', () => {
     it('returns the catalog with holder counts for admin', async () => {
-      const res = await request(server)
-        .get('/api/roles')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .expect(200);
+      const res = await request(server).get('/api/roles').set('Cookie', adminToken).expect(200);
 
       expect(res.body.success).toBe(true);
       expect(Array.isArray(res.body.data)).toBe(true);
@@ -77,10 +74,7 @@ describe('Roles (e2e)', () => {
     });
 
     it('returns 403 for a regular USER role', async () => {
-      await request(server)
-        .get('/api/roles')
-        .set('Authorization', `Bearer ${userToken}`)
-        .expect(403);
+      await request(server).get('/api/roles').set('Cookie', userToken).expect(403);
     });
 
     it('returns 401 without auth', async () => {
@@ -94,7 +88,7 @@ describe('Roles (e2e)', () => {
     it('creates a custom role as SUPER_ADMIN', async () => {
       const res = await request(server)
         .post('/api/roles')
-        .set('Authorization', `Bearer ${superAdminToken}`)
+        .set('Cookie', superAdminToken)
         .send({ name: CUSTOM_ROLE })
         .expect(201);
 
@@ -107,7 +101,7 @@ describe('Roles (e2e)', () => {
     it('returns 400 for a duplicate name (async IsUnique validation)', async () => {
       const res = await request(server)
         .post('/api/roles')
-        .set('Authorization', `Bearer ${superAdminToken}`)
+        .set('Cookie', superAdminToken)
         .send({ name: CUSTOM_ROLE })
         .expect(400);
 
@@ -118,7 +112,7 @@ describe('Roles (e2e)', () => {
     it('returns 400 for a well-known name (also an existing row)', async () => {
       const res = await request(server)
         .post('/api/roles')
-        .set('Authorization', `Bearer ${superAdminToken}`)
+        .set('Cookie', superAdminToken)
         .send({ name: 'ADMIN' })
         .expect(400);
 
@@ -129,7 +123,7 @@ describe('Roles (e2e)', () => {
     it('returns 400 for a name that is not UPPER_SNAKE_CASE', async () => {
       await request(server)
         .post('/api/roles')
-        .set('Authorization', `Bearer ${superAdminToken}`)
+        .set('Cookie', superAdminToken)
         .send({ name: 'lowercase_role' })
         .expect(400);
     });
@@ -137,7 +131,7 @@ describe('Roles (e2e)', () => {
     it('returns 403 for ADMIN role (not SUPER_ADMIN)', async () => {
       await request(server)
         .post('/api/roles')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Cookie', adminToken)
         .send({ name: 'ADMIN_FORBIDDEN_TRY' })
         .expect(403);
     });
@@ -152,7 +146,7 @@ describe('Roles (e2e)', () => {
     it('assigns a custom role when creating a user', async () => {
       const res = await request(server)
         .post('/api/users')
-        .set('Authorization', `Bearer ${superAdminToken}`)
+        .set('Cookie', superAdminToken)
         .send({
           email: holderEmail,
           name: 'Custom Role Holder',
@@ -168,7 +162,7 @@ describe('Roles (e2e)', () => {
     it('filters the user list by a custom role name', async () => {
       const res = await request(server)
         .get(`/api/users?roles=${CUSTOM_ROLE}`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Cookie', adminToken)
         .expect(200);
 
       expect(res.body.data.length).toBeGreaterThan(0);
@@ -180,12 +174,12 @@ describe('Roles (e2e)', () => {
     it('deleting the custom role un-assigns it from holders (cascade)', async () => {
       await request(server)
         .delete(`/api/roles/${customRoleId}`)
-        .set('Authorization', `Bearer ${superAdminToken}`)
+        .set('Cookie', superAdminToken)
         .expect(200);
 
       const res = await request(server)
         .get(`/api/users/${holderId}`)
-        .set('Authorization', `Bearer ${superAdminToken}`)
+        .set('Cookie', superAdminToken)
         .expect(200);
 
       expect(res.body.data.roles).not.toContain(CUSTOM_ROLE);
@@ -201,7 +195,7 @@ describe('Roles (e2e)', () => {
     beforeAll(async () => {
       const created = await request(server)
         .post('/api/roles')
-        .set('Authorization', `Bearer ${superAdminToken}`)
+        .set('Cookie', superAdminToken)
         .send({ name: RENAME_SOURCE });
       renameTargetId = created.body.data.id;
     });
@@ -209,7 +203,7 @@ describe('Roles (e2e)', () => {
     it('renames a custom role as SUPER_ADMIN', async () => {
       const res = await request(server)
         .patch(`/api/roles/${renameTargetId}`)
-        .set('Authorization', `Bearer ${superAdminToken}`)
+        .set('Cookie', superAdminToken)
         .send({ name: RENAMED_ROLE })
         .expect(200);
 
@@ -220,7 +214,7 @@ describe('Roles (e2e)', () => {
     it('returns 400 when renaming a built-in role', async () => {
       const res = await request(server)
         .patch(`/api/roles/${superAdminRoleId}`)
-        .set('Authorization', `Bearer ${superAdminToken}`)
+        .set('Cookie', superAdminToken)
         .send({ name: 'GOD_MODE' })
         .expect(400);
 
@@ -231,7 +225,7 @@ describe('Roles (e2e)', () => {
     it('returns 409 when renaming to a name another role holds', async () => {
       const res = await request(server)
         .patch(`/api/roles/${renameTargetId}`)
-        .set('Authorization', `Bearer ${superAdminToken}`)
+        .set('Cookie', superAdminToken)
         .send({ name: 'USER' })
         .expect(409);
 
@@ -241,7 +235,7 @@ describe('Roles (e2e)', () => {
     it('returns 403 for ADMIN role (not SUPER_ADMIN)', async () => {
       await request(server)
         .patch(`/api/roles/${renameTargetId}`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Cookie', adminToken)
         .send({ name: 'ADMIN_TRIED_THIS' })
         .expect(403);
     });
@@ -249,7 +243,7 @@ describe('Roles (e2e)', () => {
     it('returns 404 for a non-existent uuid', async () => {
       await request(server)
         .patch('/api/roles/00000000-0000-0000-0000-000000000000')
-        .set('Authorization', `Bearer ${superAdminToken}`)
+        .set('Cookie', superAdminToken)
         .send({ name: 'NOPE_ROLE' })
         .expect(404);
     });
@@ -261,7 +255,7 @@ describe('Roles (e2e)', () => {
     it('returns 400 when deleting a built-in role', async () => {
       const res = await request(server)
         .delete(`/api/roles/${superAdminRoleId}`)
-        .set('Authorization', `Bearer ${superAdminToken}`)
+        .set('Cookie', superAdminToken)
         .expect(400);
 
       expect(res.body.success).toBe(false);
@@ -274,7 +268,7 @@ describe('Roles (e2e)', () => {
     it('returns 403 for ADMIN role (not SUPER_ADMIN)', async () => {
       await request(server)
         .delete(`/api/roles/${superAdminRoleId}`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Cookie', adminToken)
         .expect(403);
     });
   });

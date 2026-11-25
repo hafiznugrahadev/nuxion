@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { Public } from '@common/decorators/public.decorator';
 import { FileUploadErrorsInterceptor } from '@common/interceptors/file-upload-errors.interceptor';
@@ -26,7 +26,7 @@ import type { StoredFile } from '@infrastructure/storage/storage.types';
 const MAX_UPLOAD_CEILING = 15 * 1024 * 1024;
 
 /**
- * Generic authenticated upload endpoint. Protected by the global JwtAuthGuard.
+ * Generic authenticated upload endpoint. Protected by the global SessionAuthGuard.
  * Returns the stored file's URL for callers to persist (e.g. avatarUrl).
  *
  * With a signed driver (s3, private bucket) the returned `url` is a STABLE proxy
@@ -42,7 +42,7 @@ export class FilesController {
   // Uploads are the API's most expensive request — cap well under the global limit.
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post()
-  @ApiBearerAuth()
+  @ApiCookieAuth()
   @UseInterceptors(
     FileUploadErrorsInterceptor,
     FileInterceptor('file', { limits: { fileSize: MAX_UPLOAD_CEILING } }),

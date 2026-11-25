@@ -1,0 +1,6 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nuxtjs",
+  "installCommand": "cd ../.. && bun install --frozen-lockfile",
+  "buildCommand": "cd ../.. && bun run --filter @nuxion/shared-types build && NODE_ENV=production NITRO_PRESET=vercel bun run --filter @nuxion/web build"
+}

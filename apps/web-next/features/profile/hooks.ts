@@ -1,9 +1,10 @@
 'use client';
 
 import { useApiMutation } from '@/lib/use-api-mutation';
-import { getAuthState, setSession } from '@/lib/auth-store';
+import { clearSession, getAuthState, setSession } from '@/lib/auth-store';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import type { User } from '@nuxion/shared-types';
 import { profileApi } from './api';
 import type { ChangePasswordInput, UpdateProfileInput } from './types';
@@ -30,8 +31,8 @@ export function useUpdateProfile() {
       queryClient.setQueryData<User>(ME_KEY, user);
       // Keep the header/menu name + avatar in sync with the in-memory session.
       const state = getAuthState();
-      if (state.user && state.accessToken) {
-        setSession({ accessToken: state.accessToken, user: { ...state.user, ...user } });
+      if (state.user) {
+        setSession({ user: { ...state.user, ...user } });
       }
     },
   });
@@ -40,7 +41,14 @@ export function useUpdateProfile() {
 /** Change the current user's password. */
 export function useChangePassword() {
   const t = useTranslations('profile.toasts');
+  const router = useRouter();
+  const queryClient = useQueryClient();
   return useApiMutation((input: ChangePasswordInput) => profileApi.changePassword(input), {
     successMessage: t('passwordChanged'),
+    onSuccess() {
+      clearSession();
+      queryClient.clear();
+      router.replace('/login');
+    },
   });
 }

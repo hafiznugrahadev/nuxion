@@ -48,7 +48,7 @@ function makeService(options: { update?: unknown[] } = {}) {
   const config = {
     get: vi.fn((key: string) => (key === 'app.twoFactor.enabled' ? true : undefined)),
     getOrThrow: vi.fn((key: string) => {
-      if (key === 'app.jwt.secret') return JWT_SECRET;
+      if (key === 'app.auth.twoFactorEncryptionKey') return JWT_SECRET;
       throw new Error(`unexpected getOrThrow: ${key}`);
     }),
   };

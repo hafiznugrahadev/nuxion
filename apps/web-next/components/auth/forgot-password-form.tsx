@@ -40,7 +40,9 @@ export function ForgotPasswordForm() {
         },
         ['email'],
       );
-      toast.error(t('somethingWrong'));
+      const unavailable =
+        typeof err === 'object' && err !== null && 'status' in err && err.status === 503;
+      toast.error(t(unavailable ? 'passwordResetUnavailable' : 'somethingWrong'));
     } finally {
       setSubmitting(false);
     }

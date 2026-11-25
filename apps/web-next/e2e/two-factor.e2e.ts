@@ -1,6 +1,6 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import { generate } from 'otplib';
-import { API_BASE, apiToken, deleteUserByEmail, gotoHydrated, login } from './helpers';
+import { API_BASE, apiLogin, deleteUserByEmail, gotoHydrated, login } from './helpers';
 
 /**
  * Full mandatory-2FA flow against a running stack with AUTH_2FA_ENABLED=true
@@ -17,9 +17,8 @@ const USER = { email: 'e2e-2fa@nuxion.test', password: 'e2e2fapass1', name: 'E2E
 /** Create the test account fresh (drops any prior TOTP state with it). */
 async function ensureUser(request: APIRequestContext) {
   await deleteUserByEmail(request, USER.email);
-  const token = await apiToken(request, 'superadmin@nuxion.test', 'super1234');
+  await apiLogin(request, 'superadmin@nuxion.test', 'super1234');
   const res = await request.post(`${API_BASE}/users`, {
-    headers: { Authorization: `Bearer ${token}` },
     data: { email: USER.email, name: USER.name, password: USER.password, roles: ['USER'] },
   });
   expect(res.ok()).toBeTruthy();

@@ -26,7 +26,7 @@ const items: NavItem[] = [
   { label: 'nav.componentsDemo', to: '/admin/demo/components', icon: 'widgets' },
 ];
 
-// Auth roles are only known on the client (the access token lives in memory), so
+// Auth roles are only known after the client restores the session user, so
 // admin-only items must stay hidden until after mount. Rendering them during SSR
 // — or on the client's first (hydration) pass — would make the server nav (guest
 // view) and the hydrated client nav (authed view) diverge, which Vue reports as a

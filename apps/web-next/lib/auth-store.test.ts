@@ -10,7 +10,6 @@ import {
 } from './auth-store';
 
 const SESSION = {
-  accessToken: 'tok',
   user: { id: 'u1', name: 'A B', email: 'a@b.c', roles: [UserRole.ADMIN], createdAt: '' } as never,
 };
 
@@ -24,6 +23,7 @@ describe('auth store', () => {
   it('setSession populates, clearSession empties', () => {
     setSession(SESSION);
     expect(isAuthenticated(getAuthState())).toBe(true);
+    expect(getAuthState()).not.toHaveProperty('accessToken');
     expect(hasRole(getAuthState(), UserRole.ADMIN)).toBe(true);
     clearSession();
     expect(isAuthenticated(getAuthState())).toBe(false);

@@ -25,7 +25,11 @@ services:
       # ── Provisioned in Dokploy ──
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-}
-      JWT_SECRET: ${JWT_SECRET}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-${APP_URL}}
+      AUTH_SESSION_EXPIRES_DAYS: ${AUTH_SESSION_EXPIRES_DAYS:-7}
+      JWT_SECRET: ${JWT_SECRET:-}
+      TWO_FACTOR_ENCRYPTION_KEY: ${TWO_FACTOR_ENCRYPTION_KEY:-}
       # Base URL of the frontend (the only public origin) — feeds CORS/CSRF
       # trusted origins, password-reset links and WebAuthn RP defaults.
       APP_URL: ${APP_URL}

@@ -82,7 +82,6 @@ export function TwoFactorSetup() {
       const state = getAuthState();
       if (state.user) {
         setSession({
-          accessToken: state.accessToken!,
           user: { ...state.user, twoFactorEnabled: true },
         });
       }

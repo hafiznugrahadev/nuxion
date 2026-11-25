@@ -27,7 +27,9 @@ const onSubmit = handleSubmit(async (values) => {
     sent.value = true;
   } catch (err) {
     applyApiFieldErrors(err, setErrors, ['email']);
-    toast.error(t('auth.somethingWrong'));
+    const unavailable =
+      typeof err === 'object' && err !== null && 'status' in err && err.status === 503;
+    toast.error(t(unavailable ? 'auth.passwordResetUnavailable' : 'auth.somethingWrong'));
   } finally {
     submitting.value = false;
   }

@@ -496,8 +496,8 @@ async function main(): Promise<void> {
     // The example was rewritten in the steps above, so it already carries the
     // new slug and the chosen variant's env section.
     const env = example.replace(
-      /^JWT_SECRET=.*$/m,
-      `JWT_SECRET=${randomBytes(32).toString('base64url')}`,
+      /^BETTER_AUTH_SECRET=.*$/m,
+      `BETTER_AUTH_SECRET=${randomBytes(32).toString('base64url')}`,
     );
     await writeFile(envPath, env);
   }
@@ -519,7 +519,7 @@ async function main(): Promise<void> {
   console.log(
     envExists
       ? yellow('! .env sudah ada dan TIDAK disentuh — samakan sendiri dengan .env.example.')
-      : dim('  .env dibuat dari .env.example (JWT_SECRET digenerate).'),
+      : dim('  .env dibuat dari .env.example (BETTER_AUTH_SECRET digenerate).'),
   );
   console.log(`
 ${bold('Langkah berikutnya')}

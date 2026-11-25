@@ -4,7 +4,7 @@ import request from 'supertest';
 import { eq } from 'drizzle-orm';
 import { settings } from '../src/db/schema';
 import { RedisService } from '@infrastructure/redis/redis.service';
-import { createTestApp, extractAccessToken, getDb, SEED_USERS } from './helpers/app.helper';
+import { createTestApp, extractSessionCookie, getDb, SEED_USERS } from './helpers/app.helper';
 
 // Rapid repeated logins; the suite hits /settings/branding often too.
 process.env.THROTTLE_DISABLED = 'true';
@@ -43,8 +43,8 @@ describe('Settings (e2e)', () => {
         .post('/api/auth/login')
         .send({ email: SEED_USERS.admin.email, password: SEED_USERS.admin.password }),
     ]);
-    superAdminToken = extractAccessToken(superAdmin.body);
-    adminToken = extractAccessToken(admin.body);
+    superAdminToken = extractSessionCookie(superAdmin.headers);
+    adminToken = extractSessionCookie(admin.headers);
   });
 
   afterAll(async () => {
@@ -78,7 +78,7 @@ describe('Settings (e2e)', () => {
     it('rejects ADMIN (Super Admin only)', async () => {
       await request(server)
         .put('/api/settings/branding')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Cookie', adminToken)
         .send({ appName: 'Nope' })
         .expect(403);
     });
@@ -86,12 +86,12 @@ describe('Settings (e2e)', () => {
     it('rejects invalid payloads', async () => {
       await request(server)
         .put('/api/settings/branding')
-        .set('Authorization', `Bearer ${superAdminToken}`)
+        .set('Cookie', superAdminToken)
         .send({ appName: 'x' })
         .expect(400);
       await request(server)
         .put('/api/settings/branding')
-        .set('Authorization', `Bearer ${superAdminToken}`)
+        .set('Cookie', superAdminToken)
         .send({ appName: 'Acme', logoUrl: 'not-a-url' })
         .expect(400);
     });
@@ -99,7 +99,7 @@ describe('Settings (e2e)', () => {
     it('persists as Super Admin and serves the update', async () => {
       const put = await request(server)
         .put('/api/settings/branding')
-        .set('Authorization', `Bearer ${superAdminToken}`)
+        .set('Cookie', superAdminToken)
         .send({
           appName: 'Acme Corp',
           logoUrl: null,

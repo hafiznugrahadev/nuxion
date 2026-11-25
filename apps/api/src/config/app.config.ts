@@ -76,12 +76,14 @@ const appConfigFactory = () => {
     // Express `trust proxy` (see parseTrustProxy): 1 TLS hop by default.
     trustProxy: parseTrustProxy(process.env.TRUST_PROXY),
     logLevel: process.env.LOG_LEVEL ?? 'info',
-    jwt: {
-      // Required & validated at startup (see env.validation.ts) — no insecure fallback.
-      secret: process.env.JWT_SECRET as string,
-      // Short-lived access token; long-lived opaque refresh token (see auth.service.ts).
-      accessExpiresIn: process.env.JWT_EXPIRES_IN ?? '15m',
-      refreshExpiresInDays: parseInt(process.env.JWT_REFRESH_EXPIRES_DAYS ?? '7', 10),
+    auth: {
+      secret: process.env.BETTER_AUTH_SECRET,
+      url: process.env.BETTER_AUTH_URL || appUrl,
+      sessionExpiresInDays: parseInt(process.env.AUTH_SESSION_EXPIRES_DAYS ?? '7', 10),
+      twoFactorEncryptionKey:
+        process.env.TWO_FACTOR_ENCRYPTION_KEY ||
+        process.env.JWT_SECRET ||
+        process.env.BETTER_AUTH_SECRET,
     },
     cookie: {
       // Cross-site in prod (web + api on different hosts) requires SameSite=None+Secure.
@@ -99,6 +101,7 @@ const appConfigFactory = () => {
       disabled: (process.env.THROTTLE_DISABLED ?? 'false') === 'true',
     },
     passwordReset: {
+      enabled: (process.env.AUTH_PASSWORD_RESET_ENABLED ?? 'true') !== 'false',
       ttlMinutes: parseInt(process.env.PASSWORD_RESET_TTL_MIN ?? '30', 10),
       // Derived from APP_URL — no separate env var needed.
       url: `${process.env.APP_URL || 'http://localhost:3000'}/reset-password`,

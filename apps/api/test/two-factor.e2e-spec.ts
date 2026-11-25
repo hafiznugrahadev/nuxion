@@ -4,7 +4,7 @@ import request from 'supertest';
 import { eq } from 'drizzle-orm';
 import { generate } from 'otplib';
 import { users } from '../src/db/schema';
-import { createTestApp, extractAccessToken, getDb, SEED_USERS } from './helpers/app.helper';
+import { createTestApp, extractSessionCookie, getDb, SEED_USERS } from './helpers/app.helper';
 
 // This suite exercises the mandatory-2FA mode; existing suites run with it off.
 // Vitest isolates each spec file in its own worker, so these process.env writes
@@ -56,7 +56,7 @@ describe('Two-factor auth (e2e)', () => {
   describe('while 2FA is not yet activated', () => {
     it('issues a full session right after password (middleware drives setup)', async () => {
       const res = await login(server).expect(200);
-      expect(res.body.data.accessToken).toBeTruthy();
+      expect(extractSessionCookie(res.headers)).toBeTruthy();
       expect(res.body.data.user.twoFactorEnabled).toBe(false);
     });
 
@@ -70,14 +70,14 @@ describe('Two-factor auth (e2e)', () => {
 
     beforeEach(async () => {
       const res = await login(server).expect(200);
-      accessToken = extractAccessToken(res.body);
+      accessToken = extractSessionCookie(res.headers);
     });
 
     it('runs the complete happy path', async () => {
       // 1. Begin setup — QR material + manual secret.
       const setup = await request(server)
         .post('/api/auth/2fa/setup')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Cookie', accessToken)
         .expect(200);
       const secret = setup.body.data.secret;
       expect(setup.body.data.otpauthUrl).toContain(encodeURIComponent(secret));
@@ -86,7 +86,7 @@ describe('Two-factor auth (e2e)', () => {
       // 2. Confirm with a live code → recovery codes, shown once.
       const activate = await request(server)
         .post('/api/auth/2fa/activate')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Cookie', accessToken)
         .send({ code: await generate({ secret }) })
         .expect(200);
       const recoveryCodes = activate.body.data.recoveryCodes;
@@ -124,19 +124,19 @@ describe('Two-factor auth (e2e)', () => {
           code: await generate({ secret }),
         })
         .expect(200);
-      expect(verified.body.data.accessToken).toBeTruthy();
+      expect(extractSessionCookie(verified.headers)).toBeTruthy();
       expect(verified.body.data.user.twoFactorEnabled).toBe(true);
-      expect(String(verified.headers['set-cookie'])).toMatch(/^refresh_token=/);
+      expect(String(verified.headers['set-cookie'])).toMatch(/better-auth\.session_token=/);
     });
 
     it('accepts a recovery code exactly once in place of a TOTP code', async () => {
       const setup = await request(server)
         .post('/api/auth/2fa/setup')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Cookie', accessToken)
         .expect(200);
       const activate = await request(server)
         .post('/api/auth/2fa/activate')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Cookie', accessToken)
         .send({ code: await generate({ secret: setup.body.data.secret }) })
         .expect(200);
       const [first, second] = activate.body.data.recoveryCodes;
@@ -166,23 +166,23 @@ describe('Two-factor auth (e2e)', () => {
     it('regenerates recovery codes only with the correct password', async () => {
       const setup = await request(server)
         .post('/api/auth/2fa/setup')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Cookie', accessToken)
         .expect(200);
       await request(server)
         .post('/api/auth/2fa/activate')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Cookie', accessToken)
         .send({ code: await generate({ secret: setup.body.data.secret }) })
         .expect(200);
 
       await request(server)
         .post('/api/auth/2fa/recovery/regenerate')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Cookie', accessToken)
         .send({ password: 'wrong-password' })
         .expect(401);
 
       const regen = await request(server)
         .post('/api/auth/2fa/recovery/regenerate')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Cookie', accessToken)
         .send({ password: ADMIN.password })
         .expect(200);
       expect(regen.body.data.recoveryCodes).toHaveLength(8);
@@ -192,10 +192,10 @@ describe('Two-factor auth (e2e)', () => {
   describe('passkey endpoints (flag off)', () => {
     it('refuse passkey operations with 403', async () => {
       const res = await login(server).expect(200);
-      const token = extractAccessToken(res.body);
+      const token = extractSessionCookie(res.headers);
       await request(server)
         .post('/api/auth/webauthn/register/options')
-        .set('Authorization', `Bearer ${token}`)
+        .set('Cookie', token)
         .expect(403);
       await request(server).post('/api/auth/webauthn/login/options').expect(403);
     });

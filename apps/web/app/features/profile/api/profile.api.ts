@@ -6,7 +6,7 @@ import type { ChangePasswordInput, UpdateProfileInput } from '../types';
 /**
  * Self-service profile fetchers — the authenticated user reading/updating their
  * own record via `/users/me` (SPEC DRY #4 FE). Goes through the shared client so
- * a mid-session token expiry is transparently refreshed and retried.
+ * session cookies and field-attributed errors receive consistent handling.
  */
 export function useProfileApi() {
   const api = useApi();

@@ -5,39 +5,34 @@ export const SUPER_ADMIN = { email: 'superadmin@nuxion.test', password: 'super12
 export const API_BASE = process.env.E2E_API_BASE ?? 'http://localhost:8000/api';
 export const MAILPIT = process.env.E2E_MAILPIT ?? 'http://localhost:8025';
 
-/** Log in via the API and return the access token (for direct API calls in tests). */
-export async function apiToken(
+/** APIRequestContext retains the HttpOnly cookie for subsequent API calls. */
+export async function apiLogin(
   request: APIRequestContext,
   email: string,
   password: string,
-): Promise<string> {
+): Promise<void> {
   const res = await request.post(`${API_BASE}/auth/login`, { data: { email, password } });
   expect(res.ok()).toBeTruthy();
-  return (await res.json()).data.accessToken;
+  expect((await res.json()).data.user).toBeTruthy();
 }
 
 /** Delete a user by email via the API (super-admin) — for idempotent cleanup. */
 export async function deleteUserByEmail(request: APIRequestContext, email: string) {
-  const token = await apiToken(request, SUPER_ADMIN.email, SUPER_ADMIN.password);
-  const auth = { headers: { Authorization: `Bearer ${token}` } };
-  const list = await request.get(
-    `${API_BASE}/users?limit=100&search=${encodeURIComponent(email)}`,
-    auth,
-  );
+  await apiLogin(request, SUPER_ADMIN.email, SUPER_ADMIN.password);
+  const list = await request.get(`${API_BASE}/users?limit=100&search=${encodeURIComponent(email)}`);
   const { data } = await list.json();
   const match = (data ?? []).find((u: { email: string; id: string }) => u.email === email);
-  if (match) await request.delete(`${API_BASE}/users/${match.id}`, auth);
+  if (match) await request.delete(`${API_BASE}/users/${match.id}`);
 }
 
 /** Delete a role by name via the API (super-admin) — for idempotent cleanup.
  *  Built-ins 400; this is only pointed at e2e-created custom roles. */
 export async function deleteRoleByName(request: APIRequestContext, name: string) {
-  const token = await apiToken(request, SUPER_ADMIN.email, SUPER_ADMIN.password);
-  const auth = { headers: { Authorization: `Bearer ${token}` } };
-  const list = await request.get(`${API_BASE}/roles`, auth);
+  await apiLogin(request, SUPER_ADMIN.email, SUPER_ADMIN.password);
+  const list = await request.get(`${API_BASE}/roles`);
   const { data } = await list.json();
   const match = (data ?? []).find((r: { name: string; id: string }) => r.name === name);
-  if (match) await request.delete(`${API_BASE}/roles/${match.id}`, auth);
+  if (match) await request.delete(`${API_BASE}/roles/${match.id}`);
 }
 
 /** Wait until Nuxt has hydrated (Vue mounted on #__nuxt) so form @submit handlers
@@ -59,7 +54,7 @@ export async function gotoHydrated(page: Page, path: string) {
 /** Fill and submit the login form (does not assert the outcome). */
 export async function login(page: Page, email = ADMIN.email, password = ADMIN.password) {
   await gotoHydrated(page, '/login');
-  await page.getByLabel('Email').fill(email);
+  await page.getByRole('textbox', { name: /^Email(?:\s*\*)?$/ }).fill(email);
   // Target the input by id — getByLabel('Password') also matches the "Show password" toggle.
   await page.locator('#password').fill(password);
   // Anchor the name — the social buttons are also "Sign in with …".
@@ -74,7 +69,7 @@ export async function latestResetLink(request: APIRequestContext): Promise<strin
   expect(messages.length).toBeGreaterThan(0);
   const detail = await request.get(`${MAILPIT}/api/v1/message/${messages[0].ID}`);
   const { Text } = await detail.json();
-  const match = Text.match(/https?:\/\/[^\s]*reset-password\?token=[a-f0-9]+/);
+  const match = Text.match(/https?:\/\/[^\s]*reset-password\?token=[^\s&]+/);
   if (!match) throw new Error('No reset link found in the latest email');
   return match[0];
 }

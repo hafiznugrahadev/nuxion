@@ -4,8 +4,8 @@ import { useAuthStore } from '~/stores/auth';
 export const TWO_FACTOR_SETUP_PATH = '/two-factor/setup';
 
 /**
- * Route guard for authenticated pages. The access token is client-only (in memory,
- * restored from the refresh cookie by `plugins/auth.client.ts`), so this guard runs
+ * Route guard for authenticated pages. The user is restored from the session
+ * cookie by `plugins/auth.client.ts`, so this guard runs
  * client-side; on the server it defers to let the client restore the session first.
  * Unauthenticated users are sent to /login with a redirect back to the target.
  *

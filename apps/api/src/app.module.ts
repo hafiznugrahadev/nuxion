@@ -7,6 +7,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import type { Request } from 'express';
 import { LoggerModule } from 'nestjs-pino';
 import { multistream, type Level } from 'pino';
+import { HTTP_LOG_REDACTIONS } from '@infrastructure/logging/http-redaction';
 import pretty from 'pino-pretty';
 import { validateEnv } from '@config/env.validation';
 import { appConfig } from '@config/app.config';
@@ -66,6 +67,7 @@ import { SettingsModule } from '@modules/settings/settings.module';
         const level = config.get<string>('app.logLevel') ?? 'info';
         const isProd = config.get<string>('app.env') === 'production';
         const customProps = (req: Request) => ({ requestId: req.headers['x-request-id'] });
+        const redact = [...HTTP_LOG_REDACTIONS];
 
         const mattermost = config.get<MattermostConfig>('mattermost');
         if (mattermost?.enabled && mattermost.webhookUrl) {
@@ -89,6 +91,7 @@ import { SettingsModule } from '@modules/settings/settings.module';
               level: lowestLogLevel(level as MattermostLogLevel, mattermost.level),
               stream,
               customProps,
+              redact,
             },
           };
         }
@@ -100,12 +103,14 @@ import { SettingsModule } from '@modules/settings/settings.module';
               ? undefined
               : { target: 'pino-pretty', options: { singleLine: true } },
             customProps,
+            redact,
           },
         };
       },
     }),
     // Global rate limiting (config-driven); per-route overrides via @Throttle.
     ThrottlerModule.forRootAsync({
+      imports: [],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         throttlers: [

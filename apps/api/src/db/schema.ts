@@ -31,8 +31,9 @@ export const users = pgTable(
       .primaryKey()
       .$defaultFn(() => randomUUID()),
     email: text('email').notNull(),
+    emailVerified: boolean('emailVerified').notNull().default(false),
     name: text('name').notNull(),
-    password: text('password').notNull(),
+    password: text('password').notNull().default(''),
     avatarUrl: text('avatarUrl'),
     // TOTP two-factor. The secret is AES-256-GCM encrypted at rest (two-factor.service.ts);
     // twoFactorEnabled only flips to true once activation is confirmed with a valid code.
@@ -176,3 +177,5 @@ export type PasswordResetTokenRow = typeof passwordResetTokens.$inferSelect;
 export type NotificationRow = typeof notifications.$inferSelect;
 export type PasskeyRow = typeof passkeys.$inferSelect;
 export type SettingRow = typeof settings.$inferSelect;
+
+export { authAccounts, authSessions, authVerifications } from './auth-schema';

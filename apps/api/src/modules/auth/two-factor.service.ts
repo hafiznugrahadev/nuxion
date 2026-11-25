@@ -15,6 +15,7 @@ import QRCode from 'qrcode';
 import type { Database } from '@db/relations';
 import { roleNamesFor } from '@db/user-roles';
 import { users } from '@db/schema';
+import { readCredential } from '@db/auth-credentials';
 import { RedisService } from '@infrastructure/redis/redis.service';
 import { verifyPassword } from '@common/utils/password';
 import { generateOpaqueToken, hashToken } from '@common/utils/token.util';
@@ -43,7 +44,7 @@ interface PendingChallenge {
 
 @Injectable()
 export class TwoFactorService {
-  /** AES-256 key derived from JWT_SECRET — the secret never sits in plaintext at rest. */
+  /** Keep the configured legacy encryption key so existing TOTP enrollments remain valid. */
   private readonly encryptionKey: Buffer;
 
   constructor(
@@ -52,8 +53,8 @@ export class TwoFactorService {
     private readonly redis: RedisService,
     private readonly config: ConfigService,
   ) {
-    const jwtSecret = config.getOrThrow<string>('app.jwt.secret');
-    this.encryptionKey = scryptSync(jwtSecret, 'nuxion:2fa:v1', 32);
+    const encryptionSecret = config.getOrThrow<string>('app.auth.twoFactorEncryptionKey');
+    this.encryptionKey = scryptSync(encryptionSecret, 'nuxion:2fa:v1', 32);
   }
 
   /**
@@ -208,7 +209,8 @@ export class TwoFactorService {
     if (!user.twoFactorEnabled) {
       throw new BadRequestException('Two-factor is not enabled for this account');
     }
-    if (!(await verifyPassword(password, user.password))) {
+    const passwordHash = await readCredential(this.db, userId);
+    if (!passwordHash || !(await verifyPassword(password, passwordHash))) {
       throw withFieldErrors(new UnauthorizedException('Current password is incorrect'), [
         'password',
       ]);

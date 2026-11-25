@@ -42,17 +42,14 @@ export async function getDb(app: INestApplication): Promise<Database> {
   return app.get<Database>(getDrizzleToken());
 }
 
-/** Extract access token from a login response body. */
-export function extractAccessToken(body: { data?: { accessToken?: string } }): string {
-  return body?.data?.accessToken ?? '';
-}
-
-/** Extract the Set-Cookie header value for the refresh token. */
-export function extractRefreshCookie(headers: Record<string, string | string[]>): string {
+/** Return the request Cookie value from Better Auth's Set-Cookie response. */
+export function extractSessionCookie(headers: Record<string, string | string[]>): string {
   const raw = headers['set-cookie'];
-  if (!raw) return '';
-  const cookies = Array.isArray(raw) ? raw : [raw];
-  return cookies.find((c) => c.startsWith('refresh_token=')) ?? '';
+  const cookies = Array.isArray(raw) ? raw : raw ? [raw] : [];
+  return cookies
+    .filter((cookie) => /^(?:__Secure-)?better-auth\.session_token=/.test(cookie))
+    .map((cookie) => cookie.split(';')[0])
+    .join('; ');
 }
 
 /** Unique e2e-only email so tests never clash with seeded users. */

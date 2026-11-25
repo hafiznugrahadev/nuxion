@@ -7,6 +7,10 @@ import { roles, userRoles, users } from './schema';
 // Single root .env (cwd = apps/api when run via `bun run --filter`). Env vars win.
 config({ path: ['../../.env', '.env'] });
 
+if (process.env.NODE_ENV === 'production') {
+  throw new Error('Development demo seed is disabled in production');
+}
+
 const db = drizzle(process.env.DATABASE_URL!);
 
 async function upsertRole(name: string) {

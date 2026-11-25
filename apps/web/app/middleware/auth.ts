@@ -21,8 +21,7 @@ export default defineNuxtRouteMiddleware((to) => {
     return navigateTo({ path: '/login', query: { redirect: to.fullPath } });
   }
 
-  const twoFactorEnabled = useRuntimeConfig().public.twoFactorEnabled as boolean;
-  if (twoFactorEnabled && !auth.user?.twoFactorEnabled && to.path !== TWO_FACTOR_SETUP_PATH) {
+  if (auth.enrollmentRequired && to.path !== TWO_FACTOR_SETUP_PATH) {
     return navigateTo({ path: TWO_FACTOR_SETUP_PATH, query: { redirect: to.fullPath } });
   }
 });

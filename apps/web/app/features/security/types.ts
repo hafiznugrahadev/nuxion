@@ -9,6 +9,8 @@ export interface TwoFactorSetupPayload {
 
 /** What POST /auth/2fa/activate returns — recovery codes are shown exactly once. */
 export interface TwoFactorActivatePayload {
+  accessToken: string;
+  enrollmentRequired: boolean;
   user: User;
   recoveryCodes: string[];
 }

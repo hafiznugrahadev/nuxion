@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { withFieldErrors } from '@common/validation/field-exception';
 import { RedisService } from '@infrastructure/redis/redis.service';
 import { STORAGE_DRIVER, type StorageDriver, type StoredFile } from './storage.types';
+import { validatedFileType } from './file-content';
 
 /** Minimal shape of a Multer memory-storage file (avoids needing @types/multer). */
 export interface UploadedFile {
@@ -49,7 +50,7 @@ export class StorageService {
   async upload(file: UploadedFile | undefined, folder?: string): Promise<StoredFile> {
     if (!file?.buffer)
       throw withFieldErrors(new BadRequestException('No file provided (field "file")'), ['file']);
-    if (file.size > this.maxBytes) {
+    if (file.buffer.length > this.maxBytes) {
       throw withFieldErrors(
         new PayloadTooLargeException(
           `File exceeds the ${Math.round(this.maxBytes / 1024 / 1024)}MB limit`,
@@ -57,17 +58,22 @@ export class StorageService {
         ['file'],
       );
     }
-    if (this.allowedMime.length && !this.allowedMime.includes(file.mimetype)) {
+    const detected = validatedFileType(file.buffer, file.originalname);
+    if (
+      !detected ||
+      !this.allowedMime.includes(detected.mimeType) ||
+      file.mimetype !== detected.mimeType
+    ) {
       throw withFieldErrors(
-        new UnsupportedMediaTypeException(`Unsupported file type: ${file.mimetype}`),
+        new UnsupportedMediaTypeException('Unsupported or invalid file content'),
         ['file'],
       );
     }
     return this.driver.upload({
       buffer: file.buffer,
-      originalName: file.originalname,
-      mimeType: file.mimetype,
-      size: file.size,
+      originalName: detected.originalName,
+      mimeType: detected.mimeType,
+      size: file.buffer.length,
       folder: this.sanitizeFolder(folder),
     });
   }
@@ -111,6 +117,9 @@ export class StorageService {
 
   /** Restrict folders to a safe slug — prevents path traversal and odd keys. */
   private sanitizeFolder(folder?: string): string {
+    if (folder !== undefined && (typeof folder !== 'string' || folder.length > 64)) {
+      throw withFieldErrors(new BadRequestException('Invalid upload folder'), ['folder']);
+    }
     const clean = (folder ?? 'uploads').toLowerCase().replace(/[^a-z0-9_-]/g, '');
     return clean || 'uploads';
   }

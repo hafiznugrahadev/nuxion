@@ -32,9 +32,16 @@ services:
       # Local-driver upload URLs point back at the web origin (/uploads proxy).
       STORAGE_PUBLIC_BASE_URL: ${APP_URL}
       LOG_LEVEL: ${LOG_LEVEL:-info}
-      # Swagger docs ride the /api proxy (https://<web-domain>/api/docs), Basic
-      # Auth-protected; override the password or leave the default in dev.
-      SWAGGER_PASSWORD: ${SWAGGER_PASSWORD:-admin}
+      SWAGGER_ENABLED: ${SWAGGER_ENABLED:-false}
+      SWAGGER_USER: ${SWAGGER_USER:-admin}
+      SWAGGER_PASSWORD: ${SWAGGER_PASSWORD:-}
+      MAIL_TRANSPORT: smtp
+      MAIL_FROM: ${MAIL_FROM:-Nuxion <no-reply@nuxion.test>}
+      MAIL_SMTP_HOST: ${MAIL_SMTP_HOST:?Set MAIL_SMTP_HOST for production mail}
+      MAIL_SMTP_PORT: ${MAIL_SMTP_PORT:-587}
+      MAIL_SMTP_SECURE: ${MAIL_SMTP_SECURE:-false}
+      MAIL_SMTP_USER: ${MAIL_SMTP_USER:-}
+      MAIL_SMTP_PASSWORD: ${MAIL_SMTP_PASSWORD:-}
     expose:
       - '8000' # internal only — reached via the web app's /api proxy
     networks: [dokploy-network]

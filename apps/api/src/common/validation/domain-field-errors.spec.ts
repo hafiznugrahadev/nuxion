@@ -97,7 +97,7 @@ describe('domain form field errors', () => {
     };
     for (const [input, status] of [
       [undefined, 400],
-      [{ ...file, size: 2 * 1024 * 1024 }, 413],
+      [{ ...file, buffer: Buffer.alloc(2 * 1024 * 1024), size: 2 * 1024 * 1024 }, 413],
       [file, 415],
     ] as const) {
       await expect(service.upload(input)).rejects.toMatchObject({

@@ -11,9 +11,9 @@ import { ConfigService } from '@nestjs/config';
 import { withFieldErrors } from '@common/validation/field-exception';
 import { InjectDrizzle } from '@nestjs/drizzle';
 import { JwtService } from '@nestjs/jwt';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, gt, isNull, sql } from 'drizzle-orm';
 import { UserRole } from '@nuxion/shared-types';
-import type { Database } from '@db/relations';
+import type { Database, Executor } from '@db/relations';
 import { roleNamesFor } from '@db/user-roles';
 import {
   passwordResetTokens,
@@ -33,7 +33,7 @@ import {
   generateTokenFamily,
   hashToken,
 } from '@common/utils/token.util';
-import type { JwtPayload } from './jwt.strategy';
+import type { JwtPayload, SessionAssurance, SessionPurpose } from './jwt.strategy';
 import { TwoFactorService } from './two-factor.service';
 import { toSessionUser, type SessionUser, type UserWithRoles } from './session-user';
 import { LoginDto } from './dto/login.dto';
@@ -56,6 +56,7 @@ export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
   user: SessionUser;
+  enrollmentRequired: boolean;
 }
 
 /** Full user row plus role names — the shape the auth flow works with. */
@@ -84,15 +85,12 @@ export class AuthService {
         'password',
       ]);
     }
-    // Accounts with TOTP enabled (and the feature flag on) stop here — the
-    // session is only issued after the challenge is verified. Users who have
-    // NOT set 2FA up yet still get a session; the web middleware funnels them
-    // to the setup page instead.
+    // Enrolled accounts prove TOTP first; others receive enrollment-only sessions.
     if (this.config.get<boolean>('app.twoFactor.enabled') && user.twoFactorEnabled) {
-      const challengeId = await this.twoFactor.issueLoginChallenge(user.id);
+      const challengeId = await this.twoFactor.issueLoginChallenge(user.id, user.securityVersion);
       return { twoFactorRequired: true, challengeId };
     }
-    return this.issueTokens(user, generateTokenFamily());
+    return this.issueSession(user, 'password');
   }
 
   /**
@@ -145,7 +143,7 @@ export class AuthService {
       })
       .catch(() => {});
     this.logger.log(`New user registered: ${user.email}`);
-    return this.issueTokens(userWithRoles, generateTokenFamily());
+    return this.issueSession(userWithRoles, 'password');
   }
 
   /**
@@ -156,55 +154,76 @@ export class AuthService {
   async refresh(rawToken: string | undefined): Promise<AuthTokens> {
     if (!rawToken) throw new UnauthorizedException('Missing refresh token');
 
-    const [stored] = await this.db
-      .select()
+    const [candidate] = await this.db
+      .select({ userId: refreshTokens.userId })
       .from(refreshTokens)
       .where(eq(refreshTokens.tokenHash, hashToken(rawToken)))
       .limit(1);
-    if (!stored) throw new UnauthorizedException('Invalid refresh token');
-
-    if (stored.revokedAt) {
-      this.logger.warn(
-        `Refresh token reuse detected for user ${stored.userId}; revoking token family`,
+    if (!candidate) throw new UnauthorizedException('Invalid refresh token');
+    const result = await this.db.transaction(async (tx) => {
+      const [user] = await tx
+        .select()
+        .from(users)
+        .where(eq(users.id, candidate.userId))
+        .for('update');
+      if (!user) return null;
+      const [stored] = await tx
+        .select()
+        .from(refreshTokens)
+        .where(eq(refreshTokens.tokenHash, hashToken(rawToken)))
+        .limit(1);
+      if (!stored || stored.securityVersion !== user.securityVersion) return null;
+      if (stored.revokedAt) {
+        await tx.delete(refreshTokens).where(eq(refreshTokens.familyId, stored.familyId));
+        return null;
+      }
+      if (
+        this.config.get<boolean>('app.twoFactor.enabled') &&
+        stored.purpose === 'full' &&
+        stored.assurance === 'password'
+      )
+        return null;
+      const [consumed] = await tx
+        .update(refreshTokens)
+        .set({ revokedAt: new Date() })
+        .where(
+          and(
+            eq(refreshTokens.id, stored.id),
+            isNull(refreshTokens.revokedAt),
+            gt(refreshTokens.expiresAt, new Date()),
+          ),
+        )
+        .returning({ id: refreshTokens.id });
+      if (!consumed) return null;
+      return this.issueTokens(
+        tx,
+        { ...user, roles: await roleNamesFor(tx, user.id) },
+        stored.familyId,
+        stored.purpose,
+        stored.assurance,
       );
-      await this.db.delete(refreshTokens).where(eq(refreshTokens.familyId, stored.familyId));
-      throw new UnauthorizedException('Refresh token reuse detected');
-    }
-
-    if (stored.expiresAt < new Date()) {
-      await this.db.delete(refreshTokens).where(eq(refreshTokens.id, stored.id));
-      throw new UnauthorizedException('Expired refresh token');
-    }
-
-    await this.db
-      .update(refreshTokens)
-      .set({ revokedAt: new Date() })
-      .where(eq(refreshTokens.id, stored.id));
-
-    const [userRow] = await this.db
-      .select()
-      .from(users)
-      .where(eq(users.id, stored.userId))
-      .limit(1);
-    if (!userRow) throw new UnauthorizedException('Invalid refresh token');
-    const user: UserRowWithRoles = {
-      ...userRow,
-      roles: await roleNamesFor(this.db, stored.userId),
-    };
-    return this.issueTokens(user, stored.familyId);
+    });
+    if (!result) throw new UnauthorizedException('Invalid or reused refresh token');
+    return result;
   }
 
   /** Revoke the whole family the token belongs to. Idempotent — never throws. */
   async logout(rawToken: string | undefined): Promise<void> {
     if (!rawToken) return;
     const [stored] = await this.db
-      .select({ familyId: refreshTokens.familyId })
+      .select({ userId: refreshTokens.userId, familyId: refreshTokens.familyId })
       .from(refreshTokens)
       .where(eq(refreshTokens.tokenHash, hashToken(rawToken)))
       .limit(1);
-    if (stored) {
-      await this.db.delete(refreshTokens).where(eq(refreshTokens.familyId, stored.familyId));
-    }
+    if (!stored) return;
+    await this.db.transaction(async (tx) => {
+      await tx
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.id, stored.userId))
+        .for('update');
+      await tx.delete(refreshTokens).where(eq(refreshTokens.familyId, stored.familyId));
+    });
   }
 
   /**
@@ -219,17 +238,27 @@ export class AuthService {
       return;
     }
 
-    // One active token per user — drop any prior unused ones.
-    await this.db
-      .delete(passwordResetTokens)
-      .where(and(eq(passwordResetTokens.userId, user.id), isNull(passwordResetTokens.usedAt)));
-
     const rawToken = generateOpaqueToken();
     const ttlMinutes = this.config.get<number>('app.passwordReset.ttlMinutes') ?? 30;
     const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000);
-    await this.db
-      .insert(passwordResetTokens)
-      .values({ userId: user.id, tokenHash: hashToken(rawToken), expiresAt });
+    const issued = await this.db.transaction(async (tx) => {
+      const [current] = await tx
+        .select({ securityVersion: users.securityVersion })
+        .from(users)
+        .where(eq(users.id, user.id))
+        .for('update');
+      if (!current || current.securityVersion !== user.securityVersion) {
+        return false;
+      }
+      await tx
+        .delete(passwordResetTokens)
+        .where(and(eq(passwordResetTokens.userId, user.id), isNull(passwordResetTokens.usedAt)));
+      await tx
+        .insert(passwordResetTokens)
+        .values({ userId: user.id, tokenHash: hashToken(rawToken), expiresAt });
+      return true;
+    });
+    if (!issued) return;
 
     const baseUrl =
       this.config.get<string>('app.passwordReset.url') ?? 'http://localhost:3000/reset-password';
@@ -246,8 +275,8 @@ export class AuthService {
           `(valid for ${ttlMinutes} minutes):\n\n${resetUrl}\n\n` +
           `If you didn't request this, you can safely ignore this email.`,
       });
-    } catch (err) {
-      this.logger.error(`Failed to send password reset email: ${(err as Error).message}`);
+    } catch {
+      this.logger.error('Password reset email delivery failed');
     }
   }
 
@@ -257,25 +286,38 @@ export class AuthService {
    * so any existing sessions are forced to re-authenticate.
    */
   async resetPassword(rawToken: string, newPassword: string): Promise<void> {
-    const [stored] = await this.db
-      .select()
+    const [candidate] = await this.db
+      .select({ userId: passwordResetTokens.userId })
       .from(passwordResetTokens)
       .where(eq(passwordResetTokens.tokenHash, hashToken(rawToken)))
       .limit(1);
-    if (!stored || stored.usedAt || stored.expiresAt < new Date()) {
-      throw new BadRequestException('Invalid or expired reset token');
-    }
-
+    if (!candidate) throw new BadRequestException('Invalid or expired reset token');
     const passwordHash = await hashPassword(newPassword);
     await this.db.transaction(async (tx) => {
-      await tx.update(users).set({ password: passwordHash }).where(eq(users.id, stored.userId));
-      await tx
+      const [user] = await tx
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.id, candidate.userId))
+        .for('update');
+      if (!user) throw new BadRequestException('Invalid or expired reset token');
+      const [consumed] = await tx
         .update(passwordResetTokens)
         .set({ usedAt: new Date() })
-        .where(eq(passwordResetTokens.id, stored.id));
-      await tx.delete(refreshTokens).where(eq(refreshTokens.userId, stored.userId));
+        .where(
+          and(
+            eq(passwordResetTokens.tokenHash, hashToken(rawToken)),
+            isNull(passwordResetTokens.usedAt),
+            gt(passwordResetTokens.expiresAt, new Date()),
+          ),
+        )
+        .returning({ id: passwordResetTokens.id });
+      if (!consumed) throw new BadRequestException('Invalid or expired reset token');
+      await tx
+        .update(users)
+        .set({ password: passwordHash, securityVersion: sql`${users.securityVersion} + 1` })
+        .where(eq(users.id, user.id));
+      await tx.delete(refreshTokens).where(eq(refreshTokens.userId, user.id));
     });
-    this.logger.log(`Password reset completed for user ${stored.userId}`);
   }
 
   /** Days the refresh token (and its cookie) stays valid. */
@@ -288,8 +330,27 @@ export class AuthService {
    * and passkey login completions, where the password/credential check happens
    * in a dedicated service before tokens may be minted.
    */
-  async issueSession(user: UserWithRoles): Promise<AuthTokens> {
-    return this.issueTokens(user, generateTokenFamily());
+  async issueSession(
+    user: UserWithRoles,
+    assurance: SessionAssurance = 'mfa',
+  ): Promise<AuthTokens> {
+    return this.db.transaction(async (tx) => {
+      const [current] = await tx.select().from(users).where(eq(users.id, user.id)).for('update');
+      if (!current || current.securityVersion !== user.securityVersion) {
+        throw new UnauthorizedException('Authentication changed; sign in again');
+      }
+      const purpose: SessionPurpose =
+        this.config.get<boolean>('app.twoFactor.enabled') && assurance === 'password'
+          ? 'enrollment'
+          : 'full';
+      return this.issueTokens(
+        tx,
+        { ...current, roles: await roleNamesFor(tx, current.id) },
+        generateTokenFamily(),
+        purpose,
+        assurance,
+      );
+    });
   }
 
   /** Full row (password included — verifyPassword needs it) + role names. */
@@ -299,9 +360,19 @@ export class AuthService {
     return { ...user, roles: await roleNamesFor(this.db, user.id) };
   }
 
-  private async issueTokens(user: UserWithRoles, familyId: string): Promise<AuthTokens> {
+  private async issueTokens(
+    tx: Executor,
+    user: UserWithRoles,
+    familyId: string,
+    purpose: SessionPurpose,
+    assurance: SessionAssurance,
+  ): Promise<AuthTokens> {
     const payload: JwtPayload = {
       sub: user.id,
+      version: user.securityVersion,
+      family: familyId,
+      purpose,
+      assurance,
       email: user.email,
       roles: user.roles.map((r) => r.name),
     };
@@ -309,10 +380,21 @@ export class AuthService {
 
     const refreshToken = generateRefreshToken();
     const expiresAt = new Date(Date.now() + this.refreshTtlDays * 24 * 60 * 60 * 1000);
-    await this.db
-      .insert(refreshTokens)
-      .values({ userId: user.id, familyId, tokenHash: hashToken(refreshToken), expiresAt });
+    await tx.insert(refreshTokens).values({
+      userId: user.id,
+      familyId,
+      tokenHash: hashToken(refreshToken),
+      expiresAt,
+      securityVersion: user.securityVersion,
+      purpose,
+      assurance,
+    });
 
-    return { accessToken, refreshToken, user: toSessionUser(user) };
+    return {
+      accessToken,
+      refreshToken,
+      user: toSessionUser(user),
+      enrollmentRequired: purpose === 'enrollment',
+    };
   }
 }
